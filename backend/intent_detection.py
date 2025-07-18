@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 llm = ChatOpenAI(
     temperature=0,
     openai_api_key=os.getenv("GROQ_API_KEY"),
-    model="mixtral-8x7b-32768",
+    model="llama3-8b-8192",
     base_url="https://api.groq.com/openai/v1"
 )
 
