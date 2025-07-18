@@ -62,6 +62,18 @@
   margin: 0;
 }
 
+.header-subtitle {
+  margin-top: 0.5rem;
+}
+
+.header-subtitle p {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
 .header-glow {
   position: absolute;
   bottom: -1px;
