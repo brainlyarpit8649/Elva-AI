@@ -18,6 +18,11 @@ class ChatService {
     return sessionId;
   }
 
+  setSessionId(sessionId) {
+    this.sessionId = sessionId;
+    localStorage.setItem('elva_session_id', sessionId);
+  }
+
   async sendMessage(message) {
     try {
       const response = await axios.post(`${API}/chat/message`, {
@@ -60,6 +65,26 @@ class ChatService {
       return response.data;
     } catch (error) {
       console.error('Error getting session:', error);
+      throw error;
+    }
+  }
+
+  async getAllSessions() {
+    try {
+      const response = await axios.get(`${API}/chat/sessions?user_id=${this.userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting all sessions:', error);
+      throw error;
+    }
+  }
+
+  async deleteSession(sessionId) {
+    try {
+      const response = await axios.delete(`${API}/chat/session/${sessionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting session:', error);
       throw error;
     }
   }
