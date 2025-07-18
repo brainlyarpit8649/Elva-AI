@@ -34,10 +34,10 @@ prompt = ChatPromptTemplate.from_messages([
     
     Examples:
     User: "Send an email to John about the meeting tomorrow"
-    Response: {"intent": "send_email", "recipient_name": "John", "recipient_email": "", "subject": "Meeting Tomorrow", "body": "About the meeting tomorrow"}
+    Response: {{"intent": "send_email", "recipient_name": "John", "recipient_email": "", "subject": "Meeting Tomorrow", "body": "About the meeting tomorrow"}}
     
     User: "Hello how are you?"
-    Response: {"intent": "general_chat", "message": "Hello how are you?"}
+    Response: {{"intent": "general_chat", "message": "Hello how are you?"}}
     """),
     ("user", "{input}")
 ])
