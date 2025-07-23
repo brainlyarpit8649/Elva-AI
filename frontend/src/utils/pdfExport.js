@@ -248,15 +248,23 @@ export const exportChatToPDFEnhanced = (messages, fileName) => {
     yPosition = 35;
     
     // Filter messages before processing
-    const chatMessages = messages.filter(msg => 
-      msg && 
-      !msg.isSystem && 
-      !msg.id?.startsWith('gmail_debug_') && 
-      !msg.id?.startsWith('gmail_auth_error_') &&
-      !msg.id?.startsWith('export_success_') &&
-      !msg.id?.startsWith('export_error_') &&
-      !msg.id?.startsWith('export_fallback_')
-    );
+    const chatMessages = messages.filter(msg => {
+      if (!msg) return false;
+      if (msg.isSystem) return false;
+      
+      // Safely check id field - ensure it's a string before using startsWith
+      if (msg.id && typeof msg.id === 'string') {
+        if (msg.id.startsWith('gmail_debug_') || 
+            msg.id.startsWith('gmail_auth_error_') ||
+            msg.id.startsWith('export_success_') ||
+            msg.id.startsWith('export_error_') ||
+            msg.id.startsWith('export_fallback_')) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
 
     console.log('📄 Enhanced PDF - Filtered to', chatMessages.length, 'chat messages');
 
