@@ -1161,12 +1161,55 @@ button:active:not(:disabled) {
   background: transparent;
 }
 
+/* Enhanced light theme message visibility */
 .light-theme .message-bubble {
-  color: #1f2937;
+  color: #0f172a !important; /* Darker text for better contrast */
+  font-weight: 500; /* Slightly bolder text */
 }
 
 .light-theme .message-bubble::before {
-  background: linear-gradient(45deg, rgba(79, 70, 229, 0.05), rgba(139, 92, 246, 0.05));
+  background: linear-gradient(45deg, rgba(79, 70, 229, 0.08), rgba(139, 92, 246, 0.08));
+}
+
+/* Light theme AI message backgrounds with better contrast */
+.light-theme .message-bubble:not(.bg-gradient-to-br) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Light theme system messages */
+.light-theme .bg-cyan-900\/30 {
+  background: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+  color: #0e7490 !important;
+}
+
+.light-theme .text-cyan-100 {
+  color: #0e7490 !important;
+}
+
+/* Light theme edit messages */
+.light-theme .bg-green-900\/30 {
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #15803d !important;
+}
+
+.light-theme .text-green-100 {
+  color: #15803d !important;
+}
+
+/* Light theme welcome messages */
+.light-theme .bg-gradient-to-br.from-purple-900\/40 {
+  background: rgba(147, 51, 234, 0.15) !important;
+  border-color: rgba(147, 51, 234, 0.3) !important;
+  color: #7c3aed !important;
+}
+
+.light-theme .text-purple-100 {
+  color: #7c3aed !important;
 }
 
 .light-theme .drop-down-panel {
