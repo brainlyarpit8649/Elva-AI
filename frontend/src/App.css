@@ -1577,6 +1577,343 @@ button:active:not(:disabled) {
   animation: glow-pulse 1.5s ease-in-out infinite;
 }
 
+/* Enhanced Gmail Email Display Cards */
+.email-display-card {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+  
+  /* Enhanced gradient glow effect */
+  box-shadow: 
+    0 0 40px rgba(59, 130, 246, 0.3),
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 0 30px rgba(59, 130, 246, 0.1);
+  
+  /* Animated border glow */
+  animation: email-card-glow 3s ease-in-out infinite alternate;
+  
+  /* Subtle slide-in animation */
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.email-display-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.3) 0%, 
+    rgba(139, 92, 246, 0.3) 50%, 
+    rgba(236, 72, 153, 0.3) 100%);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.7;
+  animation: email-border-glow 4s linear infinite;
+}
+
+@keyframes email-card-glow {
+  0% {
+    box-shadow: 
+      0 0 40px rgba(59, 130, 246, 0.3),
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 0 30px rgba(59, 130, 246, 0.1);
+  }
+  100% {
+    box-shadow: 
+      0 0 60px rgba(59, 130, 246, 0.5),
+      0 16px 50px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 0 40px rgba(59, 130, 246, 0.15);
+  }
+}
+
+@keyframes email-border-glow {
+  0%, 100% {
+    background-position: 0% 50%;
+    opacity: 0.7;
+  }
+  25% {
+    background-position: 100% 50%;
+    opacity: 0.9;
+  }
+  50% {
+    background-position: 100% 100%;
+    opacity: 0.8;
+  }
+  75% {
+    background-position: 0% 100%;
+    opacity: 0.9;
+  }
+}
+
+.premium-gmail-card {
+  /* Enhanced glassy effect for Gmail cards */
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  
+  /* Enhanced border with gradient */
+  border: 2px solid rgba(234, 67, 53, 0.4);
+  
+  /* Gmail-specific glow */
+  box-shadow: 
+    0 0 50px rgba(234, 67, 53, 0.3),
+    0 15px 45px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 35px rgba(234, 67, 53, 0.1);
+}
+
+.premium-gmail-card::before {
+  background: linear-gradient(135deg, 
+    rgba(234, 67, 53, 0.3), 
+    rgba(52, 168, 83, 0.3), 
+    rgba(251, 188, 4, 0.3),
+    rgba(66, 133, 244, 0.3)
+  );
+  animation: gmail-card-colors 6s linear infinite;
+}
+
+@keyframes gmail-card-colors {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 25% 50%; }
+  50% { background-position: 50% 50%; }
+  75% { background-position: 75% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.email-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  
+  /* Gradient text effect */
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  /* Subtle glow */
+  filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.4));
+  
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-emails-header {
+  color: #10b981;
+  background: linear-gradient(135deg, #10b981, #059669);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+}
+
+.email-count-badge-enhanced {
+  display: inline-block;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin: 0 4px;
+  box-shadow: 
+    0 0 20px rgba(239, 68, 68, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      0 0 20px rgba(239, 68, 68, 0.5),
+      0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 
+      0 0 30px rgba(239, 68, 68, 0.7),
+      0 6px 15px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.email-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  
+  /* Subtle inner glow */
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 15px rgba(0, 0, 0, 0.2);
+  
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.email-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.email-item:last-child {
+  margin-bottom: 0;
+}
+
+.email-field {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.email-field:last-child {
+  margin-bottom: 0;
+}
+
+.email-field-icon {
+  font-size: 1rem;
+  width: 24px;
+  flex-shrink: 0;
+  text-align: center;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+}
+
+.email-field-label {
+  font-weight: 600;
+  color: #94a3b8;
+  min-width: 70px;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.email-field-content {
+  flex: 1;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.email-snippet {
+  font-style: italic;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid rgba(59, 130, 246, 0.5);
+  margin-top: 4px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  
+  /* Subtle glow */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme support for email cards */
+.light-theme .email-display-card {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 
+    0 0 40px rgba(0, 0, 0, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 0 30px rgba(0, 0, 0, 0.02);
+}
+
+.light-theme .email-display-card::before {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.2), 
+    rgba(139, 92, 246, 0.2), 
+    rgba(236, 72, 153, 0.2)
+  );
+}
+
+.light-theme .premium-gmail-card {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(234, 67, 53, 0.3);
+  box-shadow: 
+    0 0 40px rgba(234, 67, 53, 0.15),
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 30px rgba(234, 67, 53, 0.05);
+}
+
+.light-theme .email-header {
+  color: #1f2937;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+}
+
+.light-theme .no-emails-header {
+  color: #065f46;
+  background: linear-gradient(135deg, #059669, #047857);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(5, 150, 105, 0.4));
+}
+
+.light-theme .email-item {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .email-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 25px rgba(0, 0, 0, 0.1),
+    0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.light-theme .email-field-label {
+  color: #64748b;
+}
+
+.light-theme .email-field-content {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.light-theme .email-snippet {
+  color: #475569;
+  background: rgba(0, 0, 0, 0.03);
+  border-left-color: rgba(59, 130, 246, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
 /* Custom scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
