@@ -1283,32 +1283,47 @@ button:active:not(:disabled) {
 }
 
 .light-theme .clean-input {
-  color: #1f2937 !important;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  color: #0f172a !important;
+  font-weight: 500;
+  text-shadow: none;
 }
 
 .light-theme .clean-input::placeholder {
-  color: rgba(31, 41, 55, 0.45);
+  color: rgba(15, 23, 42, 0.6) !important;
+  font-weight: 400;
 }
 
 .light-theme .clean-input:focus::placeholder {
-  color: rgba(31, 41, 55, 0.25);
+  color: rgba(15, 23, 42, 0.4) !important;
 }
 
+.light-theme .clean-input:focus {
+  color: rgba(15, 23, 42, 0.95) !important;
+}
+
+/* Enhanced light theme text colors with better contrast */
 .light-theme .text-white {
-  color: #1f2937 !important;
+  color: #0f172a !important;
+  font-weight: 500;
 }
 
 .light-theme .text-gray-300 {
-  color: #4b5563 !important;
+  color: #374151 !important;
+  font-weight: 500;
 }
 
 .light-theme .text-gray-400 {
-  color: #6b7280 !important;
+  color: #4b5563 !important;
 }
 
 .light-theme .text-gray-500 {
-  color: #9ca3af !important;
+  color: #6b7280 !important;
+}
+
+/* Light theme timestamps and metadata */
+.light-theme .opacity-70 {
+  opacity: 0.8 !important;
+  color: #6b7280 !important;
 }
 
 /* Glassy Input Area - Anchored at Bottom */
