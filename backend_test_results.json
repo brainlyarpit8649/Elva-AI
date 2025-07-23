@@ -1,224 +1,382 @@
 {
   "total_tests": 31,
-  "passed": 0,
-  "failed": 31,
-  "success_rate": 0.0,
+  "passed": 13,
+  "failed": 18,
+  "success_rate": 41.935483870967744,
   "results": [
     {
       "test": "Server Connectivity",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:37.679417",
-      "response_data": ""
+      "success": true,
+      "details": "Backend server is running and accessible",
+      "timestamp": "2025-07-23T09:02:18.056561",
+      "response_data": null
     },
     {
       "test": "Intent Detection - General Chat",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:38.202494",
-      "response_data": ""
+      "success": true,
+      "details": "Correctly classified as general_chat, response: \u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again....",
+      "timestamp": "2025-07-23T09:02:18.898536",
+      "response_data": null
     },
     {
       "test": "Intent Detection - Send Email",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:38.722353",
-      "response_data": ""
+      "details": "Wrong intent: general_chat",
+      "timestamp": "2025-07-23T09:02:19.614659",
+      "response_data": {
+        "id": "6ef03c34-3c0d-482d-b99d-461b6177b778",
+        "message": "Send an email to Sarah about the quarterly report",
+        "response": "\u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again.",
+        "intent_data": {
+          "intent": "general_chat",
+          "message": "Send an email to Sarah about the quarterly report"
+        },
+        "needs_approval": false,
+        "timestamp": "2025-07-23T09:02:19.610748"
+      }
     },
     {
       "test": "Intent Detection - Create Event",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:39.238056",
-      "response_data": ""
+      "details": "Wrong intent: general_chat",
+      "timestamp": "2025-07-23T09:02:20.343329",
+      "response_data": {
+        "id": "c34facf8-b34b-4a16-ad02-5db2270a5eb5",
+        "message": "Create a meeting with the team for tomorrow at 2pm",
+        "response": "\u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again.",
+        "intent_data": {
+          "intent": "general_chat",
+          "message": "Create a meeting with the team for tomorrow at 2pm"
+        },
+        "needs_approval": false,
+        "timestamp": "2025-07-23T09:02:20.338038"
+      }
     },
     {
       "test": "Intent Detection - Add Todo",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:39.760108",
-      "response_data": ""
+      "details": "Wrong intent: general_chat",
+      "timestamp": "2025-07-23T09:02:21.071011",
+      "response_data": {
+        "id": "d64f155b-1424-42cd-87fb-dab06afe964d",
+        "message": "Add finish the project to my todo list",
+        "response": "\u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again.",
+        "intent_data": {
+          "intent": "general_chat",
+          "message": "Add finish the project to my todo list"
+        },
+        "needs_approval": false,
+        "timestamp": "2025-07-23T09:02:21.067462"
+      }
     },
     {
       "test": "Intent Detection - Set Reminder",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:40.277986",
-      "response_data": ""
+      "details": "Wrong intent: general_chat",
+      "timestamp": "2025-07-23T09:02:21.795262",
+      "response_data": {
+        "id": "f28e79b6-ed37-455a-b15b-2be7221b2c4d",
+        "message": "Set a reminder to call mom at 5 PM today",
+        "response": "\u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again.",
+        "intent_data": {
+          "intent": "general_chat",
+          "message": "Set a reminder to call mom at 5 PM today"
+        },
+        "needs_approval": false,
+        "timestamp": "2025-07-23T09:02:21.791576"
+      }
     },
     {
       "test": "Approval Workflow - Approved",
-      "success": false,
-      "details": "No message IDs available for approval test",
-      "timestamp": "2025-07-23T03:40:40.778376",
+      "success": true,
+      "details": "Action approved and sent to n8n webhook",
+      "timestamp": "2025-07-23T09:02:22.316485",
       "response_data": null
     },
     {
       "test": "Approval Workflow - Rejected",
-      "success": false,
-      "details": "Failed to create reminder for rejection test",
-      "timestamp": "2025-07-23T03:40:41.294929",
+      "success": true,
+      "details": "Action correctly rejected",
+      "timestamp": "2025-07-23T09:02:23.093059",
       "response_data": null
     },
     {
       "test": "Approval Workflow - Edited Data",
-      "success": false,
-      "details": "Failed to create email for edit test",
-      "timestamp": "2025-07-23T03:40:41.811042",
+      "success": true,
+      "details": "Action approved with edited data",
+      "timestamp": "2025-07-23T09:02:28.567377",
       "response_data": null
     },
     {
       "test": "Chat History - Retrieval",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:42.331120",
-      "response_data": ""
+      "success": true,
+      "details": "Retrieved 7 messages from history",
+      "timestamp": "2025-07-23T09:02:29.111691",
+      "response_data": null
     },
     {
       "test": "Chat History - Clearing",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:42.962731",
-      "response_data": ""
+      "success": true,
+      "details": "Chat history successfully cleared",
+      "timestamp": "2025-07-23T09:02:29.649121",
+      "response_data": null
     },
     {
       "test": "Error Handling - Invalid Message ID",
-      "success": false,
-      "details": "Expected 404, got 502",
-      "timestamp": "2025-07-23T03:40:43.480520",
+      "success": true,
+      "details": "Correctly returned 404 for invalid message ID",
+      "timestamp": "2025-07-23T09:02:30.168513",
       "response_data": null
     },
     {
       "test": "Health Endpoint - Enhanced System",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:44.003390",
-      "response_data": ""
+      "details": "Missing web automation intents: ['linkedin_insights', 'email_automation', 'price_monitoring']",
+      "timestamp": "2025-07-23T09:02:30.690636",
+      "response_data": {
+        "status": "healthy",
+        "mongodb": "connected",
+        "gmail_api_integration": {
+          "status": "ready",
+          "oauth2_flow": "implemented",
+          "credentials_configured": true,
+          "authenticated": false,
+          "scopes": [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.compose",
+            "https://www.googleapis.com/auth/gmail.modify"
+          ],
+          "endpoints": [
+            "/api/gmail/auth",
+            "/api/gmail/callback",
+            "/api/gmail/status",
+            "/api/gmail/inbox",
+            "/api/gmail/send",
+            "/api/gmail/email/{id}"
+          ]
+        },
+        "advanced_hybrid_ai_system": {
+          "version": "2.0",
+          "groq_api_key": "configured",
+          "claude_api_key": "configured",
+          "groq_model": "llama3-8b-8192",
+          "claude_model": "claude-3-5-sonnet-20241022",
+          "sophisticated_features": {
+            "task_classification": [
+              "primary_intent",
+              "emotional_complexity",
+              "professional_tone",
+              "creative_requirement",
+              "technical_complexity",
+              "response_length",
+              "user_engagement_level",
+              "context_dependency",
+              "reasoning_type"
+            ],
+            "routing_strategies": [
+              "intent_based",
+              "emotional_routing",
+              "professional_routing",
+              "creative_routing",
+              "sequential_execution",
+              "context_enhancement"
+            ],
+            "advanced_capabilities": [
+              "conversation_history_tracking",
+              "context_aware_responses",
+              "fallback_mechanisms",
+              "confidence_scoring",
+              "routing_explanation"
+            ]
+          },
+          "routing_models": {
+            "claude_tasks": [
+              "high_emotional",
+              "creative_content",
+              "conversational",
+              "professional_warm"
+            ],
+            "groq_tasks": [
+              "logical_reasoning",
+              "structured_analysis",
+              "technical_complex",
+              "intent_detection"
+            ],
+            "sequential_tasks": [
+              "professional_emails",
+              "linkedin_posts",
+              "complex_creative"
+            ],
+            "web_automation_tasks": [
+              "web_scraping",
+              "data_extraction"
+            ]
+          }
+        },
+        "n8n_webhook": "configured",
+        "playwright_service": {
+          "status": "available",
+          "browser": "chromium",
+          "capabilities": [
+            "dynamic_data_extraction",
+            "web_scraping"
+          ]
+        }
+      }
     },
     {
       "test": "Gmail OAuth Status Check",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:44.520731",
-      "response_data": ""
+      "success": true,
+      "details": "Credentials configured: True, Authenticated: False, Requires auth: True, Scopes: 4 configured",
+      "timestamp": "2025-07-23T09:02:31.209075",
+      "response_data": null
     },
     {
       "test": "Gmail OAuth Authorization URL",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:45.038683",
-      "response_data": ""
+      "details": "Missing URL components: ['redirect_uri=https://7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com/api/gmail/callback']",
+      "timestamp": "2025-07-23T09:02:31.728609",
+      "response_data": {
+        "auth_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com&redirect_uri=https%3A%2F%2F7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_Canu8AhhwrJVxGvF40ApW1fxuOXuoj&prompt=consent&access_type=offline"
+      }
     },
     {
       "test": "Health Check - Gmail Integration",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:45.556701",
-      "response_data": ""
+      "success": true,
+      "details": "Gmail integration ready with 4 scopes and 6 endpoints configured",
+      "timestamp": "2025-07-23T09:02:32.246058",
+      "response_data": null
     },
     {
       "test": "Gmail Service Configuration",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:46.075959",
-      "response_data": ""
+      "success": true,
+      "details": "OAuth2 configuration verified: client_id configured, redirect_uri correct, 4 scopes configured",
+      "timestamp": "2025-07-23T09:02:32.768845",
+      "response_data": null
     },
     {
       "test": "Gmail Integration Readiness",
       "success": false,
-      "details": "System not fully ready:\n    \u274c Gmail status endpoint failed: HTTP 502\n    \u274c Gmail auth endpoint failed: HTTP 502\n    \u274c Gmail inbox endpoint unexpected response: HTTP 502\n    \u274c Health check failed: HTTP 502",
-      "timestamp": "2025-07-23T03:40:46.642749",
+      "details": "System not fully ready:\n    \u2705 Gmail status endpoint working with credentials configured\n    \u2705 Gmail auth URL generation working with correct client_id\n    \u274c Gmail inbox endpoint unexpected response: HTTP 200\n    \u2705 Health check shows Gmail integration as ready",
+      "timestamp": "2025-07-23T09:02:35.473074",
       "response_data": null
     },
     {
       "test": "Gmail Intent Detection",
       "success": false,
-      "details": "\u274c Gmail inbox check: HTTP 502\n    \u274c Gmail unread check: HTTP 502\n    \u274c Gmail inbox display: HTTP 502\n    \u274c New emails check: HTTP 502",
-      "timestamp": "2025-07-23T03:40:47.211031",
+      "details": "\u274c Gmail inbox check: No Gmail intent detected, got general_chat\n    \u274c Gmail unread check: No Gmail intent detected, got general_chat\n    \u274c Gmail inbox display: No Gmail intent detected, got general_chat\n    \u274c New emails check: No Gmail intent detected, got general_chat",
+      "timestamp": "2025-07-23T09:02:37.012652",
       "response_data": null
     },
     {
       "test": "Web Automation Intent Detection",
       "success": false,
-      "details": "\u274c Web scraping intent: HTTP 502\n    \u274c LinkedIn insights intent: HTTP 502\n    \u274c Email automation intent: HTTP 502\n    \u274c Price monitoring intent: HTTP 502\n    \u274c Data extraction intent: HTTP 502",
-      "timestamp": "2025-07-23T03:40:47.788280",
+      "details": "\u274c Web scraping intent: Expected web_scraping, got general_chat\n    \u274c LinkedIn insights intent: Expected linkedin_insights, got general_chat\n    \u274c Email automation intent: Expected email_automation, got general_chat\n    \u274c Price monitoring intent: Expected price_monitoring, got general_chat\n    \u274c Data extraction intent: Expected data_extraction, got general_chat",
+      "timestamp": "2025-07-23T09:02:38.602078",
       "response_data": null
     },
     {
       "test": "Web Automation - Data Extraction",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:48.329093",
-      "response_data": ""
+      "details": "Automation failed: Failed to extract data: BrowserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /pw-browsers/chromium-1179/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless=old --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-extensions --no-first-run --disable-default-apps --disable-features=TranslateUI --disable-ipc-flooding-protection --user-data-dir=/tmp/playwright_chromiumdev_profile-PuS5DA --remote-debugging-pipe --no-startup-window\n<launched> pid=1817\n[pid=1817][err] Old Headless mode has been removed from the Chrome binary. Please use the new Headless mode (https://developer.chrome.com/docs/chromium/new-headless) or the chrome-headless-shell which is a standalone implementation of the old Headless mode (https://developer.chrome.com/blog/chrome-headless-shell).\n[pid=1817][err] \n[pid=1817] <process did exit: exitCode=1, signal=null>\n[pid=1817] starting temporary directories cleanup\nCall log:\n<launching> /pw-browsers/chromium-1179/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless=old --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-extensions --no-first-run --disable-default-apps --disable-features=TranslateUI --disable-ipc-flooding-protection --user-data-dir=/tmp/playwright_chromiumdev_profile-PuS5DA --remote-debugging-pipe --no-startup-window\n  - <launched> pid=1817\n  - [pid=1817][err] Old Headless mode has been removed from the Chrome binary. Please use the new Headless mode (https://developer.chrome.com/docs/chromium/new-headless) or the chrome-headless-shell which is a standalone implementation of the old Headless mode (https://developer.chrome.com/blog/chrome-headless-shell).\n  - [pid=1817][err] \n  - [pid=1817] <process did exit: exitCode=1, signal=null>\n  - [pid=1817] starting temporary directories cleanup\n",
+      "timestamp": "2025-07-23T09:02:41.137230",
+      "response_data": {
+        "success": false,
+        "data": {},
+        "message": "Failed to extract data: BrowserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /pw-browsers/chromium-1179/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless=old --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-extensions --no-first-run --disable-default-apps --disable-features=TranslateUI --disable-ipc-flooding-protection --user-data-dir=/tmp/playwright_chromiumdev_profile-PuS5DA --remote-debugging-pipe --no-startup-window\n<launched> pid=1817\n[pid=1817][err] Old Headless mode has been removed from the Chrome binary. Please use the new Headless mode (https://developer.chrome.com/docs/chromium/new-headless) or the chrome-headless-shell which is a standalone implementation of the old Headless mode (https://developer.chrome.com/blog/chrome-headless-shell).\n[pid=1817][err] \n[pid=1817] <process did exit: exitCode=1, signal=null>\n[pid=1817] starting temporary directories cleanup\nCall log:\n<launching> /pw-browsers/chromium-1179/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless=old --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-extensions --no-first-run --disable-default-apps --disable-features=TranslateUI --disable-ipc-flooding-protection --user-data-dir=/tmp/playwright_chromiumdev_profile-PuS5DA --remote-debugging-pipe --no-startup-window\n  - <launched> pid=1817\n  - [pid=1817][err] Old Headless mode has been removed from the Chrome binary. Please use the new Headless mode (https://developer.chrome.com/docs/chromium/new-headless) or the chrome-headless-shell which is a standalone implementation of the old Headless mode (https://developer.chrome.com/blog/chrome-headless-shell).\n  - [pid=1817][err] \n  - [pid=1817] <process did exit: exitCode=1, signal=null>\n  - [pid=1817] starting temporary directories cleanup\n",
+        "execution_time": 2.002922773361206,
+        "automation_id": "9f9636dd-eb68-43c1-8632-a687e279b595"
+      }
     },
     {
       "test": "Web Automation - Price Monitoring",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:48.843356",
-      "response_data": ""
+      "details": "HTTP 400",
+      "timestamp": "2025-07-23T09:02:41.672317",
+      "response_data": "{\"detail\":\"Unsupported automation type: price_monitoring\"}"
     },
     {
       "test": "Web Automation - LinkedIn Insights",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:49.358001",
-      "response_data": ""
+      "details": "HTTP 501",
+      "timestamp": "2025-07-23T09:02:42.188216",
+      "response_data": "{\"detail\":\"LinkedIn insights temporarily disabled - Gmail API integration coming soon\"}"
     },
     {
       "test": "Web Automation - Email Automation",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:49.871908",
-      "response_data": ""
+      "details": "HTTP 501",
+      "timestamp": "2025-07-23T09:02:42.709507",
+      "response_data": "{\"detail\":\"Email automation temporarily disabled - Gmail API integration coming soon\"}"
     },
     {
       "test": "Web Automation Error Handling",
       "success": false,
-      "details": "\u274c Missing URL for web scraping: Expected 400, got 502\n    \u274c Missing credentials for LinkedIn: Expected 400, got 502\n    \u274c Invalid automation type: Expected 400, got 502",
-      "timestamp": "2025-07-23T03:40:50.420265",
+      "details": "\u2705 Missing URL for web scraping: Correctly returned 400\n    \u274c Missing credentials for LinkedIn: Expected 400, got 501\n    \u2705 Invalid automation type: Correctly returned 400",
+      "timestamp": "2025-07-23T09:02:43.256917",
       "response_data": null
     },
     {
       "test": "Automation History",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:50.935498",
-      "response_data": ""
+      "success": true,
+      "details": "Retrieved 1 automation records from history",
+      "timestamp": "2025-07-23T09:02:43.776184",
+      "response_data": null
     },
     {
       "test": "Direct Web Scraping Execution",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:51.454691",
-      "response_data": ""
+      "details": "Wrong intent detected: general_chat",
+      "timestamp": "2025-07-23T09:02:44.585920",
+      "response_data": {
+        "id": "cbac02ae-eaca-4912-b375-8f2071f2c8dd",
+        "message": "Scrape the title from https://httpbin.org/html",
+        "response": "\u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again.",
+        "intent_data": {
+          "intent": "general_chat",
+          "message": "Scrape the title from https://httpbin.org/html"
+        },
+        "needs_approval": false,
+        "timestamp": "2025-07-23T09:02:44.581287"
+      }
     },
     {
       "test": "Direct Automation Intents",
       "success": false,
-      "details": "\u274c LinkedIn notifications check: HTTP 502\n    \u274c Price scraping: HTTP 502\n    \u274c Product listings scraping: HTTP 502\n    \u274c LinkedIn job alerts: HTTP 502\n    \u274c Website updates monitoring: HTTP 502\n    \u274c Competitor monitoring: HTTP 502\n    \u274c News articles scraping: HTTP 502",
-      "timestamp": "2025-07-23T03:40:52.075909",
+      "details": "\u274c LinkedIn notifications check: Expected check_linkedin_notifications, got general_chat\n    \u274c Price scraping: Expected scrape_price, got general_chat\n    \u274c Product listings scraping: Expected scrape_product_listings, got general_chat\n    \u274c LinkedIn job alerts: Expected linkedin_job_alerts, got general_chat\n    \u274c Website updates monitoring: Expected check_website_updates, got general_chat\n    \u274c Competitor monitoring: Expected monitor_competitors, got general_chat\n    \u274c News articles scraping: Expected scrape_news_articles, got general_chat",
+      "timestamp": "2025-07-23T09:02:47.098288",
       "response_data": null
     },
     {
       "test": "Automation Status Endpoint",
-      "success": false,
-      "details": "\u274c check_linkedin_notifications: HTTP 502\n    \u274c scrape_price: HTTP 502\n    \u274c scrape_product_listings: HTTP 502\n    \u274c linkedin_job_alerts: HTTP 502\n    \u274c check_website_updates: HTTP 502\n    \u274c monitor_competitors: HTTP 502\n    \u274c scrape_news_articles: HTTP 502",
-      "timestamp": "2025-07-23T03:40:52.692437",
+      "success": true,
+      "details": "\u2705 check_linkedin_notifications: Status endpoint working\n    \u2705 scrape_price: Status endpoint working\n    \u2705 scrape_product_listings: Status endpoint working\n    \u2705 linkedin_job_alerts: Status endpoint working\n    \u2705 check_website_updates: Status endpoint working\n    \u2705 monitor_competitors: Status endpoint working\n    \u2705 scrape_news_articles: Status endpoint working",
+      "timestamp": "2025-07-23T09:02:47.751875",
       "response_data": null
     },
     {
       "test": "Direct Automation Response Format",
       "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-23T03:40:53.206343",
-      "response_data": ""
+      "details": "Missing fields: automation_result (Automation result data), automation_success (Success flag), execution_time (Execution time), direct_automation (Direct automation flag)",
+      "timestamp": "2025-07-23T09:02:48.485788",
+      "response_data": {
+        "id": "6871c4b0-5bc5-4642-ab5c-032d4c75d75e",
+        "message": "Check my LinkedIn notifications",
+        "response": "\u26a0\ufe0f I'm experiencing technical difficulties with my reasoning engine. Please try again.",
+        "intent_data": {
+          "intent": "general_chat",
+          "message": "Check my LinkedIn notifications"
+        },
+        "needs_approval": false,
+        "timestamp": "2025-07-23T09:02:48.481529"
+      }
     },
     {
       "test": "Traditional vs Direct Automation",
       "success": false,
-      "details": "Traditional automation request failed",
-      "timestamp": "2025-07-23T03:40:53.744085",
+      "details": "Approval flags incorrect - Traditional: False, Direct: False",
+      "timestamp": "2025-07-23T09:02:49.437671",
       "response_data": null
     }
   ]
