@@ -5,6 +5,7 @@ import TypewriterTagline from './TypewriterTagline';
 import ChatBox from './ChatBox';
 import DropdownMenu from './DropdownMenu';
 import GmailAuthHandler from './GmailAuthHandler';
+import { exportChatToPDFEnhanced, exportChatToPDF } from './utils/pdfExport';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
