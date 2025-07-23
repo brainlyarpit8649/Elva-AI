@@ -117,49 +117,47 @@ function App() {
   // Enhanced PDF export function
   const exportChat = () => {
     try {
-      // Dynamic import to ensure the module loads properly
-      import('./utils/pdfExport').then(({ exportChatToPDFEnhanced, exportChatToPDF }) => {
-        console.log('📤 Exporting chat to PDF...', messages.length, 'messages');
+      console.log('📤 Exporting chat to PDF...', messages.length, 'messages');
+      
+      // Try enhanced export first, fallback to basic if needed
+      const result = exportChatToPDFEnhanced(messages);
+      
+      if (result.success) {
+        console.log('✅ PDF export successful:', result.fileName);
         
-        // Try enhanced export first, fallback to basic if needed
-        const result = exportChatToPDFEnhanced(messages);
+        // Add success message to chat
+        const successMsg = {
+          id: 'export_success_' + Date.now(),
+          response: `📄 **Chat exported successfully!**\n\n` +
+                   `📁 **File**: ${result.fileName}\n` +
+                   `📊 **Messages**: ${result.messageCount} messages exported\n` +
+                   `✨ **Format**: ${result.enhanced ? 'Enhanced PDF with chat bubbles' : 'Standard PDF'}\n\n` +
+                   `The file has been downloaded to your device. You can find it in your Downloads folder.`,
+          isUser: false,
+          isSystem: true,
+          timestamp: new Date()
+        };
         
-        if (result.success) {
-          console.log('✅ PDF export successful:', result.fileName);
-          
-          // Add success message to chat
-          const successMsg = {
-            id: 'export_success_' + Date.now(),
-            response: `📄 **Chat exported successfully!**\n\n` +
-                     `📁 **File**: ${result.fileName}\n` +
-                     `📊 **Messages**: ${result.messageCount} messages exported\n` +
-                     `✨ **Format**: ${result.enhanced ? 'Enhanced PDF with chat bubbles' : 'Standard PDF'}\n\n` +
-                     `The file has been downloaded to your device. You can find it in your Downloads folder.`,
-            isUser: false,
-            isSystem: true,
-            timestamp: new Date()
-          };
-          
-          setMessages(prev => [...prev, successMsg]);
-        } else {
-          console.error('❌ PDF export failed:', result.error);
-          
-          // Add error message to chat
-          const errorMsg = {
-            id: 'export_error_' + Date.now(),
-            response: `❌ **Export failed**\n\n` +
-                     `Sorry, there was an issue exporting your chat to PDF: ${result.error}\n\n` +
-                     `Please try again or contact support if the issue persists.`,
-            isUser: false,
-            isSystem: true,
-            timestamp: new Date()
-          };
-          
-          setMessages(prev => [...prev, errorMsg]);
-        }
+        setMessages(prev => [...prev, successMsg]);
+      } else {
+        console.error('❌ PDF export failed:', result.error);
         
-        setShowDropPanel(false); // Close panel after export
-      });
+        // Add error message to chat
+        const errorMsg = {
+          id: 'export_error_' + Date.now(),
+          response: `❌ **Export failed**\n\n` +
+                   `Sorry, there was an issue exporting your chat to PDF: ${result.error}\n\n` +
+                   `Please try again or contact support if the issue persists.`,
+          isUser: false,
+          isSystem: true,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, errorMsg]);
+      }
+      
+      setShowDropPanel(false); // Close panel after export
+      
     } catch (error) {
       console.error('❌ PDF export module loading failed:', error);
       
