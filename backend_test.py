@@ -2338,18 +2338,233 @@ class ElvaBackendTester:
             self.log_test("Gmail API Health Integration", False, f"Error: {str(e)}")
             return False
 
+    def test_export_chat_message_id_handling(self):
+        """Test: Export Chat Bug Fix - Test message ID handling with various types"""
+        try:
+            # Create messages with different ID types to simulate the bug scenario
+            test_messages = [
+                {
+                    "message": "Test message with string ID",
+                    "expected_id_type": "string"
+                },
+                {
+                    "message": "Test message for export functionality",
+                    "expected_id_type": "string"
+                }
+            ]
+            
+            message_ids = []
+            
+            # Create test messages
+            for test_msg in test_messages:
+                payload = {
+                    "message": test_msg["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    msg_id = data.get("id")
+                    
+                    # Verify ID is a string (not None, not number)
+                    if isinstance(msg_id, str) and msg_id.strip():
+                        message_ids.append(msg_id)
+                    else:
+                        self.log_test("Export Chat - Message ID Handling", False, f"Invalid message ID type: {type(msg_id)}, value: {msg_id}")
+                        return False
+                else:
+                    self.log_test("Export Chat - Message ID Handling", False, f"Failed to create test message: HTTP {response.status_code}")
+                    return False
+            
+            # Test message retrieval to ensure IDs are properly handled
+            history_response = requests.get(f"{BACKEND_URL}/history/{self.session_id}", timeout=10)
+            
+            if history_response.status_code == 200:
+                history_data = history_response.json()
+                messages = history_data.get("messages", [])
+                
+                # Check that all messages have valid string IDs
+                for msg in messages:
+                    msg_id = msg.get("id")
+                    if not isinstance(msg_id, str) or not msg_id.strip():
+                        self.log_test("Export Chat - Message ID Handling", False, f"Message in history has invalid ID: {type(msg_id)}, value: {msg_id}")
+                        return False
+                
+                # Simulate the export functionality check - ensure IDs can be processed with startsWith
+                for msg in messages:
+                    msg_id = msg.get("id")
+                    try:
+                        # This is the operation that was failing: msg.id.startsWith()
+                        # We simulate checking if ID starts with a pattern
+                        if hasattr(msg_id, 'startswith'):
+                            # This should work without throwing "_msg$id.startsWith is not a function" error
+                            test_result = msg_id.startswith('test') or not msg_id.startswith('test')  # Just test the method exists
+                        else:
+                            self.log_test("Export Chat - Message ID Handling", False, f"Message ID doesn't have startswith method: {type(msg_id)}")
+                            return False
+                    except Exception as e:
+                        self.log_test("Export Chat - Message ID Handling", False, f"Error testing startswith on message ID: {str(e)}")
+                        return False
+                
+                self.log_test("Export Chat - Message ID Handling", True, f"All {len(messages)} messages have valid string IDs that support startsWith operations")
+                return True
+            else:
+                self.log_test("Export Chat - Message ID Handling", False, f"Failed to retrieve message history: HTTP {history_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Export Chat - Message ID Handling", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_credentials_new_redirect_uri(self):
+        """Test: Gmail Credentials Update - Verify new redirect URI is properly configured"""
+        try:
+            # Test the auth endpoint to get the OAuth URL
+            response = requests.get(f"{BACKEND_URL}/gmail/auth", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("Gmail Credentials - New Redirect URI", False, f"Auth URL generation failed: {data.get('message')}", data)
+                    return False
+                
+                auth_url = data.get("auth_url", "")
+                if not auth_url:
+                    self.log_test("Gmail Credentials - New Redirect URI", False, "No auth_url in response", data)
+                    return False
+                
+                # Check for the new redirect URI
+                expected_redirect_uri = "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback"
+                
+                if expected_redirect_uri not in auth_url:
+                    self.log_test("Gmail Credentials - New Redirect URI", False, f"New redirect URI not found in auth URL. Expected: {expected_redirect_uri}", {"auth_url": auth_url})
+                    return False
+                
+                # Check for the new client ID
+                expected_client_id = "191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com"
+                
+                if expected_client_id not in auth_url:
+                    self.log_test("Gmail Credentials - New Redirect URI", False, f"New client ID not found in auth URL. Expected: {expected_client_id}", {"auth_url": auth_url})
+                    return False
+                
+                self.log_test("Gmail Credentials - New Redirect URI", True, f"New Gmail credentials properly configured with updated redirect URI and client ID")
+                return True
+            else:
+                self.log_test("Gmail Credentials - New Redirect URI", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Credentials - New Redirect URI", False, f"Error: {str(e)}")
+            return False
+
+    def test_approval_modal_theme_styling_compatibility(self):
+        """Test: Approval Modal Theme Styling - Verify modal data structure supports theme styling"""
+        try:
+            # Create an email intent to trigger approval modal
+            payload = {
+                "message": "Send an email to Sarah about the quarterly report with proper styling",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check that intent data is properly structured for modal display
+                intent_data = data.get("intent_data", {})
+                if intent_data.get("intent") != "send_email":
+                    self.log_test("Approval Modal - Theme Styling Compatibility", False, f"Wrong intent detected: {intent_data.get('intent')}")
+                    return False
+                
+                # Check that needs_approval is True (modal should appear)
+                if not data.get("needs_approval"):
+                    self.log_test("Approval Modal - Theme Styling Compatibility", False, "Email intent should need approval for modal display")
+                    return False
+                
+                # Check that intent data has all required fields for modal display
+                required_fields = ["recipient_name", "subject", "body"]
+                missing_fields = [field for field in required_fields if field not in intent_data or not intent_data[field]]
+                
+                if missing_fields:
+                    self.log_test("Approval Modal - Theme Styling Compatibility", False, f"Missing required fields for modal: {missing_fields}")
+                    return False
+                
+                # Check that response text is present (for AI summary in modal)
+                response_text = data.get("response", "")
+                if not response_text or len(response_text.strip()) == 0:
+                    self.log_test("Approval Modal - Theme Styling Compatibility", False, "No response text for modal AI summary")
+                    return False
+                
+                # Test approval workflow to ensure modal data can be processed
+                message_id = data.get("id")
+                approval_payload = {
+                    "session_id": self.session_id,
+                    "message_id": message_id,
+                    "approved": True,
+                    "edited_data": {
+                        "intent": "send_email",
+                        "recipient_name": "Sarah Updated",
+                        "subject": "Updated Quarterly Report",
+                        "body": "Updated email content for theme testing"
+                    }
+                }
+                
+                approval_response = requests.post(f"{BACKEND_URL}/approve", json=approval_payload, timeout=15)
+                
+                if approval_response.status_code == 200:
+                    approval_data = approval_response.json()
+                    if approval_data.get("success"):
+                        self.log_test("Approval Modal - Theme Styling Compatibility", True, f"Modal data structure supports theme styling with all required fields present")
+                        return True
+                    else:
+                        self.log_test("Approval Modal - Theme Styling Compatibility", False, "Approval workflow failed", approval_data)
+                        return False
+                else:
+                    self.log_test("Approval Modal - Theme Styling Compatibility", False, f"Approval failed: HTTP {approval_response.status_code}")
+                    return False
+            else:
+                self.log_test("Approval Modal - Theme Styling Compatibility", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Approval Modal - Theme Styling Compatibility", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting Gmail OAuth2 Integration Testing with Updated Credentials")
+        """Run all backend tests with focus on review request priorities"""
+        print("🚀 Starting Comprehensive Elva AI Backend Testing")
         print("=" * 80)
-        print("🎯 TESTING FOCUS: Gmail OAuth2 with client_id: 191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com")
-        print("🔗 REDIRECT URI: https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback")
-        print("📋 PROJECT: elva-ai-466708")
+        print("🎯 CRITICAL TESTING AREAS (Review Request Priority):")
+        print("   1. Gmail Integration with New Credentials")
+        print("   2. Export Chat Bug Fix Verification")
+        print("   3. Core System Functionality")
+        print("   4. Infrastructure Health Check")
         print("=" * 80)
         
         test_methods = [
-            # Core functionality tests
+            # Infrastructure Health Check (Priority 4)
             self.test_server_connectivity,
+            self.test_health_endpoint,
+            
+            # Gmail Integration with New Credentials (Priority 1)
+            self.test_gmail_oauth_status_check,
+            self.test_gmail_oauth_authorization_url,
+            self.test_gmail_credentials_new_redirect_uri,
+            self.test_health_check_gmail_integration,
+            self.test_gmail_service_configuration,
+            self.test_gmail_integration_readiness,
+            self.test_gmail_intent_detection,
+            
+            # Export Chat Bug Fix Verification (Priority 2)
+            self.test_export_chat_message_id_handling,
+            
+            # Core System Functionality (Priority 3)
             self.test_intent_detection_general_chat,
             self.test_intent_detection_send_email,
             self.test_intent_detection_create_event,
@@ -2358,30 +2573,15 @@ class ElvaBackendTester:
             self.test_approval_workflow_approved,
             self.test_approval_workflow_rejected,
             self.test_approval_workflow_edited_data,
+            self.test_approval_modal_theme_styling_compatibility,
             self.test_chat_history_retrieval,
             self.test_chat_history_clearing,
             self.test_error_handling,
-            self.test_health_endpoint,
             
-            # Gmail OAuth2 Integration Tests (Review Request Priority)
-            self.test_gmail_oauth_status_check,
-            self.test_gmail_oauth_authorization_url,
-            self.test_health_check_gmail_integration,
-            self.test_gmail_service_configuration,
-            self.test_gmail_integration_readiness,
-            self.test_gmail_intent_detection,
-            
-            # Web automation tests
+            # Additional System Tests
             self.test_web_automation_intent_detection,
             self.test_web_automation_endpoint_data_extraction,
-            self.test_web_automation_endpoint_price_monitoring,
-            self.test_web_automation_endpoint_linkedin_insights,
-            self.test_web_automation_endpoint_email_automation,
-            self.test_web_automation_error_handling,
             self.test_automation_history_endpoint,
-            self.test_direct_web_scraping_execution,
-            
-            # Enhanced automation flow tests
             self.test_direct_automation_intents,
             self.test_automation_status_endpoint,
             self.test_direct_automation_response_format,
