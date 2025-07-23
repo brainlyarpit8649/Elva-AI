@@ -96,25 +96,26 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
 
   const handleGmailAuthSuccess = async () => {
     try {
-      // Update auth status
+      // Update auth status first
       await checkGmailAuthStatus(); // Re-check the actual status
       
-      // Add success message to chat with enhanced styling
+      // Add enhanced success message to chat with prominent styling
       const successMessage = {
         id: 'gmail_auth_success_' + Date.now(),
         session_id: sessionId,
         user_id: 'system',
         message: 'Gmail connected successfully ✅',
-        response: '', // Will be handled by special rendering
+        response: 'Gmail connected successfully ✅', // Enhanced response text
         timestamp: new Date().toISOString(),
         intent_data: null,
         needs_approval: false,
-        isGmailSuccess: true // Special flag for custom rendering
+        isGmailSuccess: true, // Special flag for custom rendering
+        isSystem: false // Make it appear as AI message with special styling
       };
       
       setMessages(prev => [...prev, successMessage]);
       
-      console.log('Gmail authentication successful - status updated!');
+      console.log('✅ Gmail authentication successful - enhanced success message added to chat!');
     } catch (error) {
       console.error('Error handling Gmail auth success:', error);
     }
