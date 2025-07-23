@@ -113,19 +113,90 @@ function App() {
     }
   };
 
-  // Export chat function
+  // Enhanced PDF export function
   const exportChat = () => {
-    const chatData = messages.map(msg => `${msg.isUser ? 'User' : 'AI'}: ${msg.message || msg.response}`).join('\n\n');
-    const blob = new Blob([chatData], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `elva-chat-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setShowDropPanel(false); // Close panel after export
+    try {
+      // Dynamic import to ensure the module loads properly
+      import('./utils/pdfExport').then(({ exportChatToPDFEnhanced, exportChatToPDF }) => {
+        console.log('📤 Exporting chat to PDF...', messages.length, 'messages');
+        
+        // Try enhanced export first, fallback to basic if needed
+        const result = exportChatToPDFEnhanced(messages);
+        
+        if (result.success) {
+          console.log('✅ PDF export successful:', result.fileName);
+          
+          // Add success message to chat
+          const successMsg = {
+            id: 'export_success_' + Date.now(),
+            response: `📄 **Chat exported successfully!**\n\n` +
+                     `📁 **File**: ${result.fileName}\n` +
+                     `📊 **Messages**: ${result.messageCount} messages exported\n` +
+                     `✨ **Format**: ${result.enhanced ? 'Enhanced PDF with chat bubbles' : 'Standard PDF'}\n\n` +
+                     `The file has been downloaded to your device. You can find it in your Downloads folder.`,
+            isUser: false,
+            isSystem: true,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, successMsg]);
+        } else {
+          console.error('❌ PDF export failed:', result.error);
+          
+          // Add error message to chat
+          const errorMsg = {
+            id: 'export_error_' + Date.now(),
+            response: `❌ **Export failed**\n\n` +
+                     `Sorry, there was an issue exporting your chat to PDF: ${result.error}\n\n` +
+                     `Please try again or contact support if the issue persists.`,
+            isUser: false,
+            isSystem: true,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, errorMsg]);
+        }
+        
+        setShowDropPanel(false); // Close panel after export
+      });
+    } catch (error) {
+      console.error('❌ PDF export module loading failed:', error);
+      
+      // Fallback to basic text export if PDF fails completely
+      const chatData = messages
+        .filter(msg => !msg.isSystem)
+        .map(msg => {
+          const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '';
+          const sender = msg.isUser ? 'You' : 'Elva AI';
+          const content = msg.message || msg.response || '';
+          return `[${timestamp}] ${sender}: ${content}`;
+        })
+        .join('\n\n');
+      
+      const blob = new Blob([chatData], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `elva-chat-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Add fallback message
+      const fallbackMsg = {
+        id: 'export_fallback_' + Date.now(),
+        response: `📄 **Chat exported as text file**\n\n` +
+                 `PDF export encountered an issue, so your chat has been saved as a text file instead.\n` +
+                 `Check your Downloads folder for: elva-chat-${new Date().toISOString().split('T')[0]}.txt`,
+        isUser: false,
+        isSystem: true,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, fallbackMsg]);
+      setShowDropPanel(false);
+    }
   };
 
   // Initialize Gmail auth handler
