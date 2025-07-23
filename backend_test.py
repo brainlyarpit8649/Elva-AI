@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com/api"
+BACKEND_URL = "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api"
 
 class ElvaBackendTester:
     def __init__(self):
@@ -1382,7 +1382,7 @@ class ElvaBackendTester:
                 expected_components = [
                     "https://accounts.google.com/o/oauth2/auth",
                     "client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com",
-                    "redirect_uri=https://7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com/api/gmail/callback",
+                    "redirect_uri=https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback",
                     "scope=",
                     "response_type=code"
                 ]
@@ -1540,7 +1540,7 @@ class ElvaBackendTester:
                 # Check environment configuration
                 environment = debug_info.get("environment", {})
                 gmail_redirect_uri = environment.get("GMAIL_REDIRECT_URI")
-                expected_redirect_uri = "https://7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com/api/gmail/callback"
+                expected_redirect_uri = "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback"
                 
                 if gmail_redirect_uri != expected_redirect_uri:
                     self.log_test("Gmail Service Configuration", False, f"Wrong redirect URI: {gmail_redirect_uri}", environment)
@@ -2343,7 +2343,7 @@ class ElvaBackendTester:
         print("🚀 Starting Gmail OAuth2 Integration Testing with Updated Credentials")
         print("=" * 80)
         print("🎯 TESTING FOCUS: Gmail OAuth2 with client_id: 191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com")
-        print("🔗 REDIRECT URI: https://7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com/api/gmail/callback")
+        print("🔗 REDIRECT URI: https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback")
         print("📋 PROJECT: elva-ai-466708")
         print("=" * 80)
         

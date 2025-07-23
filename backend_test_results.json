@@ -235,10 +235,10 @@
     {
       "test": "Gmail OAuth Authorization URL",
       "success": false,
-      "details": "Missing URL components: ['redirect_uri=https://7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com/api/gmail/callback']",
+      "details": "Missing URL components: ['redirect_uri=https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback']",
       "timestamp": "2025-07-23T09:02:31.728609",
       "response_data": {
-        "auth_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com&redirect_uri=https%3A%2F%2F7c6ce153-804c-41c0-b5a4-5540fb4a01ce.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_Canu8AhhwrJVxGvF40ApW1fxuOXuoj&prompt=consent&access_type=offline"
+        "auth_url": "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_Canu8AhhwrJVxGvF40ApW1fxuOXuoj&prompt=consent&access_type=offline"
       }
     },
     {
