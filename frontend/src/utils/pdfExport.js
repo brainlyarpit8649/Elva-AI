@@ -207,6 +207,12 @@ export const exportChatToPDF = (messages, fileName) => {
  */
 export const exportChatToPDFEnhanced = (messages, fileName) => {
   try {
+    console.log('📄 Starting enhanced PDF export with', messages?.length || 0, 'messages');
+    
+    if (!messages || messages.length === 0) {
+      throw new Error('No messages to export');
+    }
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -233,6 +239,19 @@ export const exportChatToPDFEnhanced = (messages, fileName) => {
     
     yPosition = 35;
     
+    // Filter messages before processing
+    const chatMessages = messages.filter(msg => 
+      msg && 
+      !msg.isSystem && 
+      !msg.id?.startsWith('gmail_debug_') && 
+      !msg.id?.startsWith('gmail_auth_error_') &&
+      !msg.id?.startsWith('export_success_') &&
+      !msg.id?.startsWith('export_error_') &&
+      !msg.id?.startsWith('export_fallback_')
+    );
+
+    console.log('📄 Enhanced PDF - Filtered to', chatMessages.length, 'chat messages');
+
     // Add metadata
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
@@ -241,7 +260,7 @@ export const exportChatToPDFEnhanced = (messages, fileName) => {
     const exportInfo = [
       `Export Date: ${new Date().toLocaleDateString()}`,
       `Export Time: ${new Date().toLocaleTimeString()}`,
-      `Total Messages: ${messages.filter(m => !m.isSystem).length}`,
+      `Total Messages: ${chatMessages.length}`,
       `Session ID: Available in original chat`
     ];
     
@@ -258,71 +277,77 @@ export const exportChatToPDFEnhanced = (messages, fileName) => {
     pdf.line(margin, yPosition, pageWidth - margin, yPosition);
     yPosition += 10;
 
-    // Process messages with enhanced formatting
-    const chatMessages = messages.filter(msg => 
-      !msg.isSystem && 
-      !msg.id?.startsWith('gmail_debug_') && 
-      !msg.id?.startsWith('gmail_auth_error_')
-    );
+    if (chatMessages.length === 0) {
+      // Add "no messages" text
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('No chat messages to export.', margin, yPosition);
+    } else {
+      // Process messages with enhanced formatting
+      chatMessages.forEach((message, index) => {
+        try {
+          // Page break check
+          if (yPosition > pageHeight - 40) {
+            pdf.addPage();
+            yPosition = margin;
+          }
 
-    chatMessages.forEach((message, index) => {
-      // Page break check
-      if (yPosition > pageHeight - 40) {
-        pdf.addPage();
-        yPosition = margin;
-      }
-
-      // Message bubble simulation
-      const isUser = message.isUser;
-      const bubbleColor = isUser ? [59, 130, 246] : [139, 92, 246]; // Blue for user, purple for AI
-      const textColor = [255, 255, 255];
-      
-      // Calculate content height
-      const messageText = (message.message || message.response || '').trim();
-      const textLines = pdf.splitTextToSize(messageText, maxWidth - 20);
-      const bubbleHeight = Math.max(15, (textLines.length * lineHeight) + 10);
-      
-      // Draw message bubble background
-      pdf.setFillColor(...bubbleColor);
-      const bubbleX = isUser ? pageWidth - margin - (maxWidth * 0.7) : margin;
-      const bubbleWidth = maxWidth * 0.7;
-      
-      // Rounded rectangle simulation
-      pdf.roundedRect(bubbleX, yPosition - 5, bubbleWidth, bubbleHeight, 3, 3, 'F');
-      
-      // Add sender label
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...textColor);
-      
-      const senderLabel = isUser ? '👤 You' : message.isGmailSuccess ? '✅ System' : '🤖 Elva AI';
-      pdf.text(senderLabel, bubbleX + 5, yPosition);
-      
-      yPosition += 8;
-      
-      // Add message content
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
-      textLines.forEach(line => {
-        pdf.text(line, bubbleX + 5, yPosition);
-        yPosition += lineHeight;
+          // Message bubble simulation
+          const isUser = message.isUser;
+          const bubbleColor = isUser ? [59, 130, 246] : [139, 92, 246]; // Blue for user, purple for AI
+          const textColor = [255, 255, 255];
+          
+          // Calculate content height
+          const messageText = (message.message || message.response || '').trim();
+          const textLines = pdf.splitTextToSize(messageText || '[Empty message]', maxWidth - 20);
+          const bubbleHeight = Math.max(15, (textLines.length * lineHeight) + 10);
+          
+          // Draw message bubble background
+          pdf.setFillColor(...bubbleColor);
+          const bubbleX = isUser ? pageWidth - margin - (maxWidth * 0.7) : margin;
+          const bubbleWidth = maxWidth * 0.7;
+          
+          // Rounded rectangle simulation
+          pdf.roundedRect(bubbleX, yPosition - 5, bubbleWidth, bubbleHeight, 3, 3, 'F');
+          
+          // Add sender label
+          pdf.setFontSize(9);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(...textColor);
+          
+          const senderLabel = isUser ? '👤 You' : message.isGmailSuccess ? '✅ System' : '🤖 Elva AI';
+          pdf.text(senderLabel, bubbleX + 5, yPosition);
+          
+          yPosition += 8;
+          
+          // Add message content
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          
+          textLines.forEach(line => {
+            pdf.text(line, bubbleX + 5, yPosition);
+            yPosition += lineHeight;
+          });
+          
+          // Add timestamp
+          if (message.timestamp) {
+            const timestamp = new Date(message.timestamp).toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+            
+            pdf.setFontSize(7);
+            pdf.setTextColor(200, 200, 200);
+            pdf.text(timestamp, bubbleX + bubbleWidth - 25, yPosition - 2);
+          }
+          
+          yPosition += messageSpacing;
+        } catch (msgError) {
+          console.warn('Error processing enhanced message:', msgError, message);
+          // Skip this message and continue
+        }
       });
-      
-      // Add timestamp
-      if (message.timestamp) {
-        const timestamp = new Date(message.timestamp).toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-        
-        pdf.setFontSize(7);
-        pdf.setTextColor(200, 200, 200);
-        pdf.text(timestamp, bubbleX + bubbleWidth - 25, yPosition - 2);
-      }
-      
-      yPosition += messageSpacing;
-    });
+    }
 
     // Enhanced footer
     const totalPages = pdf.internal.getNumberOfPages();
@@ -354,6 +379,8 @@ export const exportChatToPDFEnhanced = (messages, fileName) => {
 
     pdf.save(finalFileName);
 
+    console.log('✅ Enhanced PDF export completed successfully');
+
     return {
       success: true,
       fileName: finalFileName,
@@ -362,9 +389,10 @@ export const exportChatToPDFEnhanced = (messages, fileName) => {
     };
 
   } catch (error) {
-    console.error('Enhanced PDF Export Error:', error);
+    console.error('❌ Enhanced PDF Export Error:', error);
     
     // Fallback to basic export
+    console.log('🔄 Falling back to basic PDF export...');
     return exportChatToPDF(messages, fileName);
   }
 };
