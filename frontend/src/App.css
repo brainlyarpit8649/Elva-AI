@@ -659,59 +659,122 @@ button:active:not(:disabled) {
   }
 }
 
-/* Gmail Success Message Styling */
+/* Gmail Success Message Styling - Enhanced with Automatic Display */
 .gmail-success-message {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.15));
-  border: 2px solid rgba(34, 197, 94, 0.4);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(16, 185, 129, 0.2));
+  border: 2px solid rgba(34, 197, 94, 0.5);
   border-radius: 16px;
-  padding: 20px;
+  padding: 24px;
   margin: 16px 0;
   position: relative;
   overflow: hidden;
   
-  /* Gradient glow effect */
+  /* Enhanced gradient glow effect */
   box-shadow: 
-    0 0 30px rgba(34, 197, 94, 0.3),
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 0 40px rgba(34, 197, 94, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 0 30px rgba(34, 197, 94, 0.1);
   
-  /* Animated border glow */
-  animation: success-glow 3s ease-in-out infinite alternate;
+  /* Animated border glow with enhanced intensity */
+  animation: success-glow-enhanced 2.5s ease-in-out infinite alternate;
+  
+  /* Subtle slide-in animation */
+  transform: translateY(0);
+  opacity: 1;
+  animation: success-appear 0.6s ease-out, success-glow-enhanced 2.5s ease-in-out 0.6s infinite alternate;
 }
 
-@keyframes success-glow {
+@keyframes success-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes success-glow-enhanced {
   0% {
     box-shadow: 
-      0 0 30px rgba(34, 197, 94, 0.3),
-      0 8px 32px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 0 40px rgba(34, 197, 94, 0.4),
+      0 12px 40px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 0 30px rgba(34, 197, 94, 0.1);
   }
   100% {
     box-shadow: 
-      0 0 40px rgba(34, 197, 94, 0.5),
-      0 12px 40px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      0 0 60px rgba(34, 197, 94, 0.6),
+      0 16px 50px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 0 40px rgba(34, 197, 94, 0.15);
   }
 }
 
 .gmail-success-text {
   color: #10b981;
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   text-shadow: 
-    0 0 15px rgba(16, 185, 129, 0.8),
-    0 0 25px rgba(16, 185, 129, 0.6),
-    0 0 35px rgba(16, 185, 129, 0.4);
+    0 0 20px rgba(16, 185, 129, 0.9),
+    0 0 30px rgba(16, 185, 129, 0.7),
+    0 0 40px rgba(16, 185, 129, 0.5);
   
-  /* Gradient text effect */
-  background: linear-gradient(135deg, #10b981, #059669, #047857);
+  /* Enhanced gradient text effect */
+  background: linear-gradient(135deg, #10b981, #059669, #047857, #065f46);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  
+  /* Subtle text animation */
+  animation: text-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes text-shimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.gmail-success-text span:first-child {
+  font-size: 1.4rem;
+  filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.8));
+  animation: checkmark-pulse 2s ease-in-out infinite;
+}
+
+@keyframes checkmark-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Light theme Gmail success message */
+.light-theme .gmail-success-message {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.12));
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 
+    0 0 30px rgba(34, 197, 94, 0.3),
+    0 8px 30px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.light-theme .gmail-success-text {
+  color: #065f46;
+  text-shadow: 
+    0 0 15px rgba(6, 95, 70, 0.6),
+    0 0 25px rgba(6, 95, 70, 0.4);
 }
 
 /* Premium New Chat Button with Glassy Neon Effect */
