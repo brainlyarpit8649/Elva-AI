@@ -38,3 +38,4 @@ google-auth-oauthlib>=1.0.0
 distro>=1.9.0
 langchain-groq==0.2.2
 langchain-core
+langsmith==0.4.8
