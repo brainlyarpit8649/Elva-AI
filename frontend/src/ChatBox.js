@@ -226,6 +226,14 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
           <span>✅</span>
           <span>Gmail connected successfully</span>
         </div>
+        <div style={{ 
+          marginTop: '12px', 
+          fontSize: '0.95rem', 
+          color: 'rgba(16, 185, 129, 0.8)',
+          fontWeight: '500'
+        }}>
+          🎉 You can now use Gmail features like checking your inbox, sending emails, and reading messages!
+        </div>
       </div>
     );
   };
