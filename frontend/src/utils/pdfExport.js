@@ -7,6 +7,12 @@ import jsPDF from 'jspdf';
  */
 export const exportChatToPDF = (messages, fileName) => {
   try {
+    console.log('📄 Starting basic PDF export with', messages?.length || 0, 'messages');
+    
+    if (!messages || messages.length === 0) {
+      throw new Error('No messages to export');
+    }
+
     // Create new PDF document
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -42,102 +48,120 @@ export const exportChatToPDF = (messages, fileName) => {
 
     // Filter out system messages and process chat messages
     const chatMessages = messages.filter(msg => 
+      msg && 
       !msg.isSystem && 
       !msg.id?.startsWith('gmail_debug_') && 
-      !msg.id?.startsWith('gmail_auth_error_')
+      !msg.id?.startsWith('gmail_auth_error_') &&
+      !msg.id?.startsWith('export_success_') &&
+      !msg.id?.startsWith('export_error_') &&
+      !msg.id?.startsWith('export_fallback_')
     );
 
-    // Process each message
-    chatMessages.forEach((message, index) => {
-      // Check if we need a new page
-      if (yPosition > pageHeight - 30) {
-        pdf.addPage();
-        yPosition = margin;
-      }
+    console.log('📄 Filtered to', chatMessages.length, 'chat messages for export');
 
-      // Determine message type and content
-      const isUser = message.isUser;
-      const messageText = message.message || message.response || '';
-      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }) : '';
+    if (chatMessages.length === 0) {
+      // Add "no messages" text
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('No chat messages to export.', margin, yPosition);
+    } else {
+      // Process each message
+      chatMessages.forEach((message, index) => {
+        try {
+          // Check if we need a new page
+          if (yPosition > pageHeight - 30) {
+            pdf.addPage();
+            yPosition = margin;
+          }
 
-      // Set styling based on message type
-      if (isUser) {
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246); // Blue for user messages
-        
-        // Add "You:" label
-        pdf.text('You:', margin, yPosition);
-        
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(30, 30, 30);
-      } else {
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        
-        // Special styling for Gmail success messages
-        if (message.isGmailSuccess) {
-          pdf.setTextColor(34, 197, 94); // Green color
-          pdf.text('✅ System:', margin, yPosition);
-        } else {
-          pdf.setTextColor(139, 92, 246); // Purple for AI messages
-          pdf.text('🤖 Elva AI:', margin, yPosition);
+          // Determine message type and content
+          const isUser = message.isUser;
+          const messageText = message.message || message.response || '';
+          const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }) : '';
+
+          // Set styling based on message type
+          if (isUser) {
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(59, 130, 246); // Blue for user messages
+            
+            // Add "You:" label
+            pdf.text('You:', margin, yPosition);
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(30, 30, 30);
+          } else {
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            
+            // Special styling for Gmail success messages
+            if (message.isGmailSuccess) {
+              pdf.setTextColor(34, 197, 94); // Green color
+              pdf.text('✅ System:', margin, yPosition);
+            } else {
+              pdf.setTextColor(139, 92, 246); // Purple for AI messages
+              pdf.text('🤖 Elva AI:', margin, yPosition);
+            }
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(30, 30, 30);
+          }
+
+          yPosition += lineHeight;
+
+          // Clean and format message text
+          let cleanText = messageText
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+            .replace(/\*(.*?)\*/g, '$1') // Remove markdown italic
+            .replace(/#{1,6}\s/g, '') // Remove markdown headers
+            .replace(/```[\s\S]*?```/g, '[Code Block]') // Replace code blocks
+            .replace(/`([^`]+)`/g, '$1') // Remove inline code marks
+            .trim();
+
+          // Handle empty messages
+          if (!cleanText) {
+            cleanText = isUser ? '[Message sent]' : '[Response received]';
+          }
+
+          // Split text into lines that fit the page width
+          const textLines = pdf.splitTextToSize(cleanText, maxWidth - 10);
+          
+          // Add each line
+          textLines.forEach(line => {
+            if (yPosition > pageHeight - 20) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            
+            pdf.text(line, margin + 5, yPosition);
+            yPosition += lineHeight;
+          });
+
+          // Add timestamp if available
+          if (timestamp) {
+            pdf.setFontSize(8);
+            pdf.setTextColor(120, 120, 120);
+            pdf.text(`${timestamp}`, margin + 5, yPosition);
+            yPosition += 4;
+          }
+
+          yPosition += messageSpacing;
+
+          // Add subtle separator line between messages
+          if (index < chatMessages.length - 1) {
+            pdf.setDrawColor(220, 220, 220);
+            pdf.setLineWidth(0.1);
+            pdf.line(margin, yPosition - 4, pageWidth - margin, yPosition - 4);
+          }
+        } catch (msgError) {
+          console.warn('Error processing message:', msgError, message);
+          // Skip this message and continue
         }
-        
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(30, 30, 30);
-      }
-
-      yPosition += lineHeight;
-
-      // Clean and format message text
-      let cleanText = messageText
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
-        .replace(/\*(.*?)\*/g, '$1') // Remove markdown italic
-        .replace(/#{1,6}\s/g, '') // Remove markdown headers
-        .replace(/```[\s\S]*?```/g, '[Code Block]') // Replace code blocks
-        .replace(/`([^`]+)`/g, '$1') // Remove inline code marks
-        .trim();
-
-      // Handle empty messages
-      if (!cleanText) {
-        cleanText = isUser ? '[Message sent]' : '[Response received]';
-      }
-
-      // Split text into lines that fit the page width
-      const textLines = pdf.splitTextToSize(cleanText, maxWidth - 10);
-      
-      // Add each line
-      textLines.forEach(line => {
-        if (yPosition > pageHeight - 20) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-        
-        pdf.text(line, margin + 5, yPosition);
-        yPosition += lineHeight;
       });
-
-      // Add timestamp if available
-      if (timestamp) {
-        pdf.setFontSize(8);
-        pdf.setTextColor(120, 120, 120);
-        pdf.text(`${timestamp}`, margin + 5, yPosition);
-        yPosition += 4;
-      }
-
-      yPosition += messageSpacing;
-
-      // Add subtle separator line between messages
-      if (index < chatMessages.length - 1) {
-        pdf.setDrawColor(220, 220, 220);
-        pdf.setLineWidth(0.1);
-        pdf.line(margin, yPosition - 4, pageWidth - margin, yPosition - 4);
-      }
-    });
+    }
 
     // Add footer to last page
     const totalPages = pdf.internal.getNumberOfPages();
@@ -159,6 +183,8 @@ export const exportChatToPDF = (messages, fileName) => {
     // Save the PDF
     pdf.save(finalFileName);
 
+    console.log('✅ Basic PDF export completed successfully');
+
     return {
       success: true,
       fileName: finalFileName,
@@ -166,7 +192,7 @@ export const exportChatToPDF = (messages, fileName) => {
     };
 
   } catch (error) {
-    console.error('PDF Export Error:', error);
+    console.error('❌ Basic PDF Export Error:', error);
     return {
       success: false,
       error: error.message
