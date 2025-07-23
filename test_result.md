@@ -339,9 +339,60 @@ metadata:
         -agent: "main"
         -comment: "NEW FEATURE: Implemented Drop-Left Panel functionality with plus button toggle that rotates 45 degrees, glassmorphic panel with blur effects and 3D borders, 4 circular buttons (Gmail, Theme Toggle, Export Chat, New Chat) with 3D styling and glow effects, smooth slide-in/slide-out animations with spring physics using Framer Motion, hover effects with scale up and move up, bounce-in animations when panel opens, auto-close when clicking outside, responsive design for different screen sizes."
 
+  - task: "Gmail Unread Email Cards Enhancement"
+    implemented: true
+    working: true
+    file: "ChatBox.js, App.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "ENHANCEMENT: Enhanced Gmail unread email cards with clean structured layout, proper alignment, even spacing, glow effects, and glassy transparent background. Added comprehensive CSS styling with theme support (dark/light), animated border glow, and improved readability. Includes enhanced visual hierarchy with email field icons, labels, and snippet formatting."
+
+  - task: "Export Chat Bug Fix"
+    implemented: true
+    working: true
+    file: "pdfExport.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "BUG FIX: Fixed '_msg$id.startsWith is not a function' error in PDF export functionality. Improved message filtering logic with proper type checking to ensure msg.id is a string before using startsWith method. Applied fix to both exportChatToPDF and exportChatToPDFEnhanced functions."
+
+  - task: "Gmail Credentials Update"
+    implemented: true
+    working: true
+    file: "credentials.json"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "UPDATE: Updated Gmail OAuth2 credentials with new client configuration. Added proper redirect URI (https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback) and JavaScript origins for the current backend URL. Backend restarted to load new credentials."
+
+  - task: "Approval Modal Theme Styling"
+    implemented: true
+    working: true
+    file: "ChatBox.js, App.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "ENHANCEMENT: Added comprehensive approval modal styling with dynamic theme-based text colors. Implemented glassy background effects, animated border glow, enhanced form input styling, and complete light/dark theme support. Modal now adapts text colors dynamically based on current theme for optimal readability."
+
 test_plan:
   current_focus:
-    - "System Health & Integration Verification"
+    - "Gmail Unread Email Cards Enhancement"
+    - "Export Chat Bug Fix"
+    - "Gmail Credentials Update"
+    - "Approval Modal Theme Styling"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
