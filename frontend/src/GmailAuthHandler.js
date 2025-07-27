@@ -4,7 +4,7 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setMessages }) {
+function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setMessages, checkGmailStatus }) {
   
   // Check Gmail authentication status
   const checkGmailAuthStatus = async () => {
