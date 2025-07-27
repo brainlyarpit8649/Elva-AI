@@ -401,10 +401,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Gmail Unread Email Cards Enhancement"
-    - "Export Chat Bug Fix"
-    - "Gmail Credentials Update"
-    - "Approval Modal Theme Styling"
+    - "N8N Webhook URL Update"
+    - "Gmail Credentials.json Update"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
