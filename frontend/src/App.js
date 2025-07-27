@@ -66,7 +66,9 @@ function App() {
     const baseMessage = "Hi Buddy 👋 Good to see you! Elva AI at your service. Ask me anything or tell me what to do!";
     const gmailMessage = gmailAuthStatus.authenticated 
       ? "\n\n🎉 **Gmail is connected!** I can now help you with:\n• 📧 Check your Gmail inbox\n• ✉️ Send emails\n• 📨 Read specific emails\n• 🔍 Search your messages"
-      : "\n\n💡 **Tip:** Connect Gmail above for email assistance!";
+      : gmailAuthStatus.credentialsConfigured 
+        ? "\n\n💡 **Tip:** Connect Gmail above for email assistance!" 
+        : "\n\n⚠️ **Note:** Gmail integration is not configured. Contact support to enable email features.";
     
     const welcomeMessage = {
       id: 'welcome_' + Date.now(),
