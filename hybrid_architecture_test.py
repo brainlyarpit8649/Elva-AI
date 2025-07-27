@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://3a69cfe9-0dfa-4d09-ab7f-2b2bb8dbd2e0.preview.emergentagent.com/api"
+BACKEND_URL = "https://890f01c8-e08b-4ca4-b2c7-c59c6a30d7ac.preview.emergentagent.com/api"
 
 class HybridArchitectureTester:
     def __init__(self):
