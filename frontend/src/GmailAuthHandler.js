@@ -6,6 +6,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setMessages, checkGmailStatus }) {
+  const { showGmailSuccess, showGmailError } = useToast();
   
   // Check Gmail authentication status
   const checkGmailAuthStatus = async () => {
