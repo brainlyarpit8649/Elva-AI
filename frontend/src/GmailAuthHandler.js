@@ -1,15 +1,25 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from './context/ToastContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setMessages, checkGmailStatus }) {
+const GmailAuthHandler = ({ 
+  gmailAuthStatus, 
+  setGmailAuthStatus, 
+  sessionId, 
+  setMessages,
+  checkGmailStatus // Receive the parent status check function
+}) => {
   const { showGmailSuccess, showGmailError } = useToast();
   
-  // Check Gmail authentication status
   const checkGmailAuthStatus = async () => {
+    // Use the parent function if available, otherwise fallback to local implementation
+    if (checkGmailStatus) {
+      return await checkGmailStatus();
+    }
+    
     try {
       console.log('🔍 Checking Gmail auth status for session:', sessionId);
       
@@ -107,9 +117,11 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
         window.location.href = authUrl.toString();
       } else {
         console.error('Failed to get Gmail auth URL:', response.data.message);
+        showGmailError('Failed to initiate Gmail authentication');
       }
     } catch (error) {
       console.error('Gmail auth initiation failed:', error);
+      showGmailError('Failed to start Gmail authentication process');
     }
   };
 
@@ -125,7 +137,7 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
       // Store authentication success in localStorage
       localStorage.setItem('gmail-auth-status', 'true');
       
-      // 🔔 Show toast notification instead of chat message
+      // 🔔 Show toast notification ONLY (no chat message)
       showGmailSuccess();
       
       console.log('✅ Gmail authentication successful - toast notification shown!');
@@ -166,7 +178,7 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
       
       console.error('🚨 Gmail Auth Error Details:', { errorMessage, details });
       
-      // 🔔 Show toast notification instead of chat message
+      // 🔔 Show toast notification ONLY (no chat message)
       showGmailError(userMessage);
       
       console.error('Gmail authentication error processed');
@@ -189,7 +201,7 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
         // Update auth status
         setGmailAuthStatus({ authenticated: true, loading: false });
         
-        // 🔔 Show toast notification instead of chat message
+        // 🔔 Show toast notification ONLY (no chat message)
         showGmailSuccess();
       } else {
         console.error('Gmail OAuth callback failed:', response.data.message);
@@ -201,7 +213,7 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
     }
   };
 
-  // Gmail Debug Function
+  // Gmail Debug Function - This can still add chat messages for debug info
   const showGmailDebugInfo = async () => {
     try {
       const response = await axios.get(`${API}/gmail/debug`);
@@ -286,6 +298,6 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
     handleGmailCallback,
     showGmailDebugInfo
   };
-}
+};
 
 export default GmailAuthHandler;
