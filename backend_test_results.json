@@ -118,11 +118,11 @@
     {
       "test": "Gmail Credentials Update",
       "success": false,
-      "details": "New redirect URI not found in auth URL. Expected: https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback",
+      "details": "New redirect URI not found in auth URL. Expected: https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/api/gmail/callback",
       "timestamp": "2025-07-27T05:09:51.190444",
       "response_data": {
         "success": true,
-        "auth_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com&redirect_uri=https%3A%2F%2F8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=1855fa28-2453-4b31-b0e0-b3e136ff74c3_wpCYk2nOlL5LlXAXu282YVOvimal1S&prompt=consent&access_type=offline",
+        "auth_url": "https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=1855fa28-2453-4b31-b0e0-b3e136ff74c3_wpCYk2nOlL5LlXAXu282YVOvimal1S&prompt=consent&access_type=offline",
         "message": "OAuth2 authorization URL generated successfully"
       }
     },
@@ -136,19 +136,19 @@
     {
       "test": "Gmail OAuth Authorization URL",
       "success": false,
-      "details": "Missing URL components: ['redirect_uri=https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback']",
+      "details": "Missing URL components: ['redirect_uri=https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/api/gmail/callback']",
       "timestamp": "2025-07-27T05:09:52.237262",
       "response_data": {
-        "auth_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com&redirect_uri=https%3A%2F%2F8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_gNQli1C632Vv4nRH2Vqdx4cMH1giMd&prompt=consent&access_type=offline"
+        "auth_url": "https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_gNQli1C632Vv4nRH2Vqdx4cMH1giMd&prompt=consent&access_type=offline"
       }
     },
     {
       "test": "Gmail Credentials - New Redirect URI",
       "success": false,
-      "details": "New redirect URI not found in auth URL. Expected: https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback",
+      "details": "New redirect URI not found in auth URL. Expected: https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/api/gmail/callback",
       "timestamp": "2025-07-27T05:09:52.753084",
       "response_data": {
-        "auth_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com&redirect_uri=https%3A%2F%2F8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_DFWPh16DvdGxWXhZyCThFdc1CoxU5M&prompt=consent&access_type=offline"
+        "auth_url": "https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com%2Fapi%2Fgmail%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify&state=default_session_DFWPh16DvdGxWXhZyCThFdc1CoxU5M&prompt=consent&access_type=offline"
       }
     },
     {
