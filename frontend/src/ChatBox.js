@@ -7,6 +7,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, setMessages }) {
+  const { showGmailSuccess, showGmailError } = useToast();
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
