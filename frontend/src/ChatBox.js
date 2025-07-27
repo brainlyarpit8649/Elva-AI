@@ -145,49 +145,33 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       checkGmailAuthStatus();
       
       let userMessage = 'Gmail authentication failed. Please try again.';
-      let debugInfo = details || '';
       
       switch(errorMessage) {
         case 'access_denied':
-          userMessage = 'Gmail authentication was cancelled. You can try connecting again anytime.';
-          debugInfo = 'User denied access during OAuth2 flow.';
+          userMessage = 'Gmail authentication was cancelled';
           break;
         case 'no_code':
-          userMessage = 'Gmail authentication failed - no authorization received.';
-          debugInfo = 'OAuth2 callback did not receive authorization code.';
+          userMessage = 'Gmail authentication failed - no authorization received';
           break;
         case 'auth_failed':
-          userMessage = 'Gmail authentication failed during token exchange.';
-          debugInfo = details || 'Token exchange with Google failed.';
+          userMessage = 'Gmail authentication failed during token exchange';
           break;
         case 'server_error':
-          userMessage = 'Gmail authentication failed due to a server error.';
-          debugInfo = details || 'Backend server error during OAuth2 processing.';
+          userMessage = 'Gmail authentication failed due to a server error';
           break;
         default:
-          debugInfo = details || `Unknown error: ${errorMessage}`;
+          userMessage = details || `Gmail authentication error: ${errorMessage}`;
       }
       
-      console.error('🚨 Gmail Auth Error Details:', { errorMessage, details, debugInfo });
+      console.error('🚨 Gmail Auth Error Details:', { errorMessage, details });
       
-      const errorMsg = {
-        id: 'gmail_auth_error_' + Date.now(),
-        session_id: sessionId,
-        user_id: 'system', 
-        message: '❌ Gmail Authentication Failed',
-        response: `❌ **Gmail Authentication Error**\n\n${userMessage}\n\n` +
-                 `🔧 **Debug Info**: ${debugInfo}\n` +
-                 `🆔 **Session**: ${sessionId}\n\n` +
-                 `💡 **Next Steps**: Check the "Connect Gmail" button above shows the correct status, or try the authentication flow again.`,
-        timestamp: new Date().toISOString(),
-        intent_data: null,
-        needs_approval: false
-      };
+      // 🔔 Show toast notification instead of chat message
+      showGmailError(userMessage);
       
-      setMessages(prev => [...prev, errorMsg]);
       console.error('Gmail authentication error processed');
     } catch (error) {
       console.error('Error handling Gmail auth error:', error);
+      showGmailError('Gmail authentication failed');
     }
   };
 
