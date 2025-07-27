@@ -477,6 +477,18 @@ backend:
         -agent: "main"
         -comment: "Updated GROQ_API_KEY in /app/backend/.env from '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' to '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' to fix Elva AI reasoning agent issues. Backend service restarted successfully."
 
+  - task: "Gmail Authentication Persistence Fix"
+    implemented: true
+    working: "NA"
+    file: "server.py, gmail_oauth_service.py, credentials.json, App.js, GmailAuthHandler.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "MAJOR FIX: Implementing Gmail authentication persistence fixes as requested by user. 1) Updated credentials.json with real Gmail OAuth2 credentials including correct client_secret and redirect URIs for current backend URL, 2) Fixed hardcoded redirect URLs in server.py to use correct backend URL, 3) Updated frontend .env with correct backend URL. Next: Fix session-based token storage and status checking, update UI to show proper connection state with Connected ✅ button state."
+
 agent_communication:
     -agent: "main"
     -message: "🎯 WEBHOOK URL UPDATE & GMAIL CREDENTIALS SETUP COMPLETED! Successfully completed Phase 1 and Phase 2 tasks: 1) N8N WEBHOOK URL UPDATE - Updated webhook URL from 'https://kumararpit9468.app.n8n.cloud/webhook/elva-entry' to 'https://kumararpit8649.app.n8n.cloud/webhook/main-controller' in both .env and webhook_handler.py fallback, 2) GMAIL CREDENTIALS UPDATE - Created credentials.json with new OAuth2 configuration including proper client_id, redirect_uri, and javascript_origins for the current backend URL. Backend service restarted successfully to load new configuration. Ready for comprehensive testing to verify webhook integration and Gmail OAuth2 functionality are working correctly with new settings."
