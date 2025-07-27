@@ -289,6 +289,12 @@ function App() {
         sessionId={sessionId}
         setMessages={setMessages}
         checkGmailStatus={checkGmailStatus}
+        showDropPanel={showDropPanel}
+        setShowDropPanel={setShowDropPanel}
+        toggleTheme={toggleTheme}
+        isDarkTheme={isDarkTheme}
+        exportChat={exportChat}
+        startNewChat={startNewChat}
       />
     </ToastProvider>
   );
