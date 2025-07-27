@@ -125,13 +125,23 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     try {
       await checkGmailAuthStatus();
       
+      // Store authentication success in localStorage
+      localStorage.setItem('gmail-auth-status', 'true');
+      
       // Add styled success message with proper chat bubble formatting
       const successMessage = {
         id: 'gmail_auth_success_' + Date.now(),
         session_id: sessionId,
         user_id: 'system',
         message: 'Gmail connected successfully ✅',
-        response: 'Gmail connected successfully ✅',
+        response: `🎉 **Gmail Successfully Connected!**\n\n` +
+                 `✅ Your Gmail account has been authenticated and linked.\n\n` +
+                 `**Available Gmail features:**\n` +
+                 `• 📧 Check inbox: "Check my Gmail"\n` +
+                 `• ✉️ Send emails: "Send email to [recipient]"\n` +
+                 `• 📨 Read specific emails\n` +
+                 `• 🔍 Search your messages\n\n` +
+                 `The Gmail button shows "Connected ✅" and your session persists across browser refreshes!`,
         timestamp: new Date().toISOString(),
         intent_data: null,
         needs_approval: false,
