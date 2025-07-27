@@ -29,7 +29,7 @@ async def gmail_status(session_id: str = None) -> Dict[str, Any]:
     # Mock response - you can change authenticated to True to test the connected state
     mock_response = {
         "success": True,
-        "authenticated": False,  # Change this to True to test the connected badge
+        "authenticated": True,  # Change this to True to test the connected badge
         "credentials_configured": True,
         "requires_auth": True,
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send"],
@@ -60,4 +60,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("simple_server:app", host="0.0.0.0", port=8000, reload=True)

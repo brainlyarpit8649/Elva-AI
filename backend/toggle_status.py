@@ -9,7 +9,7 @@ import re
 def toggle_gmail_status():
     """Toggle the authenticated status in simple_server.py"""
     try:
-        with open('simple_server.py', 'r') as f:
+        with open('test_server.py', 'r') as f:
             content = f.read()
         
         # Find current status
@@ -20,11 +20,11 @@ def toggle_gmail_status():
             new_content = content.replace('"authenticated": True', '"authenticated": False')
             new_status = "Disconnected"
         else:
-            print("❌ Could not find authentication status in simple_server.py")
+            print("❌ Could not find authentication status in test_server.py")
             return False
         
         # Write back to file
-        with open('simple_server.py', 'w') as f:
+        with open('test_server.py', 'w') as f:
             f.write(new_content)
             
         print(f"✅ Gmail status toggled to: {new_status}")
