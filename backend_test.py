@@ -2552,7 +2552,11 @@ class ElvaBackendTester:
             self.test_server_connectivity,
             self.test_health_endpoint,
             
+            # N8N Webhook URL Update (Priority 1)
+            self.test_n8n_webhook_url_update,
+            
             # Gmail Integration with New Credentials (Priority 1)
+            self.test_gmail_credentials_update,
             self.test_gmail_oauth_status_check,
             self.test_gmail_oauth_authorization_url,
             self.test_gmail_credentials_new_redirect_uri,
