@@ -68,15 +68,17 @@ class GmailOAuthService:
             return None
     
     async def _save_token(self, credentials: Credentials, session_id: str):
-        """Save OAuth2 token to MongoDB with session association"""
+        """Save OAuth2 token to MongoDB with both session and user-global storage"""
         try:
             if self.db is None:
                 logger.error("❌ No database connection available for token storage")
                 return
                 
+            user_id = f'session_{session_id}' if session_id else 'default_user'
+            
             token_data = {
                 'session_id': session_id,
-                'user_id': f'session_{session_id}',  # Use session as user identifier
+                'user_id': user_id,
                 'token': credentials.token,
                 'refresh_token': credentials.refresh_token,
                 'token_uri': credentials.token_uri,
@@ -89,32 +91,54 @@ class GmailOAuthService:
                 'service': 'gmail'
             }
             
-            # Update or insert token data for this session
+            # Save session-specific token
             await self.db.oauth_tokens.update_one(
                 {'session_id': session_id, 'service': 'gmail'},
                 {'$set': token_data},
                 upsert=True
             )
             
-            logger.info(f"✅ Gmail OAuth2 token saved successfully for session: {session_id}")
+            # Also save as global user token for persistence across sessions
+            global_token_data = {**token_data, 'is_global': True, 'session_id': 'global'}
+            await self.db.oauth_tokens.update_one(
+                {'user_id': user_id, 'service': 'gmail', 'is_global': True},
+                {'$set': global_token_data},
+                upsert=True
+            )
+            
+            logger.info(f"✅ Gmail OAuth2 token saved for session: {session_id} and globally for user: {user_id}")
             
         except Exception as e:
             logger.error(f"❌ Error saving OAuth2 token: {e}")
     
     async def _load_token(self, session_id: str) -> Optional[Credentials]:
-        """Load OAuth2 token from MongoDB for specific session"""
+        """Load OAuth2 token from MongoDB with fallback to global user token"""
         try:
             if self.db is None:
                 logger.error("❌ No database connection available for token loading")
                 return None
-                
+            
+            user_id = f'session_{session_id}' if session_id else 'default_user'
+            
+            # First, try to load session-specific token
             token_record = await self.db.oauth_tokens.find_one({
                 'session_id': session_id,
                 'service': 'gmail'
             })
             
+            # If no session-specific token, try global user token
             if not token_record:
-                logger.info(f"ℹ️ No Gmail token found for session: {session_id}")
+                token_record = await self.db.oauth_tokens.find_one({
+                    'user_id': user_id,
+                    'service': 'gmail',
+                    'is_global': True
+                })
+                
+                if token_record:
+                    logger.info(f"ℹ️ Using global Gmail token for session: {session_id}")
+            
+            if not token_record:
+                logger.info(f"ℹ️ No Gmail token found for session: {session_id} or user: {user_id}")
                 return None
             
             credentials = Credentials(
