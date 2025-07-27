@@ -134,7 +134,7 @@ function App() {
     const gmailMessage = gmailAuthStatus.authenticated 
       ? "\n\n🎉 **Gmail is connected!** I can now help you with:\n• 📧 Check your Gmail inbox\n• ✉️ Send emails\n• 📨 Read specific emails\n• 🔍 Search your messages"
       : gmailAuthStatus.credentialsConfigured 
-        ? "\n\n💡 **Tip:** Connect Gmail above for email assistance!" 
+        ? "\n\n💡 **Tip:** Click 'Connect Gmail' above to access your email!" 
         : "\n\n⚠️ **Note:** Gmail integration is not configured. Contact support to enable email features.";
     
     const welcomeMessage = {
