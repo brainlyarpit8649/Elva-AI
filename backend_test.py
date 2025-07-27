@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api"
+BACKEND_URL = "https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api"
 
 class ElvaBackendTester:
     def __init__(self):
@@ -1382,7 +1382,7 @@ class ElvaBackendTester:
                 expected_components = [
                     "https://accounts.google.com/o/oauth2/auth",
                     "client_id=191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com",
-                    "redirect_uri=https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback",
+                    "redirect_uri=https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback",
                     "scope=",
                     "response_type=code"
                 ]
@@ -1540,7 +1540,7 @@ class ElvaBackendTester:
                 # Check environment configuration
                 environment = debug_info.get("environment", {})
                 gmail_redirect_uri = environment.get("GMAIL_REDIRECT_URI")
-                expected_redirect_uri = "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback"
+                expected_redirect_uri = "https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback"
                 
                 if gmail_redirect_uri != expected_redirect_uri:
                     self.log_test("Gmail Service Configuration", False, f"Wrong redirect URI: {gmail_redirect_uri}", environment)
@@ -2438,7 +2438,7 @@ class ElvaBackendTester:
                     return False
                 
                 # Check for the new redirect URI
-                expected_redirect_uri = "https://98437607-70f8-4f49-a1ff-73d118734ef0.preview.emergentagent.com/api/gmail/callback"
+                expected_redirect_uri = "https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback"
                 
                 if expected_redirect_uri not in auth_url:
                     self.log_test("Gmail Credentials - New Redirect URI", False, f"New redirect URI not found in auth URL. Expected: {expected_redirect_uri}", {"auth_url": auth_url})
