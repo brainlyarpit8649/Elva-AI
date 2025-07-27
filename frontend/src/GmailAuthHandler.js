@@ -125,32 +125,13 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
       // Store authentication success in localStorage
       localStorage.setItem('gmail-auth-status', 'true');
       
-      // Add enhanced success message to chat with prominent styling
-      const successMessage = {
-        id: 'gmail_auth_success_' + Date.now(),
-        session_id: sessionId,
-        user_id: 'system',
-        message: 'Gmail connected successfully ✅',
-        response: `🎉 **Gmail Successfully Connected!**\n\n` +
-                 `✅ Your Gmail account has been authenticated and linked to your chat session.\n\n` +
-                 `**What you can do now:**\n` +
-                 `• 📧 Check your Gmail inbox: "Check my Gmail"\n` +
-                 `• ✉️ Send emails: "Send an email to [recipient]"\n` +
-                 `• 📨 Read specific emails by asking about them\n` +
-                 `• 🔍 Search your messages\n\n` +
-                 `The Gmail button above now shows "Connected ✅" status. Your connection will persist across browser sessions!`,
-        timestamp: new Date().toISOString(),
-        intent_data: null,
-        needs_approval: false,
-        isGmailSuccess: true, // Special flag for custom rendering
-        isSystem: false // Make it appear as AI message with special styling
-      };
+      // 🔔 Show toast notification instead of chat message
+      showGmailSuccess();
       
-      setMessages(prev => [...prev, successMessage]);
-      
-      console.log('✅ Gmail authentication successful - enhanced success message added to chat!');
+      console.log('✅ Gmail authentication successful - toast notification shown!');
     } catch (error) {
       console.error('Error handling Gmail auth success:', error);
+      showGmailError('Error completing Gmail authentication setup');
     }
   };
 
