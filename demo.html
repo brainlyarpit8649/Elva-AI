@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Status Badge Demo - Elva AI</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        body.light-theme {
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%);
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .light-theme .header {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+
+        .title-section h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* 🌐 3. Gmail Status Badge - 3D Glassmorphism with Live Status */
+        .gmail-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            border: 1px solid;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+            user-select: none;
+        }
+
+        /* Connected state styling */
+        .gmail-status-badge.connected {
+            background: rgba(0, 255, 136, 0.08);
+            border-image: linear-gradient(135deg, #00ff88, #007f3f) 1;
+            border-color: transparent;
+            border-style: solid;
+            border-width: 1px;
+            background-clip: padding-box;
+        }
+
+        /* Status text styling */
+        .gmail-status-badge .status-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00ff88;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        /* Bright green pulsing dot */
+        .gmail-status-badge .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            box-shadow: 
+                0 0 8px rgba(0, 255, 136, 0.6),
+                0 0 16px rgba(0, 255, 136, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        /* Pulsing animation for the dot */
+        .gmail-status-badge .status-dot.pulsing {
+            animation: 
+                pulse-glow 2s ease-in-out infinite,
+                pulse-size 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 
+                    0 0 8px rgba(0, 255, 136, 0.6),
+                    0 0 16px rgba(0, 255, 136, 0.3),
+                    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+            }
+            50% {
+                box-shadow: 
+                    0 0 12px rgba(0, 255, 136, 0.9),
+                    0 0 24px rgba(0, 255, 136, 0.5),
+                    0 0 32px rgba(0, 255, 136, 0.2),
+                    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        @keyframes pulse-size {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        /* 🎨 4. Theme-aware styling for light mode */
+        .light-theme .gmail-status-badge.connected {
+            background: rgba(0, 127, 63, 0.12);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .light-theme .gmail-status-badge .status-text {
+            color: #007f3f;
+            text-shadow: 0 0 6px rgba(0, 127, 63, 0.2);
+        }
+
+        .light-theme .gmail-status-badge .status-dot {
+            background: linear-gradient(135deg, #00cc6a, #007f3f);
+            box-shadow: 
+                0 0 6px rgba(0, 127, 63, 0.7),
+                0 0 12px rgba(0, 127, 63, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .light-theme .gmail-status-badge .status-dot.pulsing {
+            animation: 
+                pulse-glow-light 2s ease-in-out infinite,
+                pulse-size 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow-light {
+            0%, 100% {
+                box-shadow: 
+                    0 0 6px rgba(0, 127, 63, 0.7),
+                    0 0 12px rgba(0, 127, 63, 0.4),
+                    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+            }
+            50% {
+                box-shadow: 
+                    0 0 10px rgba(0, 127, 63, 1),
+                    0 0 20px rgba(0, 127, 63, 0.6),
+                    0 0 28px rgba(0, 127, 63, 0.3),
+                    inset 0 1px 2px rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        /* Hover effect for status badge */
+        .gmail-status-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .light-theme .gmail-status-badge:hover {
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        /* 🎨 4. Fade-in transition when switching from button to badge */
+        .gmail-status-badge {
+            animation: fade-in-badge 0.6s ease-out;
+        }
+
+        @keyframes fade-in-badge {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .gmail-button {
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .gmail-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .light-theme .gmail-button {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .light-theme .gmail-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .light-theme .theme-toggle {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .demo-section {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+        }
+
+        .light-theme .demo-section {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: inherit;
+        }
+
+        .demo-section p {
+            margin-bottom: 20px;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive design for mobile/tablet */
+        @media (max-width: 768px) {
+            .gmail-status-badge {
+                padding: 6px 12px;
+                gap: 6px;
+            }
+            
+            .gmail-status-badge .status-text {
+                font-size: 12px;
+            }
+            
+            .gmail-status-badge .status-dot {
+                width: 6px;
+                height: 6px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .demo-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">E</div>
+                <div class="title-section">
+                    <h1>Elva AI</h1>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <!-- 💡 2. Gmail Status Badge Implementation -->
+                <div id="gmailStatusBadge" class="gmail-status-badge connected hidden">
+                    <div class="status-dot pulsing"></div>
+                    <span class="status-text">Connected</span>
+                </div>
+                
+                <!-- Original Gmail Button for non-connected state -->
+                <button id="gmailButton" class="gmail-button">
+                    Connect Gmail
+                </button>
+
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    🌙/☀️
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="demo-section">
+            <h2>Gmail Connection UI Demo</h2>
+            <p>
+                This demonstrates the dynamic Gmail status detection with a beautiful 3D glassmorphism badge. 
+                The badge features a pulsing green dot with theme-aware styling and smooth animations.
+            </p>
+            
+            <div class="demo-controls">
+                <button onclick="toggleGmailStatus()" class="gmail-button">
+                    Toggle Gmail Status
+                </button>
+                <button onclick="checkGmailStatus()" class="gmail-button">
+                    Check Status (API)
+                </button>
+            </div>
+            
+            <div id="statusInfo" style="margin-top: 20px; padding: 16px; border-radius: 8px; background: rgba(0,0,0,0.1); font-family: monospace; font-size: 12px;">
+                Click "Check Status (API)" to test the backend connection
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let isConnected = false;
+        const API_BASE = 'http://localhost:8000';
+
+        // 🔁 1. Dynamic Gmail Status Detection
+        async function checkGmailStatus() {
+            try {
+                console.log('🔍 Checking Gmail status...');
+                const response = await fetch(`${API_BASE}/api/gmail/status?session_id=demo_session`);
+                const data = await response.json();
+                
+                console.log('📊 Gmail Status Response:', data);
+                
+                // Update UI based on response
+                isConnected = data.authenticated || false;
+                updateGmailUI();
+                
+                // Show status info
+                document.getElementById('statusInfo').innerHTML = `
+                    <strong>API Response:</strong><br>
+                    Authenticated: ${data.authenticated}<br>
+                    Credentials Configured: ${data.credentials_configured}<br>
+                    Session ID: ${data.session_id}<br>
+                    Status: ${data.success ? 'Success' : 'Error'}
+                `;
+                
+            } catch (error) {
+                console.error('❌ Gmail status check failed:', error);
+                document.getElementById('statusInfo').innerHTML = `
+                    <strong>Error:</strong> ${error.message}<br>
+                    Make sure the backend server is running on localhost:8000
+                `;
+            }
+        }
+
+        function toggleGmailStatus() {
+            isConnected = !isConnected;
+            updateGmailUI();
+            document.getElementById('statusInfo').innerHTML = `
+                <strong>Demo Toggle:</strong><br>
+                Gmail Status: ${isConnected ? 'Connected ✅' : 'Disconnected ❌'}
+            `;
+        }
+
+        // 💡 2. Update Gmail UI with smooth transition
+        function updateGmailUI() {
+            const badge = document.getElementById('gmailStatusBadge');
+            const button = document.getElementById('gmailButton');
+            
+            if (isConnected) {
+                // Show connected badge with fade-in animation
+                button.classList.add('hidden');
+                badge.classList.remove('hidden');
+                badge.style.animation = 'fade-in-badge 0.6s ease-out';
+            } else {
+                // Show connect button
+                badge.classList.add('hidden');
+                button.classList.remove('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Gmail Status Badge Demo Loaded');
+            updateGmailUI();
+            
+            // Auto-check status on page load
+            setTimeout(checkGmailStatus, 1000);
+        });
+
+        // 🧪 5. Testing Tip: Simulate status changes
+        function simulateGmailAuth() {
+            console.log('🔐 Simulating Gmail authentication...');
+            setTimeout(() => {
+                isConnected = true;
+                updateGmailUI();
+                document.getElementById('statusInfo').innerHTML = `
+                    <strong>Simulation:</strong><br>
+                    Gmail authentication completed!<br>
+                    Status badge is now showing with pulsing animation.
+                `;
+            }, 2000);
+        }
+
+        // Add click handler for Gmail button
+        document.getElementById('gmailButton').addEventListener('click', function() {
+            simulateGmailAuth();
+        });
+
+        console.log('🎨 Gmail Status Badge Demo with 3D Glassmorphism Effect');
+        console.log('✨ Features: Dynamic status detection, theme-aware styling, pulsing animation');
+    </script>
+</body>
+</html>
