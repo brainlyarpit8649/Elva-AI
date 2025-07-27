@@ -207,20 +207,15 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
         // Update auth status
         setGmailAuthStatus({ authenticated: true, loading: false });
         
-        // Add success message to chat with enhanced styling
-        const successMessage = {
-          id: 'gmail_auth_success_' + Date.now(),
-          response: "Gmail connected successfully ✅",
-          isUser: false,
-          isGmailSuccess: true, // Special flag for styling
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, successMessage]);
+        // 🔔 Show toast notification instead of chat message
+        showGmailSuccess();
       } else {
         console.error('Gmail OAuth callback failed:', response.data.message);
+        showGmailError('Gmail authentication failed');
       }
     } catch (error) {
       console.error('Gmail callback handling failed:', error);
+      showGmailError('Gmail authentication failed');
     }
   };
 
