@@ -476,7 +476,7 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
             error_msg = result.get('message', 'Authentication failed')
             logger.error(f"❌ Gmail authentication failed for session {session_id}: {error_msg}")
             return RedirectResponse(
-                url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=error&message=auth_failed&details={error_msg}&session_id={session_id}',
+                url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=error&message=auth_failed&details={error_msg}&session_id={session_id}',
                 status_code=302
             )
         
