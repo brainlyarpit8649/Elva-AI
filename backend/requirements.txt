@@ -40,3 +40,4 @@ distro>=1.9.0
 langchain-groq==0.2.2
 langchain-core
 langsmith==0.4.8
+zstandard>=0.23.0
