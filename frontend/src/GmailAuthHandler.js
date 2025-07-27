@@ -113,8 +113,12 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
 
   const handleGmailAuthSuccess = async () => {
     try {
-      // Update auth status first
-      await checkGmailAuthStatus(); // Re-check the actual status
+      // Update auth status first using the function from App.js
+      if (checkGmailStatus) {
+        await checkGmailStatus(); // This will update the main App state
+      } else {
+        await checkGmailAuthStatus(); // Fallback to local check
+      }
       
       // Store authentication success in localStorage
       localStorage.setItem('gmail-auth-status', 'true');
