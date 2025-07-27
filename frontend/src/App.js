@@ -283,7 +283,15 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="chat-background h-screen text-white flex flex-col overflow-hidden">
+      <GmailAuthHandlerWrapper 
+        gmailAuthStatus={gmailAuthStatus}
+        setGmailAuthStatus={setGmailAuthStatus}
+        sessionId={sessionId}
+        setMessages={setMessages}
+        checkGmailStatus={checkGmailStatus}
+      />
+    </ToastProvider>
+  );
         {/* Premium Glassy Header */}
         <header className="glassy-header shadow-lg flex-shrink-0">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between relative z-10">
