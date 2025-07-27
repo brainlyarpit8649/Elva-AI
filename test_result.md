@@ -403,6 +403,7 @@ test_plan:
   current_focus:
     - "N8N Webhook URL Update"
     - "Gmail Credentials.json Update"
+    - "Groq API Key Update"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
