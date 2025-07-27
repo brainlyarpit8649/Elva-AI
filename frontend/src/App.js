@@ -28,7 +28,16 @@ function App() {
   const [showDropPanel, setShowDropPanel] = useState(false); // Drop-left panel state
 
   function generateSessionId() {
-    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    // Check if we have a session ID in localStorage first
+    const existingSessionId = localStorage.getItem('elva-session-id');
+    if (existingSessionId) {
+      return existingSessionId;
+    }
+    
+    // Generate new session ID and store it
+    const newSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('elva-session-id', newSessionId);
+    return newSessionId;
   }
 
   // Initialize theme on app load
