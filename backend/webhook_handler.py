@@ -8,7 +8,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # N8N webhook URL from environment
-N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL", "https://kumararpit9468.app.n8n.cloud/webhook/elva-entry")
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL", "https://kumararpit8649.app.n8n.cloud/webhook/main-controller")
 
 async def send_to_n8n(webhook_data: dict) -> dict:
     """
