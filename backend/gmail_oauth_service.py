@@ -470,12 +470,12 @@ class GmailOAuthService:
         return self._authenticate()
     
     async def get_auth_status(self, session_id: str = None) -> Dict[str, Any]:
-        """Get Gmail authentication status for specific session"""
+        """Get Gmail authentication status with enhanced session and user-global token checking"""
         try:
             credentials_configured = self._load_credentials_config() is not None
             
             if session_id:
-                # Check if we have valid credentials for this session
+                # Check if we have valid credentials for this session or user
                 credentials = await self._load_token(session_id)
                 authenticated = credentials is not None
                 
@@ -485,15 +485,40 @@ class GmailOAuthService:
                         if credentials.expired and credentials.refresh_token:
                             credentials.refresh(Request())
                             await self._save_token(credentials, session_id)
+                            logger.info(f"🔄 Refreshed expired Gmail credentials for session: {session_id}")
                         
                         # Try to build service to verify credentials work
                         service = build('gmail', 'v1', credentials=credentials)
+                        
+                        # Test with a simple API call
+                        profile = service.users().getProfile(userId='me').execute()
                         authenticated = True
+                        logger.info(f"✅ Gmail credentials verified for session: {session_id}, email: {profile.get('emailAddress', 'unknown')}")
+                        
                     except Exception as e:
                         logger.warning(f"Gmail credentials invalid for session {session_id}: {e}")
                         authenticated = False
+                        
+                        # Clean up invalid tokens
+                        if self.db:
+                            await self.db.oauth_tokens.delete_many({
+                                '$or': [
+                                    {'session_id': session_id, 'service': 'gmail'},
+                                    {'user_id': f'session_{session_id}', 'service': 'gmail', 'is_global': True}
+                                ]
+                            })
+                            logger.info(f"🧹 Cleaned up invalid tokens for session: {session_id}")
             else:
                 authenticated = False
+                
+                # For health checks, try to find any valid tokens
+                if self.db:
+                    try:
+                        token_count = await self.db.oauth_tokens.count_documents({'service': 'gmail'})
+                        if token_count > 0:
+                            logger.info(f"📊 Found {token_count} Gmail tokens in database")
+                    except Exception as e:
+                        logger.error(f"Error counting tokens: {e}")
             
             return {
                 'success': True,
