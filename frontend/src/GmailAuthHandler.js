@@ -155,7 +155,11 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
   const handleGmailAuthError = (errorMessage, details) => {
     try {
       // Update auth status and re-check
-      checkGmailAuthStatus();
+      if (checkGmailStatus) {
+        checkGmailStatus(); // This will update the main App state
+      } else {
+        checkGmailAuthStatus(); // Fallback to local check
+      }
       
       // Map error codes to user-friendly messages
       let userMessage = 'Gmail authentication failed. Please try again.';
