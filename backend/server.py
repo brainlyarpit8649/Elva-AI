@@ -737,6 +737,24 @@ async def health_check():
                 "capabilities": [
                     "dynamic_data_extraction", "web_scraping"
                 ]
+            },
+            "conversation_memory_system": {
+                "status": "available",
+                "langchain_integration": "enabled", 
+                "memory_types": [
+                    "ConversationBufferMemory",
+                    "ConversationSummaryBufferMemory"
+                ],
+                "features": [
+                    "context_retention",
+                    "conversation_summarization", 
+                    "intent_context_storage",
+                    "memory_cleanup",
+                    "mongodb_integration"
+                ],
+                "max_token_limit": conversation_memory.max_token_limit,
+                "buffer_window_size": conversation_memory.buffer_window_size,
+                "memory_cleanup_interval": str(conversation_memory.memory_cleanup_interval)
             }
         }
         
