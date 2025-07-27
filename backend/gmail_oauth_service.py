@@ -512,7 +512,7 @@ class GmailOAuthService:
                 authenticated = False
                 
                 # For health checks, try to find any valid tokens
-                if self.db:
+                if self.db is not None:
                     try:
                         token_count = await self.db.oauth_tokens.count_documents({'service': 'gmail'})
                         if token_count > 0:
