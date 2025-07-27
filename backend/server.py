@@ -382,6 +382,24 @@ async def execute_web_automation(request: WebAutomationRequest):
         logger.error(f"Web automation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/automation-history/{session_id}")
+async def get_automation_history(session_id: str):
+    """Get automation history for a session"""
+    try:
+        logger.info(f"Getting automation history for session: {session_id}")
+        
+        automation_logs = await db.automation_logs.find(
+            {"session_id": session_id}
+        ).sort("timestamp", -1).to_list(50)  # Get latest 50 records
+        
+        # Convert ObjectIds to strings for JSON serialization
+        serializable_logs = [convert_objectid_to_str(log) for log in automation_logs]
+        
+        return {"automation_history": serializable_logs}
+    except Exception as e:
+        logger.error(f"Automation history error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/conversation-memory/{session_id}")
 async def get_conversation_memory_info(session_id: str):
     """Get conversation memory information and statistics for a session"""
