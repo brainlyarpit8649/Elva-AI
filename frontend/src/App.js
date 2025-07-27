@@ -280,14 +280,6 @@ function App() {
     }
   };
 
-  // Initialize Gmail auth handler
-  const gmailAuthHandler = GmailAuthHandler({ 
-    gmailAuthStatus, 
-    setGmailAuthStatus, 
-    sessionId, 
-    setMessages,
-    checkGmailStatus // Pass the status check function
-  });
 
   return (
     <ToastProvider>
