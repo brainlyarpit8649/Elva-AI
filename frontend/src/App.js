@@ -80,13 +80,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    loadChatHistory();
-    // Check Gmail status on page load
-    checkGmailStatus();
-    // Add welcome message when starting a new chat
-    if (messages.length === 0) {
-      addWelcomeMessage();
-    }
+    const initializeApp = async () => {
+      // First check Gmail status
+      await checkGmailStatus();
+      // Then load chat history
+      await loadChatHistory();
+      // Add welcome message only if no history exists
+      if (messages.length === 0) {
+        addWelcomeMessage();
+      }
+    };
+    
+    initializeApp();
   }, [sessionId]);
 
   // Re-check Gmail status when route reloads
