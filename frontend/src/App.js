@@ -292,6 +292,8 @@ function App() {
       />
     </ToastProvider>
   );
+}
+
 // Wrapper component to use GmailAuthHandler inside ToastProvider context
 function GmailAuthHandlerWrapper({ gmailAuthStatus, setGmailAuthStatus, sessionId, setMessages, checkGmailStatus }) {
   // Initialize Gmail auth handler inside the ToastProvider context
