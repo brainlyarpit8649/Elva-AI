@@ -437,27 +437,33 @@ agent_communication:
 backend:
   - task: "N8N Webhook URL Update"
     implemented: true
-    working: "NA" 
+    working: true
     file: ".env, webhook_handler.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         -working: "NA"
         -agent: "main"
         -comment: "Updated N8N_WEBHOOK_URL in /app/backend/.env from 'https://kumararpit9468.app.n8n.cloud/webhook/elva-entry' to 'https://kumararpit8649.app.n8n.cloud/webhook/main-controller'. Also updated fallback URL in webhook_handler.py line 11. Backend service restarted successfully."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ N8N WEBHOOK URL UPDATE VERIFIED: Comprehensive testing confirms the new webhook URL (https://kumararpit8649.app.n8n.cloud/webhook/main-controller) is loaded correctly from environment variables and being used by the webhook handler. Tested approval workflow and confirmed webhook is called with new URL. Health check shows N8N webhook as 'configured'. The webhook URL update is working correctly and ready for production use."
 
   - task: "Gmail Credentials.json Update"
     implemented: true
-    working: "NA"
+    working: true
     file: "credentials.json"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         -working: "NA"
         -agent: "main"
         -comment: "Created /app/backend/credentials.json with new OAuth2 configuration: client_id='191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com', project_id='elva-ai-466708', redirect_uri and javascript_origins configured for current backend URL. Backend service restarted to load new credentials."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ GMAIL CREDENTIALS UPDATE VERIFIED: New Gmail OAuth2 credentials successfully loaded and working correctly. Verified new client_id (191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com) is properly configured and appears in generated OAuth URLs. Gmail status endpoint reports credentials_configured: true. Health check shows Gmail integration as 'ready' with OAuth2 flow 'implemented', 4 scopes configured, and 6 endpoints available. OAuth2 authorization URLs are generated correctly with the new credentials. The Gmail credentials update is working correctly and ready for production use."
 
 agent_communication:
     -agent: "main"
