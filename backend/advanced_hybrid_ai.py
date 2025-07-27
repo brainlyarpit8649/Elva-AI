@@ -662,67 +662,115 @@ Return ONLY the JSON object."""
 
     async def process_message(self, user_input: str, session_id: str) -> Tuple[dict, str, RoutingDecision]:
         """
-        Main processing function with advanced routing
+        Enhanced message processing with conversation memory integration.
+        
+        Args:
+            user_input: User's input message
+            session_id: Session identifier for memory retrieval
+            
+        Returns:
+            Tuple of (intent_data, response_text, routing_decision)
         """
-        logger.info(f"🚀 Advanced Hybrid Processing: {user_input[:50]}...")
+        logger.info(f"🚀 Processing message with memory context: {user_input[:50]}...")
         
-        # Step 1: Advanced task classification
-        classification = await self.analyze_task_classification(user_input, session_id)
-        
-        # Step 2: Calculate routing decision
-        routing_decision = self._calculate_routing_decision(classification, session_id)
-        
-        # Step 3: Update conversation history
-        self._update_conversation_history(session_id, user_input, classification)
-        
-        logger.info(f"🧠 Classification: {classification.primary_intent} | Routing: {routing_decision.primary_model.value} | Confidence: {routing_decision.confidence:.2f}")
-        logger.info(f"💡 Reasoning: {routing_decision.reasoning}")
-        
-        # Step 4: Execute routing decision
         try:
-            if routing_decision.primary_model == ModelChoice.BOTH_SEQUENTIAL:
-                intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id)
-            elif routing_decision.primary_model == ModelChoice.CLAUDE:
-                # Claude for warm, contextual responses
-                enhanced_prompt = user_input
-                if routing_decision.use_context_enhancement:
-                    enhanced_prompt = await self._get_context_enhanced_prompt(user_input, session_id)
-                
-                system_message = self._generate_claude_system_message(classification, {"intent": classification.primary_intent})
-                response_text = await self._get_claude_response(enhanced_prompt, system_message)
-                intent_data = {"intent": classification.primary_intent, "message": user_input}
-            else:  # Groq
-                intent_data = await self._groq_intent_detection(user_input)
-                if intent_data.get("intent") == "general_chat":
-                    # Fallback to Claude for general chat
-                    response_text = await self._get_claude_response(user_input)
-                else:
-                    # Use Groq for structured response
-                    response_text = f"I've analyzed your request: {intent_data.get('intent')}. Here are the details I extracted: {json.dumps(intent_data, indent=2)}"
+            # Get conversation memory for context
+            try:
+                memory = get_conversation_memory()
+                conversation_context = await memory.get_relevant_context(session_id, user_input)
+                logger.info(f"📚 Retrieved conversation context: {len(conversation_context)} chars")
+            except Exception as e:
+                logger.warning(f"Could not retrieve conversation context: {e}")
+                conversation_context = ""
             
-            return intent_data, response_text, routing_decision
+            # Step 1: Advanced task classification with context
+            classification = await self.analyze_task_classification(user_input, session_id)
             
-        except Exception as e:
-            logger.error(f"Processing error: {e}")
-            # Fallback to simple routing
-            if routing_decision.fallback_model:
-                try:
-                    if routing_decision.fallback_model == ModelChoice.CLAUDE:
-                        response_text = await self._get_claude_response(user_input)
-                        intent_data = {"intent": "general_chat", "message": user_input}
-                    else:
-                        intent_data = await self._groq_intent_detection(user_input) 
-                        response_text = f"Structured analysis: {json.dumps(intent_data, indent=2)}"
+            # Step 2: Calculate routing decision
+            routing_decision = self._calculate_routing_decision(classification, session_id)
+            
+            # Step 3: Update conversation history
+            self._update_conversation_history(session_id, user_input, classification)
+            
+            logger.info(f"🧠 Classification: {classification.primary_intent} | Routing: {routing_decision.primary_model.value} | Confidence: {routing_decision.confidence:.2f}")
+            logger.info(f"💡 Reasoning: {routing_decision.reasoning}")
+            
+            # Step 4: Execute routing decision with context
+            try:
+                if routing_decision.primary_model == ModelChoice.BOTH_SEQUENTIAL:
+                    intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id)
+                elif routing_decision.primary_model == ModelChoice.CLAUDE:
+                    # Claude for warm, contextual responses
+                    enhanced_prompt = user_input
+                    if routing_decision.use_context_enhancement and conversation_context:
+                        enhanced_prompt = f"Context: {conversation_context}\n\nCurrent request: {user_input}"
                     
-                    return intent_data, response_text, routing_decision
-                except Exception as fallback_error:
-                    logger.error(f"Fallback error: {fallback_error}")
-            
-            # Ultimate fallback
+                    system_message = self._generate_claude_system_message(classification, {"intent": classification.primary_intent})
+                    response_text = await self._get_claude_response(enhanced_prompt, system_message)
+                    intent_data = {"intent": classification.primary_intent, "message": user_input}
+                else:  # Groq
+                    intent_data = await self._groq_intent_detection(user_input)
+                    if intent_data.get("intent") == "general_chat":
+                        # Fallback to Claude for general chat with context
+                        enhanced_prompt = user_input
+                        if conversation_context:
+                            enhanced_prompt = f"Context: {conversation_context}\n\nCurrent request: {user_input}"
+                        response_text = await self._get_claude_response(enhanced_prompt)
+                    else:
+                        # Use Groq for structured response
+                        response_text = f"I've analyzed your request: {intent_data.get('intent')}. Here are the details I extracted: {json.dumps(intent_data, indent=2)}"
+                
+                # Step 5: Store conversation in memory
+                try:
+                    memory = get_conversation_memory()
+                    await memory.add_message_to_memory(session_id, user_input, response_text, intent_data)
+                    logger.info(f"💾 Stored conversation in memory for session: {session_id}")
+                except Exception as e:
+                    logger.warning(f"Could not store conversation in memory: {e}")
+                
+                return intent_data, response_text, routing_decision
+                
+            except Exception as e:
+                logger.error(f"Processing error: {e}")
+                # Fallback to simple routing
+                if routing_decision.fallback_model:
+                    try:
+                        if routing_decision.fallback_model == ModelChoice.CLAUDE:
+                            response_text = await self._get_claude_response(user_input)
+                            intent_data = {"intent": "general_chat", "message": user_input}
+                        else:
+                            intent_data = await self._groq_intent_detection(user_input) 
+                            response_text = f"Structured analysis: {json.dumps(intent_data, indent=2)}"
+                        
+                        # Store fallback conversation in memory
+                        try:
+                            memory = get_conversation_memory()
+                            await memory.add_message_to_memory(session_id, user_input, response_text, intent_data)
+                        except Exception as mem_e:
+                            logger.warning(f"Could not store fallback conversation in memory: {mem_e}")
+                        
+                        return intent_data, response_text, routing_decision
+                    except Exception as fallback_error:
+                        logger.error(f"Fallback error: {fallback_error}")
+                
+                # Ultimate fallback
+                return (
+                    {"intent": "general_chat", "message": user_input, "error": str(e)},
+                    "I apologize, but I'm experiencing some technical difficulties. Please try again.",
+                    routing_decision
+                )
+                
+        except Exception as e:
+            logger.error(f"💥 Error in advanced hybrid processing: {e}")
+            # Ultimate fallback without memory
             return (
                 {"intent": "general_chat", "message": user_input, "error": str(e)},
                 "I apologize, but I'm experiencing some technical difficulties. Please try again.",
-                routing_decision
+                RoutingDecision(
+                    primary_model=ModelChoice.CLAUDE,
+                    confidence=0.5,
+                    reasoning="Fallback due to processing error"
+                )
             )
 
     def get_routing_stats(self, session_id: str) -> dict:
