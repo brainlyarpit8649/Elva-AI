@@ -18,6 +18,7 @@ from webhook_handler import send_approved_action
 from playwright_service import playwright_service, AutomationResult
 from direct_automation_handler import direct_automation_handler
 from gmail_oauth_service import GmailOAuthService
+from conversation_memory import initialize_conversation_memory
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
