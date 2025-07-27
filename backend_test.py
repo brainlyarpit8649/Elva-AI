@@ -2536,6 +2536,165 @@ class ElvaBackendTester:
             self.log_test("Approval Modal - Theme Styling Compatibility", False, f"Error: {str(e)}")
             return False
 
+    def test_n8n_webhook_url_update(self):
+        """Test N8N Webhook URL Update - Verify new webhook URL is loaded correctly"""
+        try:
+            # Test health endpoint to verify N8N webhook configuration
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if N8N webhook is configured
+                if data.get("n8n_webhook") != "configured":
+                    self.log_test("N8N Webhook URL Update", False, "N8N webhook not configured in health check", data)
+                    return False
+                
+                # Test approval workflow to verify webhook is actually called with new URL
+                # First create an email intent
+                email_payload = {
+                    "message": "Send an email to test@example.com about webhook testing",
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                chat_response = requests.post(f"{BACKEND_URL}/chat", json=email_payload, timeout=15)
+                
+                if chat_response.status_code != 200:
+                    self.log_test("N8N Webhook URL Update", False, "Failed to create email intent for webhook test")
+                    return False
+                
+                chat_data = chat_response.json()
+                message_id = chat_data["id"]
+                
+                # Now approve the action to trigger webhook
+                approval_payload = {
+                    "session_id": self.session_id,
+                    "message_id": message_id,
+                    "approved": True
+                }
+                
+                approval_response = requests.post(f"{BACKEND_URL}/approve", json=approval_payload, timeout=15)
+                
+                if approval_response.status_code == 200:
+                    approval_data = approval_response.json()
+                    
+                    # Check if webhook was called
+                    if "n8n_response" not in approval_data:
+                        self.log_test("N8N Webhook URL Update", False, "No n8n_response in approval result - webhook not called", approval_data)
+                        return False
+                    
+                    n8n_response = approval_data.get("n8n_response", {})
+                    
+                    # Check if webhook call was attempted (success or failure both indicate URL is being used)
+                    if "status_code" in n8n_response or "error" in n8n_response:
+                        self.log_test("N8N Webhook URL Update", True, f"New N8N webhook URL (https://kumararpit8649.app.n8n.cloud/webhook/main-controller) is being used correctly. Response: {n8n_response}")
+                        return True
+                    else:
+                        self.log_test("N8N Webhook URL Update", False, "Invalid n8n_response structure", approval_data)
+                        return False
+                else:
+                    self.log_test("N8N Webhook URL Update", False, f"Approval failed with HTTP {approval_response.status_code}")
+                    return False
+            else:
+                self.log_test("N8N Webhook URL Update", False, f"Health check failed with HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("N8N Webhook URL Update", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_credentials_update(self):
+        """Test Gmail Credentials Update - Verify new credentials.json is loaded correctly"""
+        try:
+            # Test Gmail OAuth status to verify new credentials are loaded
+            response = requests.get(f"{BACKEND_URL}/gmail/status", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if credentials are configured
+                if not data.get("credentials_configured"):
+                    self.log_test("Gmail Credentials Update", False, "Gmail credentials not configured", data)
+                    return False
+                
+                # Test Gmail auth URL generation to verify new client_id is used
+                auth_response = requests.get(f"{BACKEND_URL}/gmail/auth?session_id={self.session_id}", timeout=10)
+                
+                if auth_response.status_code == 200:
+                    auth_data = auth_response.json()
+                    
+                    if not auth_data.get("success"):
+                        self.log_test("Gmail Credentials Update", False, "Gmail auth URL generation failed", auth_data)
+                        return False
+                    
+                    auth_url = auth_data.get("auth_url", "")
+                    
+                    # Check if new client_id is in the auth URL
+                    expected_client_id = "191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com"
+                    if expected_client_id not in auth_url:
+                        self.log_test("Gmail Credentials Update", False, f"New client_id not found in auth URL. Expected: {expected_client_id}", auth_data)
+                        return False
+                    
+                    # Check if correct redirect URI is in the auth URL
+                    expected_redirect_uri = "https://8325963d-4d9f-4302-b0a4-adc906453175.preview.emergentagent.com/api/gmail/callback"
+                    if expected_redirect_uri not in auth_url:
+                        self.log_test("Gmail Credentials Update", False, f"New redirect URI not found in auth URL. Expected: {expected_redirect_uri}", auth_data)
+                        return False
+                    
+                    # Test health endpoint Gmail integration status
+                    health_response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+                    
+                    if health_response.status_code == 200:
+                        health_data = health_response.json()
+                        gmail_integration = health_data.get("gmail_api_integration", {})
+                        
+                        if gmail_integration.get("status") != "ready":
+                            self.log_test("Gmail Credentials Update", False, f"Gmail integration not ready: {gmail_integration.get('status')}", health_data)
+                            return False
+                        
+                        if gmail_integration.get("oauth2_flow") != "implemented":
+                            self.log_test("Gmail Credentials Update", False, f"OAuth2 flow not implemented: {gmail_integration.get('oauth2_flow')}", health_data)
+                            return False
+                        
+                        if not gmail_integration.get("credentials_configured"):
+                            self.log_test("Gmail Credentials Update", False, "Credentials not configured in health check", health_data)
+                            return False
+                        
+                        # Check if expected scopes are configured
+                        scopes = gmail_integration.get("scopes", [])
+                        expected_scopes = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send"]
+                        missing_scopes = [scope for scope in expected_scopes if scope not in scopes]
+                        
+                        if missing_scopes:
+                            self.log_test("Gmail Credentials Update", False, f"Missing expected scopes: {missing_scopes}", health_data)
+                            return False
+                        
+                        # Check if expected endpoints are available
+                        endpoints = gmail_integration.get("endpoints", [])
+                        expected_endpoints = ["/api/gmail/auth", "/api/gmail/callback", "/api/gmail/status", "/api/gmail/inbox"]
+                        missing_endpoints = [endpoint for endpoint in expected_endpoints if endpoint not in endpoints]
+                        
+                        if missing_endpoints:
+                            self.log_test("Gmail Credentials Update", False, f"Missing expected endpoints: {missing_endpoints}", health_data)
+                            return False
+                        
+                        self.log_test("Gmail Credentials Update", True, f"New Gmail credentials loaded successfully. Client ID: {expected_client_id[:20]}..., OAuth2 flow ready, {len(scopes)} scopes configured, {len(endpoints)} endpoints available")
+                        return True
+                    else:
+                        self.log_test("Gmail Credentials Update", False, f"Health check failed with HTTP {health_response.status_code}")
+                        return False
+                else:
+                    self.log_test("Gmail Credentials Update", False, f"Gmail auth URL generation failed with HTTP {auth_response.status_code}")
+                    return False
+            else:
+                self.log_test("Gmail Credentials Update", False, f"Gmail status check failed with HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Credentials Update", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests with focus on review request priorities"""
         print("🚀 Starting Comprehensive Elva AI Backend Testing")
