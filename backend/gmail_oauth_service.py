@@ -500,7 +500,7 @@ class GmailOAuthService:
                         authenticated = False
                         
                         # Clean up invalid tokens
-                        if self.db:
+                        if self.db is not None:
                             await self.db.oauth_tokens.delete_many({
                                 '$or': [
                                     {'session_id': session_id, 'service': 'gmail'},
