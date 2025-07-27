@@ -2183,3 +2183,180 @@ button:active:not(:disabled) {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.8), rgba(59, 130, 246, 0.8));
 }
+
+/* 🌐 3. Gmail Status Badge - 3D Glassmorphism with Live Status */
+.gmail-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  border: 1px solid;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+  user-select: none;
+}
+
+/* Connected state styling */
+.gmail-status-badge.connected {
+  background: rgba(0, 255, 136, 0.08);
+  border-image: linear-gradient(135deg, #00ff88, #007f3f) 1;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 1px;
+  background-clip: padding-box;
+}
+
+/* Status text styling */
+.gmail-status-badge .status-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00ff88;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+  letter-spacing: 0.5px;
+}
+
+/* Bright green pulsing dot */
+.gmail-status-badge .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  box-shadow: 
+    0 0 8px rgba(0, 255, 136, 0.6),
+    0 0 16px rgba(0, 255, 136, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  position: relative;
+}
+
+/* Pulsing animation for the dot */
+.gmail-status-badge .status-dot.pulsing {
+  animation: 
+    pulse-glow 2s ease-in-out infinite,
+    pulse-size 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 8px rgba(0, 255, 136, 0.6),
+      0 0 16px rgba(0, 255, 136, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 12px rgba(0, 255, 136, 0.9),
+      0 0 24px rgba(0, 255, 136, 0.5),
+      0 0 32px rgba(0, 255, 136, 0.2),
+      inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  }
+}
+
+@keyframes pulse-size {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* 🎨 4. Theme-aware styling for light mode */
+.light-theme .gmail-status-badge.connected {
+  background: rgba(0, 127, 63, 0.12);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .gmail-status-badge .status-text {
+  color: #007f3f;
+  text-shadow: 0 0 6px rgba(0, 127, 63, 0.2);
+}
+
+.light-theme .gmail-status-badge .status-dot {
+  background: linear-gradient(135deg, #00cc6a, #007f3f);
+  box-shadow: 
+    0 0 6px rgba(0, 127, 63, 0.7),
+    0 0 12px rgba(0, 127, 63, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.light-theme .gmail-status-badge .status-dot.pulsing {
+  animation: 
+    pulse-glow-light 2s ease-in-out infinite,
+    pulse-size 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow-light {
+  0%, 100% {
+    box-shadow: 
+      0 0 6px rgba(0, 127, 63, 0.7),
+      0 0 12px rgba(0, 127, 63, 0.4),
+      inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px rgba(0, 127, 63, 1),
+      0 0 20px rgba(0, 127, 63, 0.6),
+      0 0 28px rgba(0, 127, 63, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* Hover effect for status badge */
+.gmail-status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .gmail-status-badge:hover {
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* 🎨 4. Fade-in transition when switching from button to badge */
+.gmail-status-badge {
+  animation: fade-in-badge 0.6s ease-out;
+}
+
+@keyframes fade-in-badge {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive design for mobile/tablet */
+@media (max-width: 768px) {
+  .gmail-status-badge {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  
+  .gmail-status-badge .status-text {
+    font-size: 12px;
+  }
+  
+  .gmail-status-badge .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+}

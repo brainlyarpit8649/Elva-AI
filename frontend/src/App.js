@@ -40,6 +40,31 @@ function App() {
     return newSessionId;
   }
 
+  // 🔁 1. Dynamic Gmail Status Detection - Check status on page load
+  const checkGmailStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/gmail/status?session_id=${sessionId}`);
+      const data = response.data;
+      
+      setGmailAuthStatus({ 
+        authenticated: data.authenticated || false,
+        loading: false,
+        credentialsConfigured: data.credentials_configured || false,
+        error: data.error || null,
+        debugInfo: data
+      });
+    } catch (error) {
+      console.error('Gmail status check failed:', error);
+      setGmailAuthStatus({ 
+        authenticated: false, 
+        loading: false,
+        credentialsConfigured: false,
+        error: error.message,
+        debugInfo: null
+      });
+    }
+  };
+
   // Initialize theme on app load
   useEffect(() => {
     const savedTheme = localStorage.getItem('elva-theme');
@@ -56,10 +81,22 @@ function App() {
 
   useEffect(() => {
     loadChatHistory();
+    // Check Gmail status on page load
+    checkGmailStatus();
     // Add welcome message when starting a new chat
     if (messages.length === 0) {
       addWelcomeMessage();
     }
+  }, [sessionId]);
+
+  // Re-check Gmail status when route reloads
+  useEffect(() => {
+    const handleFocus = () => {
+      checkGmailStatus();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [sessionId]);
 
   const addWelcomeMessage = () => {
@@ -217,7 +254,8 @@ function App() {
     gmailAuthStatus, 
     setGmailAuthStatus, 
     sessionId, 
-    setMessages 
+    setMessages,
+    checkGmailStatus // Pass the status check function
   });
 
   return (
@@ -263,36 +301,45 @@ function App() {
               startNewChat={startNewChat}
             />
 
-            {/* Gmail Button in Header */}
-            <button
-              onClick={gmailAuthStatus.authenticated ? null : gmailAuthHandler.initiateGmailAuth}
-              className={`circular-icon-btn ${
-                gmailAuthStatus.authenticated 
-                  ? 'gmail-connected' 
-                  : gmailAuthStatus.credentialsConfigured 
-                    ? 'gmail-ready' 
-                    : 'gmail-error'
-              }`}
-              title={
-                gmailAuthStatus.authenticated 
-                  ? "Gmail Connected ✅" 
-                  : gmailAuthStatus.credentialsConfigured 
-                    ? "Connect Gmail" 
-                    : "Gmail credentials missing ❌"
-              }
-              disabled={gmailAuthStatus.authenticated || !gmailAuthStatus.credentialsConfigured}
-            >
-              <div className="connected-indicator">
-                <img 
-                  src="https://images.unsplash.com/photo-1706879349268-8cb3a9ae739a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHxnbWFpbCUyMGxvZ298ZW58MHx8fHwxNzUzMjQ4NTQ1fDA&ixlib=rb-4.1.0&q=85"
-                  alt="Gmail"
-                  className="gmail-icon"
-                />
-                {gmailAuthStatus.authenticated && (
-                  <div className="connected-check">✓</div>
-                )}
+            {/* 💡 2. Replace Gmail Button with Live Status Badge */}
+            {gmailAuthStatus.authenticated ? (
+              // 🌐 3. Connected Status Badge with 3D Glassmorphism effect
+              <div className="gmail-status-badge connected">
+                <div className="status-dot pulsing"></div>
+                <span className="status-text">Connected</span>
               </div>
-            </button>
+            ) : (
+              // Original Gmail Button for non-connected state
+              <button
+                onClick={gmailAuthStatus.authenticated ? null : gmailAuthHandler.initiateGmailAuth}
+                className={`circular-icon-btn ${
+                  gmailAuthStatus.authenticated 
+                    ? 'gmail-connected' 
+                    : gmailAuthStatus.credentialsConfigured 
+                      ? 'gmail-ready' 
+                      : 'gmail-error'
+                }`}
+                title={
+                  gmailAuthStatus.authenticated 
+                    ? "Gmail Connected ✅" 
+                    : gmailAuthStatus.credentialsConfigured 
+                      ? "Connect Gmail" 
+                      : "Gmail credentials missing ❌"
+                }
+                disabled={gmailAuthStatus.authenticated || !gmailAuthStatus.credentialsConfigured}
+              >
+                <div className="connected-indicator">
+                  <img 
+                    src="https://images.unsplash.com/photo-1706879349268-8cb3a9ae739a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHxnbWFpbCUyMGxvZ298ZW58MHx8fHwxNzUzMjQ4NTQ1fDA&ixlib=rb-4.1.0&q=85"
+                    alt="Gmail"
+                    className="gmail-icon"
+                  />
+                  {gmailAuthStatus.authenticated && (
+                    <div className="connected-check">✓</div>
+                  )}
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </header>

@@ -8,10 +8,16 @@ const GmailAuthHandler = ({
   gmailAuthStatus, 
   setGmailAuthStatus, 
   sessionId, 
-  setMessages 
+  setMessages,
+  checkGmailStatus // Receive the parent status check function
 }) => {
   
   const checkGmailAuthStatus = async () => {
+    // Use the parent function if available, otherwise fallback to local implementation
+    if (checkGmailStatus) {
+      return await checkGmailStatus();
+    }
+    
     try {
       console.log('🔍 Checking Gmail auth status for session:', sessionId);
       const response = await axios.get(`${API}/gmail/status?session_id=${sessionId}`);
@@ -102,8 +108,12 @@ const GmailAuthHandler = ({
 
   const handleGmailAuthSuccess = async () => {
     try {
-      // Update auth status
-      await checkGmailAuthStatus(); // Re-check the actual status
+      // Update auth status using the parent function or fallback
+      if (checkGmailStatus) {
+        await checkGmailStatus();
+      } else {
+        await checkGmailAuthStatus();
+      }
       
       // Add success message to chat with special formatting
       const successMessage = {
@@ -111,7 +121,14 @@ const GmailAuthHandler = ({
         session_id: sessionId,
         user_id: 'system',
         message: '✅ Gmail OAuth2 Flow Completed!',
-        response: '', // Will be handled by special rendering
+        response: '🎉 **Gmail Connected Successfully!**\n\n' +
+          '✅ Authentication completed\n' +
+          '📧 You can now ask me to:\n' +
+          '• Check your Gmail inbox\n' +
+          '• Send emails\n' +
+          '• Read specific emails\n' +
+          '• Search your messages\n\n' +
+          '💡 The status badge above shows your connection is live and active!',
         timestamp: new Date().toISOString(),
         intent_data: null,
         needs_approval: false,
@@ -128,8 +145,12 @@ const GmailAuthHandler = ({
 
   const handleGmailAuthError = (errorMessage, details) => {
     try {
-      // Update auth status and re-check
-      checkGmailAuthStatus();
+      // Update auth status and re-check using parent function or fallback
+      if (checkGmailStatus) {
+        checkGmailStatus();
+      } else {
+        checkGmailAuthStatus();
+      }
       
       // Map error codes to user-friendly messages
       let userMessage = 'Gmail authentication failed. Please try again.';
