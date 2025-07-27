@@ -295,6 +295,7 @@ function App() {
         isDarkTheme={isDarkTheme}
         exportChat={exportChat}
         startNewChat={startNewChat}
+        messages={messages}
       />
     </ToastProvider>
   );
