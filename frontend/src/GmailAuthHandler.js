@@ -116,13 +116,23 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
       // Update auth status first
       await checkGmailAuthStatus(); // Re-check the actual status
       
+      // Store authentication success in localStorage
+      localStorage.setItem('gmail-auth-status', 'true');
+      
       // Add enhanced success message to chat with prominent styling
       const successMessage = {
         id: 'gmail_auth_success_' + Date.now(),
         session_id: sessionId,
         user_id: 'system',
         message: 'Gmail connected successfully ✅',
-        response: 'Gmail connected successfully ✅', // Enhanced response text
+        response: `🎉 **Gmail Successfully Connected!**\n\n` +
+                 `✅ Your Gmail account has been authenticated and linked to your chat session.\n\n` +
+                 `**What you can do now:**\n` +
+                 `• 📧 Check your Gmail inbox: "Check my Gmail"\n` +
+                 `• ✉️ Send emails: "Send an email to [recipient]"\n` +
+                 `• 📨 Read specific emails by asking about them\n` +
+                 `• 🔍 Search your messages\n\n` +
+                 `The Gmail button above now shows "Connected ✅" status. Your connection will persist across browser sessions!`,
         timestamp: new Date().toISOString(),
         intent_data: null,
         needs_approval: false,
