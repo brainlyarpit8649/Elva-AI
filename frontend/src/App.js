@@ -104,6 +104,31 @@ function App() {
     return () => window.removeEventListener('focus', handleFocus);
   }, [sessionId]);
 
+  // Update welcome message when Gmail status changes
+  useEffect(() => {
+    if (!gmailAuthStatus.loading && messages.length > 0) {
+      // Find and update the welcome message if it exists
+      const welcomeMessageIndex = messages.findIndex(msg => msg.isWelcome);
+      if (welcomeMessageIndex !== -1) {
+        const baseMessage = "Hi Buddy 👋 Good to see you! Elva AI at your service. Ask me anything or tell me what to do!";
+        const gmailMessage = gmailAuthStatus.authenticated 
+          ? "\n\n🎉 **Gmail is connected!** I can now help you with:\n• 📧 Check your Gmail inbox\n• ✉️ Send emails\n• 📨 Read specific emails\n• 🔍 Search your messages"
+          : gmailAuthStatus.credentialsConfigured 
+            ? "\n\n💡 **Tip:** Connect Gmail above for email assistance!" 
+            : "\n\n⚠️ **Note:** Gmail integration is not configured. Contact support to enable email features.";
+        
+        const updatedMessage = {
+          ...messages[welcomeMessageIndex],
+          response: baseMessage + gmailMessage
+        };
+        
+        const updatedMessages = [...messages];
+        updatedMessages[welcomeMessageIndex] = updatedMessage;
+        setMessages(updatedMessages);
+      }
+    }
+  }, [gmailAuthStatus.authenticated, gmailAuthStatus.credentialsConfigured, gmailAuthStatus.loading]);
+
   const addWelcomeMessage = () => {
     const baseMessage = "Hi Buddy 👋 Good to see you! Elva AI at your service. Ask me anything or tell me what to do!";
     const gmailMessage = gmailAuthStatus.authenticated 
