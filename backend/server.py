@@ -382,22 +382,53 @@ async def execute_web_automation(request: WebAutomationRequest):
         logger.error(f"Web automation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/automation-history/{session_id}")
-async def get_automation_history(session_id: str):
-    """Get automation history for a session"""
+@api_router.get("/conversation-memory/{session_id}")
+async def get_conversation_memory_info(session_id: str):
+    """Get conversation memory information and statistics for a session"""
     try:
-        logger.info(f"Getting automation history for session: {session_id}")
+        memory_stats = conversation_memory.get_memory_stats(session_id)
+        conversation_context = await conversation_memory.get_conversation_context(session_id)
+        session_summary = await conversation_memory.get_session_summary(session_id)
         
-        automation_logs = await db.automation_logs.find(
-            {"session_id": session_id}
-        ).sort("timestamp", -1).to_list(50)  # Get latest 50 records
-        
-        # Convert ObjectIds to strings for JSON serialization
-        serializable_logs = [convert_objectid_to_str(log) for log in automation_logs]
-        
-        return {"automation_history": serializable_logs}
+        return {
+            "success": True,
+            "session_id": session_id,
+            "memory_stats": memory_stats,
+            "conversation_context": conversation_context,
+            "session_summary": session_summary,
+            "context_length": len(conversation_context),
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
     except Exception as e:
-        logger.error(f"Automation history error: {e}")
+        logger.error(f"Conversation memory info error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/conversation-memory/{session_id}")
+async def clear_conversation_memory(session_id: str):
+    """Clear conversation memory for a specific session"""
+    try:
+        await conversation_memory.clear_session_memory(session_id)
+        return {
+            "success": True,
+            "message": f"Conversation memory cleared for session {session_id}",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        logger.error(f"Clear conversation memory error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/conversation-memory/cleanup")
+async def cleanup_old_conversation_memories():
+    """Cleanup old conversation memories to prevent memory leaks"""
+    try:
+        await conversation_memory.cleanup_old_memories()
+        return {
+            "success": True,
+            "message": "Old conversation memories cleaned up successfully",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        logger.error(f"Memory cleanup error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # OAuth2 endpoints for Gmail API
