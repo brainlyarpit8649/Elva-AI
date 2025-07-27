@@ -469,7 +469,7 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
             logger.info(f"🎉 Gmail authentication successful for session {session_id} - redirecting to frontend")
             # Redirect to frontend with success parameter
             return RedirectResponse(
-                url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=success&service=gmail&session_id={session_id}',
+                url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=success&service=gmail&session_id={session_id}',
                 status_code=302
             )
         else:
