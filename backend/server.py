@@ -446,7 +446,7 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
             logger.warning(f"❌ OAuth callback received error: {error}")
             # Redirect to frontend with error parameter
             return RedirectResponse(
-                url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=error&message={error}&session_id={session_id}',
+                url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=error&message={error}&session_id={session_id}',
                 status_code=302
             )
         
@@ -454,7 +454,7 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
         if not code:
             logger.error("❌ No authorization code received in OAuth callback")
             return RedirectResponse(
-                url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=error&message=no_code&session_id={session_id}',
+                url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=error&message=no_code&session_id={session_id}',
                 status_code=302
             )
         
@@ -469,14 +469,14 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
             logger.info(f"🎉 Gmail authentication successful for session {session_id} - redirecting to frontend")
             # Redirect to frontend with success parameter
             return RedirectResponse(
-                url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=success&service=gmail&session_id={session_id}',
+                url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=success&service=gmail&session_id={session_id}',
                 status_code=302
             )
         else:
             error_msg = result.get('message', 'Authentication failed')
             logger.error(f"❌ Gmail authentication failed for session {session_id}: {error_msg}")
             return RedirectResponse(
-                url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=error&message=auth_failed&details={error_msg}&session_id={session_id}',
+                url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=error&message=auth_failed&details={error_msg}&session_id={session_id}',
                 status_code=302
             )
         
@@ -484,7 +484,7 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
         logger.error(f"💥 Gmail auth callback exception: {e}")
         # Redirect to frontend with error parameter
         return RedirectResponse(
-            url=f'https://d62b4a87-6fa2-4774-94f5-8b98144d123f.preview.emergentagent.com/?auth=error&message=server_error&details={str(e)}&session_id={session_id if session_id else "unknown"}',
+            url=f'https://18de7278-a979-4e48-8ae0-085f7bf93526.preview.emergentagent.com/?auth=error&message=server_error&details={str(e)}&session_id={session_id if session_id else "unknown"}',
             status_code=302
         )
 
