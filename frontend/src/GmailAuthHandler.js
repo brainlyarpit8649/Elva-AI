@@ -10,6 +10,10 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
   const checkGmailAuthStatus = async () => {
     try {
       console.log('🔍 Checking Gmail auth status for session:', sessionId);
+      
+      // Add loading state
+      setGmailAuthStatus(prev => ({ ...prev, loading: true }));
+      
       const response = await axios.get(`${API}/gmail/status?session_id=${sessionId}`);
       const data = response.data;
       
@@ -29,7 +33,14 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
         }
       });
       
-      // Add debug information to chat if there are issues
+      // Store authentication status in localStorage for persistence
+      if (data.authenticated) {
+        localStorage.setItem('gmail-auth-status', 'true');
+      } else {
+        localStorage.removeItem('gmail-auth-status');
+      }
+      
+      // Only show debug information for actual issues, not just unauthenticated status
       if (!data.success || !data.credentials_configured || data.error) {
         console.log('🔧 Gmail Auth Issues Detected:', data);
         
@@ -44,23 +55,26 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
             `\n` +
             (!data.credentials_configured ? 
               '⚠️ **Issue**: Gmail credentials.json file is missing from backend. This is required for OAuth2 authentication to work properly.' : 
-              !data.authenticated ? 
-                '💡 Click "Connect Gmail" above to authenticate with your Google account.' : 
-                '✅ Everything looks good!'),
+              data.error ? 
+                `⚠️ **Issue**: ${data.error}` : 
+                '💡 Click "Connect Gmail" above to authenticate with your Google account.'),
           isUser: false,
           isSystem: true,
           timestamp: new Date()
         };
         
-        setTimeout(() => {
-          setMessages(prev => {
-            const hasDebugMessage = prev.some(msg => msg.id && msg.id.startsWith('gmail_debug_'));
-            if (!hasDebugMessage) {
-              return [...prev, debugMessage];
-            }
-            return prev;
-          });
-        }, 1000);
+        // Only add debug message if there are actual errors, not just lack of authentication
+        if (!data.credentials_configured || data.error) {
+          setTimeout(() => {
+            setMessages(prev => {
+              const hasDebugMessage = prev.some(msg => msg.id && msg.id.startsWith('gmail_debug_'));
+              if (!hasDebugMessage) {
+                return [...prev, debugMessage];
+              }
+              return prev;
+            });
+          }, 1000);
+        }
       }
       
     } catch (error) {
@@ -72,6 +86,9 @@ function GmailAuthHandler({ gmailAuthStatus, setGmailAuthStatus, sessionId, setM
         error: error.message,
         debugInfo: { error: error.response?.data || error.message }
       });
+      
+      // Remove any stored auth status on error
+      localStorage.removeItem('gmail-auth-status');
     }
   };
 
