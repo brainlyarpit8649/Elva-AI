@@ -227,6 +227,22 @@ Examples:
             reasoning_type="emotional"
         )
 
+    def _get_default_classification(self, user_input: str) -> TaskClassification:
+        """
+        Get default classification when AI analysis fails
+        """
+        return TaskClassification(
+            primary_intent="general_chat",
+            emotional_complexity="medium",
+            professional_tone_required=False,
+            creative_requirement="low",
+            technical_complexity="simple",
+            response_length="medium",
+            user_engagement_level="conversational",
+            context_dependency="none",
+            reasoning_type="emotional"
+        )
+
     def _calculate_routing_decision(self, classification: TaskClassification, session_id: str) -> RoutingDecision:
         """
         Calculate optimal routing decision based on sophisticated analysis
