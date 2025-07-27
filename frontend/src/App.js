@@ -98,7 +98,10 @@ function App() {
   };
 
   const startNewChat = () => {
-    setSessionId(generateSessionId());
+    // Clear the old session ID from localStorage and generate a new one
+    localStorage.removeItem('elva-session-id');
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId);
     setMessages([]);
     setShowDropPanel(false); // Close panel when starting new chat
   };
