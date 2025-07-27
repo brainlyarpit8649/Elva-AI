@@ -159,73 +159,65 @@ class AdvancedHybridAI:
 
     async def analyze_task_classification(self, user_input: str, session_id: str) -> TaskClassification:
         """
-        Advanced task classification using AI analysis
+        Advanced task classification using AI analysis with conversation context
         """
-        logger.info(f"🔍 Advanced Task Classification: {user_input[:50]}...")
+        logger.info(f"🔍 Advanced Task Classification with Context: {user_input[:50]}...")
         
-        # Use Groq for quick classification analysis
-        classification_prompt = f"""Analyze this user message and classify it across multiple dimensions. Return ONLY a JSON object.
-
-User Message: "{user_input}"
-
-Classify across these dimensions:
-{{
-  "primary_intent": "one of: general_chat, send_email, create_event, add_todo, set_reminder, linkedin_post, complex_analysis, creative_writing, technical_explanation, web_scraping, linkedin_insights, email_automation, data_extraction",
-  "emotional_complexity": "one of: low, medium, high",
-  "professional_tone_required": true or false,
-  "creative_requirement": "one of: none, low, medium, high",
-  "technical_complexity": "one of: simple, moderate, complex",
-  "response_length": "one of: short, medium, long",
-  "user_engagement_level": "one of: informational, conversational, interactive", 
-  "context_dependency": "one of: none, session, historical",
-  "reasoning_type": "one of: logical, emotional, creative, analytical"
-}}
-
-Examples:
-- "Send a professional email to my boss" → high professional_tone, low creative_requirement, medium emotional_complexity
-- "I'm feeling stressed about work" → high emotional_complexity, conversational engagement, emotional reasoning
-- "Explain quantum computing" → technical_explanation intent, complex technical_complexity, logical reasoning
-- "Write a creative story about AI" → creative_writing intent, high creative_requirement, creative reasoning"""
-
         try:
-            response = await self._get_groq_response(classification_prompt)
+            # Get conversation context for better classification
+            try:
+                memory = get_conversation_memory()
+                conversation_context = await memory.get_conversation_context(session_id)
+                logger.info(f"📚 Using conversation context for classification: {len(conversation_context)} chars")
+            except Exception as e:
+                logger.warning(f"Could not retrieve context for classification: {e}")
+                conversation_context = ""
             
-            # Extract and parse JSON
-            content = response.strip()
-            start_idx = content.find('{')
-            end_idx = content.rfind('}')
-            
-            if start_idx != -1 and end_idx != -1:
-                json_str = content[start_idx:end_idx + 1]
-                classification_data = json.loads(json_str)
-                
-                return TaskClassification(
-                    primary_intent=classification_data.get("primary_intent", "general_chat"),
-                    emotional_complexity=classification_data.get("emotional_complexity", "medium"),
-                    professional_tone_required=classification_data.get("professional_tone_required", False),
-                    creative_requirement=classification_data.get("creative_requirement", "none"),
-                    technical_complexity=classification_data.get("technical_complexity", "simple"),
-                    response_length=classification_data.get("response_length", "medium"),
-                    user_engagement_level=classification_data.get("user_engagement_level", "conversational"),
-                    context_dependency=classification_data.get("context_dependency", "none"),
-                    reasoning_type=classification_data.get("reasoning_type", "emotional")
+            # Enhanced classification prompt with context
+            classification_prompt = f"""
+{f"Previous conversation context: {conversation_context}" if conversation_context else ""}
+
+Current request: "{user_input}"
+
+Analyze this user request and classify it across multiple dimensions. Consider the conversation context when making classifications.
+
+Return JSON with these exact fields:
+- primary_intent: main intent type (general_chat, send_email, linkedin_post, create_event, add_todo, set_reminder, etc.)
+- emotional_complexity: low/medium/high (how much emotional intelligence is needed)
+- professional_tone_required: true/false (business context vs casual)
+- creative_requirement: none/low/medium/high (how much creativity is needed)
+- technical_complexity: simple/moderate/complex (technical depth required)
+- response_length: short/medium/long (expected response length)
+- user_engagement_level: informational/conversational/interactive (type of interaction)
+- context_dependency: none/session/historical (how much context is needed)
+- reasoning_type: logical/emotional/creative/analytical (primary reasoning approach)
+
+Be precise and consider nuances in the request and any context from previous messages.
+"""
+
+            try:
+                response = await self._get_groq_response(
+                    classification_prompt, 
+                    "You are an advanced task classifier with conversation awareness. Return only valid JSON."
                 )
                 
+                # Parse the JSON response
+                try:
+                    classification_data = json.loads(response.strip())
+                    classified = TaskClassification(**classification_data)
+                    logger.info(f"✅ Classification complete: {classified.primary_intent} (complexity: {classified.emotional_complexity})")
+                    return classified
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.warning(f"Classification parsing error: {e}")
+                    return self._get_default_classification(user_input)
+                
+            except Exception as e:
+                logger.error(f"Groq classification error: {e}")
+                return self._get_default_classification(user_input)
+                
         except Exception as e:
-            logger.error(f"Classification error: {e}")
-            
-        # Fallback classification
-        return TaskClassification(
-            primary_intent="general_chat",
-            emotional_complexity="medium",
-            professional_tone_required=False,
-            creative_requirement="low",
-            technical_complexity="simple",
-            response_length="medium",
-            user_engagement_level="conversational",
-            context_dependency="none",
-            reasoning_type="emotional"
-        )
+            logger.error(f"Task classification error: {e}")
+            return self._get_default_classification(user_input)
 
     def _get_default_classification(self, user_input: str) -> TaskClassification:
         """
