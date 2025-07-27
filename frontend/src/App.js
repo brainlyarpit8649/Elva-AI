@@ -313,7 +313,8 @@ function GmailAuthHandlerWrapper({
   toggleTheme,
   isDarkTheme,
   exportChat,
-  startNewChat
+  startNewChat,
+  messages
 }) {
   // Initialize Gmail auth handler inside the ToastProvider context
   const gmailAuthHandler = GmailAuthHandler({ 
