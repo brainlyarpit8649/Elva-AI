@@ -15,7 +15,7 @@ from langchain.schema import BaseMessage, HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-import aioredis
+import redis.asyncio as redis
 import pickle
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class ElvaConversationMemory:
     async def _init_redis(self):
         """Initialize Redis connection with error handling"""
         try:
-            self.redis = await aioredis.from_url(
+            self.redis = await redis.from_url(
                 self.redis_url,
                 decode_responses=False,  # We'll handle serialization
                 retry_on_timeout=True,
