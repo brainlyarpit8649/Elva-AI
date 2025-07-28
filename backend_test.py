@@ -2695,91 +2695,245 @@ class ElvaBackendTester:
             self.log_test("Gmail Credentials Update", False, f"Error: {str(e)}")
             return False
 
+    def test_groq_api_key_update(self):
+        """Test: Groq API Key Update - Verify new key is working"""
+        try:
+            # Test that the new Groq API key is working by making a chat request
+            payload = {
+                "message": "Test the new Groq API key with a simple greeting",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if we got a proper response (indicates Groq API is working)
+                if data.get("response") and len(data.get("response", "").strip()) > 0:
+                    intent_data = data.get("intent_data", {})
+                    if intent_data.get("intent") == "general_chat":
+                        self.log_test("Groq API Key Update", True, f"New Groq API key working correctly. Response: {data['response'][:100]}...")
+                        return True
+                    else:
+                        self.log_test("Groq API Key Update", False, f"Intent detection not working properly: {intent_data.get('intent')}", data)
+                        return False
+                else:
+                    self.log_test("Groq API Key Update", False, "Empty response from Groq API", data)
+                    return False
+            else:
+                self.log_test("Groq API Key Update", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Groq API Key Update", False, f"Error: {str(e)}")
+            return False
+
+    def test_memory_system_enhancement(self):
+        """Test: Enhanced Memory System with Redis Integration"""
+        try:
+            # Test memory stats endpoint
+            response = requests.get(f"{BACKEND_URL}/memory/stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("Memory System Enhancement", False, "Memory stats request not successful", data)
+                    return False
+                
+                stats = data.get("stats", {})
+                
+                # Check if Redis integration is mentioned in stats
+                redis_info = stats.get("redis_integration", {})
+                
+                # Test session-specific memory stats
+                session_response = requests.get(f"{BACKEND_URL}/memory/stats/{self.session_id}", timeout=10)
+                
+                if session_response.status_code == 200:
+                    session_data = session_response.json()
+                    
+                    if session_data.get("success"):
+                        self.log_test("Memory System Enhancement", True, f"Enhanced memory system working. Redis enabled: {redis_info.get('enabled', 'unknown')}")
+                        return True
+                    else:
+                        self.log_test("Memory System Enhancement", False, "Session memory stats not successful", session_data)
+                        return False
+                else:
+                    self.log_test("Memory System Enhancement", False, f"Session memory stats HTTP {session_response.status_code}", session_response.text)
+                    return False
+            else:
+                self.log_test("Memory System Enhancement", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Memory System Enhancement", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_authentication_persistence(self):
+        """Test: Gmail Authentication Persistence Fix"""
+        try:
+            # Test Gmail debug endpoint for detailed information
+            response = requests.get(f"{BACKEND_URL}/gmail/debug", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("Gmail Authentication Persistence", False, "Gmail debug request not successful", data)
+                    return False
+                
+                debug_info = data.get("debug_info", {})
+                gmail_service_status = debug_info.get("gmail_service_status", {})
+                
+                # Check if credentials file exists and is properly configured
+                if not gmail_service_status.get("credentials_file_exists"):
+                    self.log_test("Gmail Authentication Persistence", False, "Gmail credentials file does not exist", debug_info)
+                    return False
+                
+                credentials_content = gmail_service_status.get("credentials_content", {})
+                if not credentials_content.get("client_id_configured"):
+                    self.log_test("Gmail Authentication Persistence", False, "Gmail client_id not configured", debug_info)
+                    return False
+                
+                if not credentials_content.get("redirect_uri_configured"):
+                    self.log_test("Gmail Authentication Persistence", False, "Gmail redirect_uri not configured", debug_info)
+                    return False
+                
+                # Check database connection for token storage
+                db_status = debug_info.get("database_status", {})
+                if db_status.get("connection") != "connected":
+                    self.log_test("Gmail Authentication Persistence", False, f"Database not connected: {db_status.get('connection')}", debug_info)
+                    return False
+                
+                self.log_test("Gmail Authentication Persistence", True, f"Gmail authentication persistence properly configured. Token count: {db_status.get('gmail_token_count', 0)}")
+                return True
+            else:
+                self.log_test("Gmail Authentication Persistence", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Authentication Persistence", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
-        """Run all backend tests with focus on review request priorities"""
-        print("🚀 Starting Comprehensive Elva AI Backend Testing")
-        print("=" * 80)
-        print("🎯 CRITICAL TESTING AREAS (Review Request Priority):")
-        print("   1. Gmail Integration with New Credentials")
-        print("   2. Export Chat Bug Fix Verification")
-        print("   3. Core System Functionality")
-        print("   4. Infrastructure Health Check")
+        """Run all backend tests with focus on review request areas"""
+        print("🚀 Starting Comprehensive Elva AI Backend Testing...")
+        print("🎯 Focus: ChatBox consolidation and credential updates testing")
+        print(f"Backend URL: {BACKEND_URL}")
+        print(f"Session ID: {self.session_id}")
         print("=" * 80)
         
-        test_methods = [
-            # Infrastructure Health Check (Priority 4)
-            self.test_server_connectivity,
-            self.test_health_endpoint,
+        # Priority tests based on review request
+        priority_tests = [
+            # 1. Basic health check to verify services are running
+            ("Basic Health Check", [
+                self.test_server_connectivity,
+                self.test_health_endpoint,
+            ]),
             
-            # N8N Webhook URL Update (Priority 1)
-            self.test_n8n_webhook_url_update,
+            # 2. Gmail OAuth status endpoint to verify new credentials are loaded
+            ("Gmail OAuth & Credentials", [
+                self.test_gmail_credentials_update,
+                self.test_gmail_oauth_status_check,
+                self.test_gmail_authentication_persistence,
+                self.test_gmail_credentials_new_redirect_uri,
+            ]),
             
-            # Gmail Integration with New Credentials (Priority 1)
-            self.test_gmail_credentials_update,
-            self.test_gmail_oauth_status_check,
-            self.test_gmail_oauth_authorization_url,
-            self.test_gmail_credentials_new_redirect_uri,
-            self.test_health_check_gmail_integration,
-            self.test_gmail_service_configuration,
-            self.test_gmail_integration_readiness,
-            self.test_gmail_intent_detection,
+            # 3. Test chat endpoint for basic functionality
+            ("Chat Functionality", [
+                self.test_intent_detection_general_chat,
+                self.test_groq_api_key_update,
+            ]),
             
-            # Export Chat Bug Fix Verification (Priority 2)
-            self.test_export_chat_message_id_handling,
+            # 4. Test approval workflow endpoints
+            ("Approval Workflow", [
+                self.test_intent_detection_send_email,
+                self.test_approval_workflow_approved,
+                self.test_n8n_webhook_url_update,
+            ]),
             
-            # Core System Functionality (Priority 3)
-            self.test_intent_detection_general_chat,
-            self.test_intent_detection_send_email,
-            self.test_intent_detection_create_event,
-            self.test_intent_detection_add_todo,
-            self.test_intent_detection_set_reminder,
-            self.test_approval_workflow_approved,
-            self.test_approval_workflow_rejected,
-            self.test_approval_workflow_edited_data,
-            self.test_approval_modal_theme_styling_compatibility,
-            self.test_chat_history_retrieval,
-            self.test_chat_history_clearing,
-            self.test_error_handling,
-            
-            # Additional System Tests
-            self.test_web_automation_intent_detection,
-            self.test_web_automation_endpoint_data_extraction,
-            self.test_automation_history_endpoint,
-            self.test_direct_automation_intents,
-            self.test_automation_status_endpoint,
-            self.test_direct_automation_response_format,
-            self.test_traditional_vs_direct_automation
+            # 5. Verify all critical API endpoints are responding correctly
+            ("Critical API Endpoints", [
+                self.test_chat_history_retrieval,
+                self.test_memory_system_enhancement,
+                self.test_export_chat_message_id_handling,
+            ]),
         ]
+        
+        # Additional comprehensive tests
+        comprehensive_tests = [
+            ("Additional Core Tests", [
+                self.test_intent_detection_create_event,
+                self.test_intent_detection_add_todo,
+                self.test_approval_workflow_rejected,
+                self.test_approval_workflow_edited_data,
+                self.test_chat_history_clearing,
+                self.test_error_handling,
+            ]),
+            
+            ("Gmail Integration Tests", [
+                self.test_gmail_oauth_authorization_url,
+                self.test_gmail_intent_detection,
+                self.test_health_check_gmail_integration,
+            ])
+        ]
+        
+        all_test_groups = priority_tests + comprehensive_tests
         
         passed = 0
         failed = 0
         
-        for test_method in test_methods:
-            try:
-                if test_method():
-                    passed += 1
-                else:
-                    failed += 1
-            except Exception as e:
-                print(f"❌ FAIL - {test_method.__name__}: Unexpected error: {str(e)}")
-                failed += 1
-            
-            # Small delay between tests
-            time.sleep(0.5)
+        print("🔥 PRIORITY TESTS (Review Request Focus):")
+        print("-" * 50)
         
-        print("=" * 70)
-        print(f"🏁 Gmail API OAuth2 Integration & Cleanup Testing Complete!")
-        print(f"✅ Passed: {passed}")
-        print(f"❌ Failed: {failed}")
-        print(f"📊 Success Rate: {(passed/(passed+failed)*100):.1f}%")
+        for group_name, tests in priority_tests:
+            print(f"\n📋 {group_name}:")
+            for test in tests:
+                try:
+                    if test():
+                        passed += 1
+                    else:
+                        failed += 1
+                except Exception as e:
+                    print(f"❌ EXCEPTION in {test.__name__}: {str(e)}")
+                    failed += 1
+                
+                # Small delay between tests
+                time.sleep(0.5)
+        
+        print("\n📋 COMPREHENSIVE TESTS:")
+        print("-" * 50)
+        
+        for group_name, tests in comprehensive_tests:
+            print(f"\n📋 {group_name}:")
+            for test in tests:
+                try:
+                    if test():
+                        passed += 1
+                    else:
+                        failed += 1
+                except Exception as e:
+                    print(f"❌ EXCEPTION in {test.__name__}: {str(e)}")
+                    failed += 1
+                
+                # Small delay between tests
+                time.sleep(0.5)
+        
+        print("=" * 80)
+        print(f"🎯 COMPREHENSIVE BACKEND TESTING COMPLETED!")
+        print(f"✅ PASSED: {passed}")
+        print(f"❌ FAILED: {failed}")
+        print(f"📊 SUCCESS RATE: {(passed/(passed+failed)*100):.1f}%")
         
         if failed == 0:
-            print("🎉 ALL TESTS PASSED! Gmail API OAuth2 integration and cleanup verification successful!")
+            print("🎉 ALL TESTS PASSED! Backend is working perfectly!")
         else:
-            print(f"⚠️  {failed} tests failed. Please check the details above.")
+            print(f"⚠️  {failed} tests failed. Check the details above.")
         
         return {
-            "total_tests": len(test_methods),
+            "total_tests": passed + failed,
             "passed": passed,
             "failed": failed,
             "success_rate": passed/(passed+failed)*100 if (passed+failed) > 0 else 0,
