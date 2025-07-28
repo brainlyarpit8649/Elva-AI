@@ -250,6 +250,48 @@ Be precise and consider nuances in the request and any context from previous mes
             reasoning_type="emotional"
         )
 
+    def _get_default_classification_with_intent(self, user_input: str, primary_intent: str) -> TaskClassification:
+        """
+        Get default classification with specific intent when AI analysis fails
+        """
+        # Set appropriate defaults based on intent type
+        if primary_intent in ["send_email", "linkedin_post"]:
+            return TaskClassification(
+                primary_intent=primary_intent,
+                emotional_complexity="medium",
+                professional_tone_required=True,
+                creative_requirement="medium",
+                technical_complexity="simple",
+                response_length="medium",
+                user_engagement_level="interactive",
+                context_dependency="session",
+                reasoning_type="creative"
+            )
+        elif primary_intent in ["create_event", "add_todo", "set_reminder"]:
+            return TaskClassification(
+                primary_intent=primary_intent,
+                emotional_complexity="low",
+                professional_tone_required=True,
+                creative_requirement="low",
+                technical_complexity="simple",
+                response_length="short",
+                user_engagement_level="informational",
+                context_dependency="none",
+                reasoning_type="logical"
+            )
+        else:  # general_chat and others
+            return TaskClassification(
+                primary_intent=primary_intent,
+                emotional_complexity="medium",
+                professional_tone_required=False,
+                creative_requirement="low",
+                technical_complexity="simple",
+                response_length="medium",
+                user_engagement_level="conversational",
+                context_dependency="none",
+                reasoning_type="emotional"
+            )
+
     def _calculate_routing_decision(self, classification: TaskClassification, session_id: str) -> RoutingDecision:
         """
         Calculate optimal routing decision based on sophisticated analysis
