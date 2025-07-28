@@ -164,6 +164,12 @@ class AdvancedHybridAI:
         logger.info(f"🔍 Advanced Task Classification with Context: {user_input[:50]}...")
         
         try:
+            # First, get the intent using our working intent detection
+            intent_data = await self._groq_intent_detection(user_input)
+            primary_intent = intent_data.get("intent", "general_chat")
+            
+            logger.info(f"🎯 Detected intent: {primary_intent}")
+            
             # Get conversation context for better classification
             try:
                 memory = get_conversation_memory()
@@ -173,16 +179,17 @@ class AdvancedHybridAI:
                 logger.warning(f"Could not retrieve context for classification: {e}")
                 conversation_context = ""
             
-            # Enhanced classification prompt with context
+            # Enhanced classification prompt with context and detected intent
             classification_prompt = f"""
 {f"Previous conversation context: {conversation_context}" if conversation_context else ""}
 
 Current request: "{user_input}"
+Detected intent: "{primary_intent}"
 
-Analyze this user request and classify it across multiple dimensions. Consider the conversation context when making classifications.
+Based on the detected intent "{primary_intent}" and the user request, classify this across multiple dimensions:
 
 Return JSON with these exact fields:
-- primary_intent: main intent type (general_chat, send_email, linkedin_post, create_event, add_todo, set_reminder, etc.)
+- primary_intent: "{primary_intent}" (use this exact value)
 - emotional_complexity: low/medium/high (how much emotional intelligence is needed)
 - professional_tone_required: true/false (business context vs casual)
 - creative_requirement: none/low/medium/high (how much creativity is needed)
@@ -191,6 +198,12 @@ Return JSON with these exact fields:
 - user_engagement_level: informational/conversational/interactive (type of interaction)
 - context_dependency: none/session/historical (how much context is needed)
 - reasoning_type: logical/emotional/creative/analytical (primary reasoning approach)
+
+Guidelines by intent type:
+- send_email, linkedin_post: professional_tone_required=true, creative_requirement=medium
+- create_event, add_todo, set_reminder: professional_tone_required=true, reasoning_type=logical
+- general_chat: emotional_complexity=medium, reasoning_type=emotional
+- creative_writing: creative_requirement=high, reasoning_type=creative
 
 Be precise and consider nuances in the request and any context from previous messages.
 """
@@ -204,16 +217,18 @@ Be precise and consider nuances in the request and any context from previous mes
                 # Parse the JSON response
                 try:
                     classification_data = json.loads(response.strip())
+                    # Ensure primary_intent matches our detected intent
+                    classification_data["primary_intent"] = primary_intent
                     classified = TaskClassification(**classification_data)
                     logger.info(f"✅ Classification complete: {classified.primary_intent} (complexity: {classified.emotional_complexity})")
                     return classified
                 except (json.JSONDecodeError, TypeError) as e:
                     logger.warning(f"Classification parsing error: {e}")
-                    return self._get_default_classification(user_input)
+                    return self._get_default_classification_with_intent(user_input, primary_intent)
                 
             except Exception as e:
                 logger.error(f"Groq classification error: {e}")
-                return self._get_default_classification(user_input)
+                return self._get_default_classification_with_intent(user_input, primary_intent)
                 
         except Exception as e:
             logger.error(f"Task classification error: {e}")
