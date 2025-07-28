@@ -100,7 +100,7 @@ def validate_webhook_data(webhook_data: dict) -> bool:
             return False
     
     # Validate intent is one of the supported types
-    supported_intents = ["send_email", "create_event", "add_todo", "set_reminder", "linkedin_post"]
+    supported_intents = ["send_email", "create_event", "add_todo", "set_reminder"]
     if webhook_data.get("intent") not in supported_intents:
         logger.error(f"Unsupported intent: {webhook_data.get('intent')}")
         return False
