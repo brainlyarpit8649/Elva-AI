@@ -107,7 +107,7 @@ class AdvancedHybridAI:
             "intent_routing": {
                 "general_chat": {"model": ModelChoice.CLAUDE, "confidence": 0.9},
                 "send_email": {"model": ModelChoice.BOTH_SEQUENTIAL, "confidence": 0.85},
-                "linkedin_post": {"model": ModelChoice.BOTH_SEQUENTIAL, "confidence": 0.85},
+                "generate_post_prompt_package": {"model": ModelChoice.CLAUDE, "confidence": 0.85},
                 "create_event": {"model": ModelChoice.BOTH_SEQUENTIAL, "confidence": 0.8},
                 "add_todo": {"model": ModelChoice.CLAUDE, "confidence": 0.7},
                 "set_reminder": {"model": ModelChoice.CLAUDE, "confidence": 0.7},
