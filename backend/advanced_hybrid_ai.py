@@ -200,7 +200,7 @@ Return JSON with these exact fields:
 - reasoning_type: logical/emotional/creative/analytical (primary reasoning approach)
 
 Guidelines by intent type:
-- send_email, linkedin_post: professional_tone_required=true, creative_requirement=medium
+- send_email, generate_post_prompt_package: professional_tone_required=true, creative_requirement=medium
 - create_event, add_todo, set_reminder: professional_tone_required=true, reasoning_type=logical
 - general_chat: emotional_complexity=medium, reasoning_type=emotional
 - creative_writing: creative_requirement=high, reasoning_type=creative
