@@ -399,36 +399,51 @@ class ElvaConversationMemory:
 
     async def get_session_summary(self, session_id: str) -> str:
         """
-        Get an AI-generated summary of the entire conversation session.
+        Get an AI-generated summary of the entire conversation session with improved fallback messaging.
         """
         try:
             summary_memory = await self.get_summary_memory(session_id)
             
             # Get the summary from Langchain's summary memory
-            if hasattr(summary_memory, 'buffer'):
+            if hasattr(summary_memory, 'buffer') and summary_memory.buffer:
                 return summary_memory.buffer
             else:
                 # Generate summary using Claude
                 full_context = await self.get_conversation_context(session_id, use_summary=False)
                 
-                if not full_context or not self.claude_api_key:
-                    return "No conversation summary available."
+                if not full_context or full_context == "No conversation history available.":
+                    logger.info(f"No conversation context available for session {session_id}")
+                    return "Summary unavailable — conversation too short to generate meaningful summary."
                     
-                claude_chat = LlmChat(
-                    api_key=self.claude_api_key,
-                    session_id=f"summary_{session_id}",
-                    system_message="""You are a conversation summarizer. Create a concise, helpful summary 
-                    of the conversation that captures key topics, user preferences, and important context.
+                if not self.claude_api_key:
+                    logger.warning("Claude API key missing for summary generation")
+                    return "Summary unavailable — summarization service not configured."
                     
-                    Focus on information that would be useful for future interactions."""
-                ).with_model("anthropic", "claude-3-5-sonnet-20241022").with_max_tokens(1024)
-                
-                summary = await claude_chat.send_message(UserMessage(text=f"Summarize this conversation:\n\n{full_context}"))
-                return summary
+                try:
+                    claude_chat = LlmChat(
+                        api_key=self.claude_api_key,
+                        session_id=f"summary_{session_id}",
+                        system_message="""You are a conversation summarizer. Create a concise, helpful summary 
+                        of the conversation that captures key topics, user preferences, and important context.
+                        
+                        Focus on information that would be useful for future interactions."""
+                    ).with_model("anthropic", "claude-3-5-sonnet-20241022").with_max_tokens(1024)
+                    
+                    summary = await claude_chat.send_message(UserMessage(text=f"Summarize this conversation:\n\n{full_context}"))
+                    
+                    if summary and len(summary.strip()) > 0:
+                        return summary
+                    else:
+                        logger.warning(f"Empty summary received for session {session_id}")
+                        return "Summary unavailable — conversation summarization failed to generate content."
+                        
+                except Exception as claude_error:
+                    logger.error(f"Claude summarization failed for session {session_id}: {claude_error}")
+                    return f"Summary unavailable — summarization failed due to service error."
                 
         except Exception as e:
-            logger.error(f"Error getting session summary: {e}")
-            return "Unable to generate conversation summary."
+            logger.error(f"Error getting session summary for {session_id}: {e}")
+            return "Summary unavailable — unable to process conversation history."
 
     async def clear_session_memory(self, session_id: str):
         """
