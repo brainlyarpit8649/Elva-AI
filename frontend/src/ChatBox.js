@@ -201,17 +201,23 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   const renderGmailSuccessMessage = () => {
     return (
       <div className="gmail-success-message">
-        <div className="gmail-success-text">
-          <span>✅</span>
-          <span>Gmail connected successfully</span>
+        <div className="gmail-success-title">
+          🎉 Gmail Authentication Successful!
         </div>
-        <div style={{ 
-          marginTop: '12px', 
-          fontSize: '0.95rem', 
-          color: 'rgba(16, 185, 129, 0.8)',
-          fontWeight: '500'
-        }}>
-          🎉 You can now use Gmail features like checking your inbox, sending emails, and reading messages!
+        
+        <div style={{ fontWeight: '600', marginBottom: '12px', color: 'rgba(255, 255, 255, 0.9)' }}>
+          Your Gmail account has been securely connected using OAuth2. I can now help you with:
+        </div>
+        
+        <ul className="gmail-features-list">
+          <li>📧 Check your Gmail inbox</li>
+          <li>✉️ Send emails</li>
+          <li>📨 Read specific emails</li>
+          <li>🔍 Search your messages</li>
+        </ul>
+        
+        <div className="gmail-example-text">
+          Try saying: "Check my Gmail inbox" or "Send an email to [someone]"
         </div>
       </div>
     );
