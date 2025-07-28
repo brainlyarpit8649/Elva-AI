@@ -14,7 +14,7 @@ import json
 
 # Import our enhanced hybrid AI system
 from advanced_hybrid_ai import detect_intent, generate_friendly_draft, handle_general_chat, advanced_hybrid_ai
-from webhook_handler import send_approved_action
+from webhook_handler import send_approved_action, send_to_n8n
 from playwright_service import playwright_service, AutomationResult
 from direct_automation_handler import direct_automation_handler
 from gmail_oauth_service import GmailOAuthService
