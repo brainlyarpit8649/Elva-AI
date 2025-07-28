@@ -1,225 +1,169 @@
 {
-  "total_tests": 31,
+  "total_tests": 23,
   "passed": 0,
-  "failed": 31,
+  "failed": 23,
   "success_rate": 0.0,
   "results": [
     {
       "test": "Server Connectivity",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:33.846740",
+      "timestamp": "2025-07-28T11:07:50.493491",
       "response_data": ""
     },
     {
       "test": "Health Endpoint - Enhanced System",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:34.365440",
+      "timestamp": "2025-07-28T11:07:51.014646",
       "response_data": ""
-    },
-    {
-      "test": "N8N Webhook URL Update",
-      "success": false,
-      "details": "Health check failed with HTTP 502",
-      "timestamp": "2025-07-27T09:53:34.885869",
-      "response_data": null
     },
     {
       "test": "Gmail Credentials Update",
       "success": false,
       "details": "Gmail status check failed with HTTP 502",
-      "timestamp": "2025-07-27T09:53:35.406327",
+      "timestamp": "2025-07-28T11:07:51.529564",
       "response_data": null
     },
     {
       "test": "Gmail OAuth Status Check",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:35.928540",
+      "timestamp": "2025-07-28T11:07:52.045979",
       "response_data": ""
     },
     {
-      "test": "Gmail OAuth Authorization URL",
+      "test": "Gmail Authentication Persistence",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:36.448723",
+      "timestamp": "2025-07-28T11:07:52.565057",
       "response_data": ""
     },
     {
       "test": "Gmail Credentials - New Redirect URI",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:36.968831",
+      "timestamp": "2025-07-28T11:07:53.090544",
       "response_data": ""
-    },
-    {
-      "test": "Health Check - Gmail Integration",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:37.487882",
-      "response_data": ""
-    },
-    {
-      "test": "Gmail Service Configuration",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:38.010440",
-      "response_data": ""
-    },
-    {
-      "test": "Gmail Integration Readiness",
-      "success": false,
-      "details": "System not fully ready:\n    \u274c Gmail status endpoint failed: HTTP 502\n    \u274c Gmail auth endpoint failed: HTTP 502\n    \u274c Gmail inbox endpoint unexpected response: HTTP 502\n    \u274c Health check failed: HTTP 502",
-      "timestamp": "2025-07-27T09:53:38.581625",
-      "response_data": null
-    },
-    {
-      "test": "Gmail Intent Detection",
-      "success": false,
-      "details": "\u274c Gmail inbox check: HTTP 502\n    \u274c Gmail unread check: HTTP 502\n    \u274c Gmail inbox display: HTTP 502\n    \u274c New emails check: HTTP 502",
-      "timestamp": "2025-07-27T09:53:39.172804",
-      "response_data": null
-    },
-    {
-      "test": "Export Chat - Message ID Handling",
-      "success": false,
-      "details": "Failed to create test message: HTTP 502",
-      "timestamp": "2025-07-27T09:53:39.693166",
-      "response_data": null
     },
     {
       "test": "Intent Detection - General Chat",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:40.210589",
+      "timestamp": "2025-07-28T11:07:53.606944",
+      "response_data": ""
+    },
+    {
+      "test": "Groq API Key Update",
+      "success": false,
+      "details": "HTTP 502",
+      "timestamp": "2025-07-28T11:07:54.124169",
       "response_data": ""
     },
     {
       "test": "Intent Detection - Send Email",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:40.726332",
-      "response_data": ""
-    },
-    {
-      "test": "Intent Detection - Create Event",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:41.243378",
-      "response_data": ""
-    },
-    {
-      "test": "Intent Detection - Add Todo",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:41.760545",
-      "response_data": ""
-    },
-    {
-      "test": "Intent Detection - Set Reminder",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:42.277969",
+      "timestamp": "2025-07-28T11:07:54.640044",
       "response_data": ""
     },
     {
       "test": "Approval Workflow - Approved",
       "success": false,
       "details": "No message IDs available for approval test",
-      "timestamp": "2025-07-27T09:53:42.778359",
+      "timestamp": "2025-07-28T11:07:55.140390",
       "response_data": null
+    },
+    {
+      "test": "N8N Webhook URL Update",
+      "success": false,
+      "details": "Health check failed with HTTP 502",
+      "timestamp": "2025-07-28T11:07:55.678653",
+      "response_data": null
+    },
+    {
+      "test": "Chat History - Retrieval",
+      "success": false,
+      "details": "HTTP 502",
+      "timestamp": "2025-07-28T11:07:56.191856",
+      "response_data": ""
+    },
+    {
+      "test": "Memory System Enhancement",
+      "success": false,
+      "details": "HTTP 502",
+      "timestamp": "2025-07-28T11:07:56.719653",
+      "response_data": ""
+    },
+    {
+      "test": "Export Chat - Message ID Handling",
+      "success": false,
+      "details": "Failed to create test message: HTTP 502",
+      "timestamp": "2025-07-28T11:07:57.233245",
+      "response_data": null
+    },
+    {
+      "test": "Intent Detection - Create Event",
+      "success": false,
+      "details": "HTTP 502",
+      "timestamp": "2025-07-28T11:07:57.748230",
+      "response_data": ""
+    },
+    {
+      "test": "Intent Detection - Add Todo",
+      "success": false,
+      "details": "HTTP 502",
+      "timestamp": "2025-07-28T11:07:58.263380",
+      "response_data": ""
     },
     {
       "test": "Approval Workflow - Rejected",
       "success": false,
       "details": "Failed to create reminder for rejection test",
-      "timestamp": "2025-07-27T09:53:43.294481",
+      "timestamp": "2025-07-28T11:07:58.779341",
       "response_data": null
     },
     {
       "test": "Approval Workflow - Edited Data",
       "success": false,
       "details": "Failed to create email for edit test",
-      "timestamp": "2025-07-27T09:53:43.813166",
+      "timestamp": "2025-07-28T11:07:59.293900",
       "response_data": null
-    },
-    {
-      "test": "Approval Modal - Theme Styling Compatibility",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:44.351716",
-      "response_data": ""
-    },
-    {
-      "test": "Chat History - Retrieval",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:44.867845",
-      "response_data": ""
     },
     {
       "test": "Chat History - Clearing",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:45.384454",
+      "timestamp": "2025-07-28T11:07:59.810139",
       "response_data": ""
     },
     {
       "test": "Error Handling - Invalid Message ID",
       "success": false,
       "details": "Expected 404, got 502",
-      "timestamp": "2025-07-27T09:53:45.902279",
+      "timestamp": "2025-07-28T11:08:00.324738",
       "response_data": null
     },
     {
-      "test": "Web Automation Intent Detection",
-      "success": false,
-      "details": "\u274c Web scraping intent: HTTP 502\n    \u274c LinkedIn insights intent: HTTP 502\n    \u274c Email automation intent: HTTP 502\n    \u274c Price monitoring intent: HTTP 502\n    \u274c Data extraction intent: HTTP 502",
-      "timestamp": "2025-07-27T09:53:46.484170",
-      "response_data": null
-    },
-    {
-      "test": "Web Automation - Data Extraction",
+      "test": "Gmail OAuth Authorization URL",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:47.003453",
+      "timestamp": "2025-07-28T11:08:00.870063",
       "response_data": ""
     },
     {
-      "test": "Automation History",
+      "test": "Gmail Intent Detection",
+      "success": false,
+      "details": "\u274c Gmail inbox check: HTTP 502\n    \u274c Gmail unread check: HTTP 502\n    \u274c Gmail inbox display: HTTP 502\n    \u274c New emails check: HTTP 502",
+      "timestamp": "2025-07-28T11:08:01.444868",
+      "response_data": null
+    },
+    {
+      "test": "Health Check - Gmail Integration",
       "success": false,
       "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:47.518861",
+      "timestamp": "2025-07-28T11:08:01.958473",
       "response_data": ""
-    },
-    {
-      "test": "Direct Automation Intents",
-      "success": false,
-      "details": "\u274c LinkedIn notifications check: HTTP 502\n    \u274c Price scraping: HTTP 502\n    \u274c Product listings scraping: HTTP 502\n    \u274c LinkedIn job alerts: HTTP 502\n    \u274c Website updates monitoring: HTTP 502\n    \u274c Competitor monitoring: HTTP 502\n    \u274c News articles scraping: HTTP 502",
-      "timestamp": "2025-07-27T09:53:48.134328",
-      "response_data": null
-    },
-    {
-      "test": "Automation Status Endpoint",
-      "success": false,
-      "details": "\u274c check_linkedin_notifications: HTTP 502\n    \u274c scrape_price: HTTP 502\n    \u274c scrape_product_listings: HTTP 502\n    \u274c linkedin_job_alerts: HTTP 502\n    \u274c check_website_updates: HTTP 502\n    \u274c monitor_competitors: HTTP 502\n    \u274c scrape_news_articles: HTTP 502",
-      "timestamp": "2025-07-27T09:53:48.751875",
-      "response_data": null
-    },
-    {
-      "test": "Direct Automation Response Format",
-      "success": false,
-      "details": "HTTP 502",
-      "timestamp": "2025-07-27T09:53:49.268976",
-      "response_data": ""
-    },
-    {
-      "test": "Traditional vs Direct Automation",
-      "success": false,
-      "details": "Traditional automation request failed",
-      "timestamp": "2025-07-27T09:53:49.805177",
-      "response_data": null
     }
   ]
 }
