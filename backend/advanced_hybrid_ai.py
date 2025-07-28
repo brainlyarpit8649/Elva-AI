@@ -675,8 +675,8 @@ The content you generate will be used EXACTLY as written in the approval modal."
         intent = intent_data.get("intent", "general_chat")
         if intent == "send_email":
             base_message += " When drafting emails, focus on clarity, professionalism, and appropriate tone."
-        elif intent == "linkedin_post":
-            base_message += " For LinkedIn posts, create engaging professional content that encourages interaction."
+        elif intent == "generate_post_prompt_package":
+            base_message += " For LinkedIn post preparation, help gather project details and create structured instructions for AI generation."
         elif intent in ["add_todo", "set_reminder"]:
             base_message += " Be encouraging and supportive when helping with task management."
         
