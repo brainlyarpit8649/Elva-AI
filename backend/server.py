@@ -152,7 +152,8 @@ async def chat(request: ChatRequest):
         else:
             # Traditional flow for non-direct automation intents
             web_automation_intents = ["web_scraping", "linkedin_insights", "email_automation", "data_extraction"]
-            needs_approval = intent_data.get("intent") not in ["general_chat"]
+            # generate_post_prompt_package doesn't need approval - it just shows blocks for user review
+            needs_approval = intent_data.get("intent") not in ["general_chat", "generate_post_prompt_package"]
             
             # For web automation intents, check if we have required credentials
             if intent_data.get("intent") in web_automation_intents:
