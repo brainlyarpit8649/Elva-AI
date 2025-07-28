@@ -70,12 +70,13 @@ For "Add finish the report to my todo list":
   "due_date": ""
 }}
 
-For "Post about AI on LinkedIn":
+For "Help me prepare a LinkedIn post about my project":
 {{
-  "intent": "linkedin_post",
-  "topic": "Artificial Intelligence",
-  "category": "Technology",
-  "post_content": "Excited to share insights about AI advancements! #AI #Technology"
+  "intent": "generate_post_prompt_package",
+  "topic": "Project accomplishment",
+  "project_name": "Calculator App",
+  "project_type": "Web Development",
+  "tech_stack": "HTML, CSS, JavaScript"
 }}
 
 For anything else:
