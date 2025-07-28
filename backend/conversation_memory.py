@@ -93,53 +93,95 @@ class ElvaConversationMemory:
             logger.warning(f"⚠️ Redis connection failed: {e}. Using MongoDB-only mode")
             self.redis = None
 
+    async def _get_memory(self, session_id: str, memory_type: str = 'buffer'):
+        """
+        Shared utility method to get or create memory for a session.
+        Reduces code duplication between buffer and summary memory methods.
+        
+        Args:
+            session_id: Session identifier
+            memory_type: Either 'buffer' or 'summary'
+            
+        Returns:
+            ConversationBufferMemory or ConversationSummaryBufferMemory
+        """
+        try:
+            # Check Redis cache first for buffer memory
+            if memory_type == 'buffer' and self.redis:
+                cached_memory = await self._get_memory_from_redis(session_id)
+                if cached_memory:
+                    return cached_memory
+            
+            # Get the appropriate session dictionary
+            memory_sessions = (self.buffer_memory_sessions if memory_type == 'buffer' 
+                             else self.summary_memory_sessions)
+            
+            # Return existing memory if available
+            if session_id in memory_sessions:
+                memory = memory_sessions[session_id]
+                # Cache buffer memory in Redis
+                if memory_type == 'buffer' and self.redis:
+                    await self._cache_memory_in_redis(session_id, memory)
+                return memory
+            
+            # Create MongoDB chat message history for this session
+            message_history = await self._get_native_mongodb_history(session_id)
+            
+            # Create memory based on type
+            if memory_type == 'buffer':
+                memory = ConversationBufferMemory(
+                    chat_memory=message_history,
+                    return_messages=True,
+                    memory_key="chat_history",
+                    input_key="input",
+                    output_key="output"
+                )
+            else:  # summary
+                memory = ConversationSummaryBufferMemory(
+                    llm=self.groq_llm,
+                    chat_memory=message_history,
+                    max_token_limit=self.max_token_limit,
+                    return_messages=True,
+                    memory_key="chat_history",
+                    input_key="input", 
+                    output_key="output"
+                )
+            
+            # Store in session dictionary
+            memory_sessions[session_id] = memory
+            
+            # Cache buffer memory in Redis
+            if memory_type == 'buffer' and self.redis:
+                await self._cache_memory_in_redis(session_id, memory)
+            
+            logger.info(f"🆕 Created {memory_type} memory for session: {session_id}")
+            return memory
+            
+        except Exception as e:
+            logger.error(f"Error creating {memory_type} memory for session {session_id}: {e}")
+            # Return a fallback empty memory
+            if memory_type == 'buffer':
+                return ConversationBufferMemory(return_messages=True)
+            else:
+                return ConversationSummaryBufferMemory(
+                    llm=self.groq_llm,
+                    max_token_limit=self.max_token_limit,
+                    return_messages=True
+                )
+
     async def get_buffer_memory(self, session_id: str) -> ConversationBufferMemory:
         """
-        Get or create buffer memory for a session.
+        Get or create buffer memory for a session with Redis caching.
         Keeps recent conversation turns in memory for immediate context.
         """
-        if session_id not in self.buffer_memory_sessions:
-            # Create MongoDB chat message history for this session
-            message_history = await self._get_mongodb_history(session_id)
-            
-            # Initialize buffer memory with chat history
-            memory = ConversationBufferMemory(
-                chat_memory=message_history,
-                return_messages=True,
-                memory_key="chat_history",
-                input_key="input",
-                output_key="output"
-            )
-            
-            self.buffer_memory_sessions[session_id] = memory
-            logger.info(f"🆕 Created buffer memory for session: {session_id}")
-            
-        return self.buffer_memory_sessions[session_id]
+        return await self._get_memory(session_id, 'buffer')
 
     async def get_summary_memory(self, session_id: str) -> ConversationSummaryBufferMemory:
         """
         Get or create summary buffer memory for a session.
         Maintains conversation summary when buffer gets too long.
         """
-        if session_id not in self.summary_memory_sessions:
-            # Create MongoDB chat message history for this session  
-            message_history = await self._get_mongodb_history(session_id)
-            
-            # Initialize summary buffer memory
-            memory = ConversationSummaryBufferMemory(
-                llm=self.groq_llm,
-                chat_memory=message_history,
-                max_token_limit=self.max_token_limit,
-                return_messages=True,
-                memory_key="chat_history",
-                input_key="input", 
-                output_key="output"
-            )
-            
-            self.summary_memory_sessions[session_id] = memory
-            logger.info(f"🧠 Created summary memory for session: {session_id}")
-            
-        return self.summary_memory_sessions[session_id]
+        return await self._get_memory(session_id, 'summary')
 
     async def _get_mongodb_history(self, session_id: str):
         """
