@@ -262,7 +262,7 @@ Your responses should be:
 Respond based on intent type:
 
 - send_email → Draft a friendly, professional email
-- linkedin_post → Create an engaging professional LinkedIn post
+- generate_post_prompt_package → Help prepare LinkedIn post content and instructions for AI generation
 - create_event / add_todo / set_reminder → Provide a warm summary of the task
 - general_chat → Respond naturally and helpfully
 
