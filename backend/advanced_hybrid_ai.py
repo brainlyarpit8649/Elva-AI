@@ -504,7 +504,7 @@ Write a professional, engaging LinkedIn post based on the above project descript
 Use a friendly and confident tone.
 Highlight what the user built, the purpose, and what they learned.
 Use relevant emojis to make the post more engaging and thematic (e.g., 💻, 🚀).
-Instruct to use hashtags to AI.
+Use relevant hashtags to improve visibility and reach.
 
 DO NOT generate the actual LinkedIn post content. Only provide the description and instructions for AI generation."""
             
