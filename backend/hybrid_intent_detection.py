@@ -39,7 +39,7 @@ class HybridAIChat:
             
         # Task routing configuration
         self.claude_tasks = {
-            "general_chat", "send_email", "linkedin_post", 
+            "general_chat", "send_email", "generate_post_prompt_package", 
             "friendly_draft", "creative_content", "emotional_response"
         }
         
