@@ -782,11 +782,25 @@ async def health_check():
                     "conversation_summarization", 
                     "intent_context_storage",
                     "memory_cleanup",
-                    "mongodb_integration"
+                    "mongodb_integration",
+                    "redis_caching",
+                    "native_mongodb_history",
+                    "enhanced_fallback_messaging",
+                    "memory_stats_api",
+                    "early_api_key_validation"
                 ],
                 "max_token_limit": conversation_memory.max_token_limit,
                 "buffer_window_size": conversation_memory.buffer_window_size,
-                "memory_cleanup_interval": str(conversation_memory.memory_cleanup_interval)
+                "memory_cleanup_interval_hours": conversation_memory.memory_cleanup_hours,
+                "redis_integration": {
+                    "enabled": conversation_memory.redis is not None,
+                    "url": conversation_memory.redis_url if conversation_memory.redis is not None else "not_configured",
+                    "ttl_seconds": conversation_memory.redis_ttl
+                },
+                "api_keys": {
+                    "groq_configured": bool(os.getenv("GROQ_API_KEY")),
+                    "claude_configured": bool(os.getenv("CLAUDE_API_KEY"))
+                }
             }
         }
         
