@@ -223,6 +223,42 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     );
   };
 
+  const renderPostPromptPackage = (message) => {
+    const intentData = message.intent_data;
+    
+    if (!intentData || intentData.intent !== 'generate_post_prompt_package') {
+      return null;
+    }
+
+    return (
+      <div className="post-prompt-package-display">
+        <div className="package-block post-description-block">
+          <div className="block-header">
+            <span className="block-icon">📝</span>
+            <h3 className="block-title">Post Description</h3>
+          </div>
+          <div className="block-content">
+            {intentData.post_description || "No description available"}
+          </div>
+        </div>
+
+        <div className="package-block ai-instructions-block">
+          <div className="block-header">
+            <span className="block-icon">🤖</span>
+            <h3 className="block-title">AI Instructions</h3>
+          </div>
+          <div className="block-content">
+            {intentData.ai_instructions || "No instructions available"}
+          </div>
+        </div>
+
+        <div className="package-confirmation">
+          💬 <strong>Ready to send?</strong> Just say <strong>'send'</strong>, <strong>'yes, go ahead'</strong>, or <strong>'submit'</strong> to send this package to your automation workflow!
+        </div>
+      </div>
+    );
+  };
+
   const renderEmailDisplay = (response) => {
     // Handle authentication prompts
     if (response.includes('🔐 Please connect your Gmail account')) {
