@@ -19,7 +19,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://67d702ac-e945-429b-ad8d-9ad023dfb124.preview.emergentagent.com/api"
+BACKEND_URL = "https://72e97293-ded7-4170-aeb3-7df6343cbbb4.preview.emergentagent.com/api"
 
 class ContentSynchronizationTester:
     def __init__(self):
