@@ -31,7 +31,7 @@ You can detect the following intents:
 2. create_event
 3. add_todo
 4. set_reminder
-5. linkedin_post
+5. generate_post_prompt_package
 6. general_chat
 
 Examples of COMPLETE JSON responses:
