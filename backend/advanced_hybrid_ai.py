@@ -255,7 +255,7 @@ Be precise and consider nuances in the request and any context from previous mes
         Get default classification with specific intent when AI analysis fails
         """
         # Set appropriate defaults based on intent type
-        if primary_intent in ["send_email", "linkedin_post"]:
+        if primary_intent in ["send_email", "generate_post_prompt_package"]:
             return TaskClassification(
                 primary_intent=primary_intent,
                 emotional_complexity="medium",
