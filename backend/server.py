@@ -116,6 +116,97 @@ async def chat(request: ChatRequest):
     try:
         logger.info(f"🚀 Advanced Hybrid AI Chat: {request.message}")
         
+        # Check if this is a send confirmation for a pending post prompt package
+        user_msg_lower = request.message.lower().strip()
+        send_commands = ["send", "yes, go ahead", "submit", "send it", "yes go ahead", "go ahead"]
+        is_send_command = any(cmd in user_msg_lower for cmd in send_commands)
+        
+        if is_send_command and request.session_id in pending_post_packages:
+            # User wants to send the pending post prompt package to n8n
+            pending_data = pending_post_packages[request.session_id]
+            
+            # Send to N8N webhook
+            try:
+                webhook_result = await send_to_n8n({
+                    "intent": "generate_post_prompt_package",
+                    "session_id": request.session_id,
+                    "post_description": pending_data.get("post_description", ""),
+                    "ai_instructions": pending_data.get("ai_instructions", ""),
+                    "topic": pending_data.get("topic", ""),
+                    "project_name": pending_data.get("project_name", ""),
+                    "project_type": pending_data.get("project_type", ""),
+                    "tech_stack": pending_data.get("tech_stack", "")
+                })
+                
+                # Clear the pending data
+                del pending_post_packages[request.session_id]
+                
+                # Create success response
+                response_text = "✅ **Post Prompt Package Sent Successfully!**\n\nYour LinkedIn post preparation package has been sent to the automation system. You can now use the Post Description and AI Instructions to generate your LinkedIn post with any AI tool of your choice."
+                
+                # Save to database
+                chat_msg = ChatMessage(
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    message=request.message,
+                    response=response_text,
+                    intent_data={"intent": "post_package_sent", "webhook_result": webhook_result}
+                )
+                await db.chat_messages.insert_one(chat_msg.dict())
+                
+                return ChatResponse(
+                    id=chat_msg.id,
+                    message=request.message,
+                    response=response_text,
+                    intent_data={"intent": "post_package_sent"},
+                    needs_approval=False,
+                    timestamp=chat_msg.timestamp
+                )
+                
+            except Exception as e:
+                logger.error(f"Error sending post package to webhook: {e}")
+                response_text = "❌ **Error sending post package.** Please try again or contact support if the issue persists."
+                
+                chat_msg = ChatMessage(
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    message=request.message,
+                    response=response_text,
+                    intent_data={"intent": "post_package_error", "error": str(e)}
+                )
+                await db.chat_messages.insert_one(chat_msg.dict())
+                
+                return ChatResponse(
+                    id=chat_msg.id,
+                    message=request.message,
+                    response=response_text,
+                    intent_data={"intent": "post_package_error"},
+                    needs_approval=False,
+                    timestamp=chat_msg.timestamp
+                )
+        
+        elif is_send_command and request.session_id not in pending_post_packages:
+            # User said send but no pending post package
+            response_text = "🤔 I don't see any pending LinkedIn post prompt package to send. Please first ask me to help you prepare a LinkedIn post about your project or topic."
+            
+            chat_msg = ChatMessage(
+                session_id=request.session_id,
+                user_id=request.user_id,
+                message=request.message,
+                response=response_text,
+                intent_data={"intent": "no_pending_package"}
+            )
+            await db.chat_messages.insert_one(chat_msg.dict())
+            
+            return ChatResponse(
+                id=chat_msg.id,
+                message=request.message,
+                response=response_text,
+                intent_data={"intent": "no_pending_package"},
+                needs_approval=False,
+                timestamp=chat_msg.timestamp
+            )
+        
         # Use advanced hybrid processing with sophisticated routing
         intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
             request.message, 
