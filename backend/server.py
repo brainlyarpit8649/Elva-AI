@@ -871,7 +871,7 @@ async def health_check():
                 "routing_models": {
                     "claude_tasks": ["high_emotional", "creative_content", "conversational", "professional_warm"],
                     "groq_tasks": ["logical_reasoning", "structured_analysis", "technical_complex", "intent_detection"],
-                    "sequential_tasks": ["professional_emails", "linkedin_posts", "complex_creative"],
+                    "sequential_tasks": ["professional_emails", "complex_creative"],
                     "web_automation_tasks": ["web_scraping", "data_extraction"]
                 }
             },
