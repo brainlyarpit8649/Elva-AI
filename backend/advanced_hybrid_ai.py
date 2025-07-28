@@ -699,7 +699,7 @@ Send email: {{"intent": "send_email", "recipient_name": "Name", "subject": "Subj
 Create event: {{"intent": "create_event", "event_title": "Title", "date": "Date", "time": "Time"}}
 Add todo: {{"intent": "add_todo", "task": "Task description", "due_date": "Date"}}
 Set reminder: {{"intent": "set_reminder", "reminder_text": "Text", "reminder_date": "Date"}}
-LinkedIn post: {{"intent": "linkedin_post", "topic": "Topic", "post_content": "Content"}}
+LinkedIn post: {{"intent": "generate_post_prompt_package", "topic": "Topic", "project_name": "Project name", "project_type": "Type"}}
 Creative writing: {{"intent": "creative_writing", "content": "Creative content", "topic": "Topic"}}
 
 Web automation (traditional): 
