@@ -447,7 +447,7 @@ class ElvaConversationMemory:
 
     async def clear_session_memory(self, session_id: str):
         """
-        Clear memory for a specific session.
+        Clear memory for a specific session from both local cache and Redis.
         """
         try:
             # Remove from active memory sessions
@@ -456,6 +456,12 @@ class ElvaConversationMemory:
                 
             if session_id in self.summary_memory_sessions:
                 del self.summary_memory_sessions[session_id]
+                
+            # Clear from Redis cache
+            if self.redis:
+                cache_key = f"buffer_memory:{session_id}"
+                await self.redis.delete(cache_key)
+                logger.debug(f"🗑️ Cleared Redis cache for session: {session_id}")
                 
             # Clear context data from database
             await self.db.conversation_context.delete_many({"session_id": session_id})
@@ -468,6 +474,7 @@ class ElvaConversationMemory:
     async def cleanup_old_memories(self):
         """
         Cleanup old memory sessions to prevent memory leaks.
+        Enhanced with Redis TTL information.
         """
         try:
             cutoff_time = datetime.utcnow() - self.memory_cleanup_interval
@@ -477,26 +484,84 @@ class ElvaConversationMemory:
                 "timestamp": {"$lt": cutoff_time}
             })
             
-            logger.info(f"🧹 Cleaned up {result.deleted_count} old memory records")
+            # Clean up local memory sessions (they don't have timestamps, so clean all)
+            old_buffer_sessions = len(self.buffer_memory_sessions)
+            old_summary_sessions = len(self.summary_memory_sessions)
+            
+            self.buffer_memory_sessions.clear()
+            self.summary_memory_sessions.clear()
+            
+            logger.info(f"🧹 Cleaned up {result.deleted_count} old memory records, "
+                       f"{old_buffer_sessions} buffer sessions, {old_summary_sessions} summary sessions")
             
         except Exception as e:
             logger.error(f"Error during memory cleanup: {e}")
 
-    def get_memory_stats(self, session_id: str) -> Dict[str, Any]:
+    async def get_memory_stats(self, session_id: str = None) -> Dict[str, Any]:
         """
-        Get memory statistics for a session.
+        Get comprehensive memory statistics for a session or overall system.
+        Enhanced with Redis information.
         """
-        stats = {
-            "session_id": session_id,
-            "has_buffer_memory": session_id in self.buffer_memory_sessions,
-            "has_summary_memory": session_id in self.summary_memory_sessions,
-            "memory_cleanup_interval": str(self.memory_cleanup_interval),
-            "max_token_limit": self.max_token_limit,
-            "buffer_window_size": self.buffer_window_size,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-        return stats
+        try:
+            stats = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "memory_cleanup_interval_hours": self.memory_cleanup_hours,
+                "max_token_limit": self.max_token_limit,
+                "buffer_window_size": self.buffer_window_size,
+                "redis_ttl_seconds": self.redis_ttl,
+                "redis_connected": self.redis is not None
+            }
+            
+            if session_id:
+                # Session-specific stats
+                stats.update({
+                    "session_id": session_id,
+                    "has_buffer_memory": session_id in self.buffer_memory_sessions,
+                    "has_summary_memory": session_id in self.summary_memory_sessions,
+                })
+                
+                # Check Redis cache status
+                if self.redis:
+                    cache_key = f"buffer_memory:{session_id}"
+                    ttl = await self.redis.ttl(cache_key)
+                    stats["redis_cache_ttl"] = ttl if ttl > 0 else None
+                    stats["redis_cached"] = ttl > 0
+                else:
+                    stats["redis_cache_ttl"] = None
+                    stats["redis_cached"] = False
+                    
+            else:
+                # System-wide stats
+                stats.update({
+                    "total_buffer_sessions": len(self.buffer_memory_sessions),
+                    "total_summary_sessions": len(self.summary_memory_sessions),
+                    "api_keys_configured": {
+                        "groq": bool(os.getenv("GROQ_API_KEY")),
+                        "claude": bool(os.getenv("CLAUDE_API_KEY"))
+                    }
+                })
+                
+                # Redis cluster stats
+                if self.redis:
+                    try:
+                        redis_info = await self.redis.info()
+                        stats["redis_info"] = {
+                            "connected_clients": redis_info.get("connected_clients", 0),
+                            "used_memory": redis_info.get("used_memory_human", "N/A"),
+                            "total_commands_processed": redis_info.get("total_commands_processed", 0)
+                        }
+                    except Exception as redis_error:
+                        logger.warning(f"Failed to get Redis info: {redis_error}")
+                        stats["redis_info"] = {"error": str(redis_error)}
+                        
+            return stats
+            
+        except Exception as e:
+            logger.error(f"Error getting memory stats: {e}")
+            return {
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
 
 
 class SimpleChatMessageHistory:
