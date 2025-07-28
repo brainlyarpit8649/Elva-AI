@@ -1,11 +1,12 @@
 """
 Enhanced Conversation Memory System for Elva AI
-Implements Langchain memory modules for better conversation context and continuity
+Implements Langchain memory modules with Redis caching for better conversation context and continuity
 """
 
 import os
 import json
 import logging
+import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory
@@ -14,6 +15,8 @@ from langchain.schema import BaseMessage, HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+import aioredis
+import pickle
 
 logger = logging.getLogger(__name__)
 
