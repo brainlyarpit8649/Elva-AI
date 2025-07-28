@@ -277,7 +277,7 @@ class ElvaConversationMemory:
 
     async def add_message_to_memory(self, session_id: str, user_message: str, ai_response: str, intent_data: dict = None):
         """
-        Add a conversation turn to both buffer and summary memory.
+        Add a conversation turn to both buffer and summary memory with Redis caching.
         """
         try:
             # Get both memory types
@@ -292,6 +292,10 @@ class ElvaConversationMemory:
             summary_memory.chat_memory.add_user_message(user_message)
             summary_memory.chat_memory.add_ai_message(ai_response)
             
+            # Update Redis cache for buffer memory
+            if self.redis:
+                await self._cache_memory_in_redis(session_id, buffer_memory)
+            
             # Store enhanced context if intent data available
             if intent_data:
                 await self._store_intent_context(session_id, intent_data)
@@ -303,7 +307,7 @@ class ElvaConversationMemory:
 
     async def get_conversation_context(self, session_id: str, use_summary: bool = False) -> str:
         """
-        Retrieve conversation context for the session.
+        Retrieve conversation context for the session with enhanced memory awareness.
         
         Args:
             session_id: Session identifier
@@ -322,6 +326,9 @@ class ElvaConversationMemory:
             memory_vars = memory.load_memory_variables({})
             chat_history = memory_vars.get("chat_history", [])
             
+            if not chat_history:
+                return "No conversation history available."
+            
             # Format conversation context
             context_parts = []
             for message in chat_history[-self.buffer_window_size:]:  # Last N messages
@@ -334,7 +341,7 @@ class ElvaConversationMemory:
             
         except Exception as e:
             logger.error(f"Error getting conversation context: {e}")
-            return ""
+            return "Unable to retrieve conversation context at this time."
 
     async def get_relevant_context(self, session_id: str, query: str) -> str:
         """
