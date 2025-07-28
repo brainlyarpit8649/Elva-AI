@@ -275,6 +275,24 @@ async def chat(request: ChatRequest):
                         logger.error(f"Direct web scraping error: {e}")
                         response_text += f"\n\n❌ **Automation Error:** {str(e)}"
         
+        # Handle generate_post_prompt_package intent - store pending data
+        if intent_data.get("intent") == "generate_post_prompt_package":
+            # Store the post description and AI instructions for later confirmation
+            pending_post_packages[request.session_id] = {
+                "post_description": intent_data.get("post_description", ""),
+                "ai_instructions": intent_data.get("ai_instructions", ""),
+                "topic": intent_data.get("topic", ""),
+                "project_name": intent_data.get("project_name", ""),
+                "project_type": intent_data.get("project_type", ""),
+                "tech_stack": intent_data.get("tech_stack", ""),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            # Add confirmation instruction to the response
+            response_text += "\n\n💬 **Ready to send?** Just say **'send'**, **'yes, go ahead'**, or **'submit'** to send this package to your automation workflow!"
+            
+            logger.info(f"📝 Stored pending post package for session {request.session_id}")
+        
         # Save to database
         chat_msg = ChatMessage(
             session_id=request.session_id,
