@@ -740,6 +740,13 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
                 <div className="flex-1">
                   {message.isGmailSuccess ? (
                     renderGmailSuccessMessage()
+                  ) : message.intent_data?.intent === 'generate_post_prompt_package' ? (
+                    <div>
+                      <div className="whitespace-pre-wrap mb-4">
+                        {message.response ? renderEmailDisplay(message.response) : message.message}
+                      </div>
+                      {renderPostPromptPackage(message)}
+                    </div>
                   ) : (
                     <div className="whitespace-pre-wrap">
                       {message.response ? renderEmailDisplay(message.response) : message.message}
