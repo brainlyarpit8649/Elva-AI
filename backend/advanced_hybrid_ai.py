@@ -491,16 +491,22 @@ Body: [exact email content that will be used]
 
 The content you write for Subject and Body will be used EXACTLY as written in the approval modal. Make sure the body is complete and ready to send."""
             
-        elif intent == "linkedin_post":
+        elif intent == "generate_post_prompt_package":
             base_message += """ 
             
-CRITICAL: When creating LinkedIn posts, structure your response EXACTLY as follows:
+CRITICAL: When helping prepare a LinkedIn post prompt package, structure your response EXACTLY as follows:
 
-📱 Here's an engaging LinkedIn post for you:
+📝 **Post Description**
+[Clear description of what the post is about - summarize the project, achievement, or topic]
 
-[exact post content including hashtags and formatting - this exact text will be used]
+🤖 **AI Instructions**  
+Write a professional, engaging LinkedIn post based on the above project description.
+Use a friendly and confident tone.
+Highlight what the user built, the purpose, and what they learned.
+Use relevant emojis to make the post more engaging and thematic (e.g., 💻, 🚀).
+Instruct to use hashtags to AI.
 
-The post content you generate will be used EXACTLY as written in the approval modal. Make it complete and ready to post."""
+DO NOT generate the actual LinkedIn post content. Only provide the description and instructions for AI generation."""
             
         elif intent == "creative_writing":
             base_message += """ 
