@@ -183,16 +183,81 @@ class ElvaConversationMemory:
         """
         return await self._get_memory(session_id, 'summary')
 
-    async def _get_mongodb_history(self, session_id: str):
+    async def _get_memory_from_redis(self, session_id: str) -> Optional[ConversationBufferMemory]:
+        """Get buffer memory from Redis cache"""
+        try:
+            if not self.redis:
+                return None
+                
+            cache_key = f"buffer_memory:{session_id}"
+            cached_data = await self.redis.get(cache_key)
+            
+            if cached_data:
+                memory = pickle.loads(cached_data)
+                logger.debug(f"📋 Retrieved buffer memory from Redis for session: {session_id}")
+                return memory
+                
+        except Exception as e:
+            logger.error(f"Error retrieving memory from Redis: {e}")
+            
+        return None
+
+    async def _cache_memory_in_redis(self, session_id: str, memory: ConversationBufferMemory):
+        """Cache buffer memory in Redis with TTL"""
+        try:
+            if not self.redis:
+                return
+                
+            cache_key = f"buffer_memory:{session_id}"
+            serialized_memory = pickle.dumps(memory)
+            
+            # Set with TTL
+            await self.redis.setex(cache_key, self.redis_ttl, serialized_memory)
+            logger.debug(f"💾 Cached buffer memory in Redis for session: {session_id}, TTL: {self.redis_ttl}s")
+            
+        except Exception as e:
+            logger.error(f"Error caching memory in Redis: {e}")
+
+    async def _get_native_mongodb_history(self, session_id: str):
         """
-        Create a MongoDB chat message history adapter for Langchain.
-        This bridges our existing MongoDB storage with Langchain memory.
+        Create native LangChain MongoDB chat message history.
+        Replaces the custom SimpleChatMessageHistory with native LangChain MongoDB integration.
+        """
+        try:
+            # Use native LangChain MongoDB integration
+            mongo_url = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+            db_name = os.getenv("DB_NAME", "test_database")
+            
+            # Create native MongoDB chat message history
+            message_history = MongoDBChatMessageHistory(
+                connection_string=mongo_url,
+                database_name=db_name,
+                collection_name="chat_messages",
+                session_id=session_id
+            )
+            
+            logger.debug(f"📚 Created native MongoDB history for session: {session_id}")
+            return message_history
+            
+        except Exception as e:
+            logger.error(f"Error creating native MongoDB history for session {session_id}: {e}")
+            # Fallback to custom implementation if native fails
+            return await self._get_mongodb_history_fallback(session_id)
+
+    async def _get_mongodb_history_fallback(self, session_id: str):
+        """
+        Fallback method using custom MongoDB integration.
+        Used when native LangChain MongoDB integration fails.
         """
         try:
             # Retrieve existing messages from our MongoDB collection
             messages = await self.db.chat_messages.find(
                 {"session_id": session_id}
             ).sort("timestamp", 1).to_list(1000)
+            
+            # Log warning if we hit the 1000 message limit
+            if len(messages) == 1000:
+                logger.warning(f"⚠️ Message truncation detected for session {session_id}: Retrieved exactly 1000 messages. Consider implementing pagination.")
             
             # Convert our message format to Langchain format
             langchain_messages = []
@@ -207,7 +272,7 @@ class ElvaConversationMemory:
             return SimpleChatMessageHistory(messages=langchain_messages)
             
         except Exception as e:
-            logger.error(f"Error creating MongoDB history for session {session_id}: {e}")
+            logger.error(f"Error creating fallback MongoDB history for session {session_id}: {e}")
             return SimpleChatMessageHistory(messages=[])
 
     async def add_message_to_memory(self, session_id: str, user_message: str, ai_response: str, intent_data: dict = None):
