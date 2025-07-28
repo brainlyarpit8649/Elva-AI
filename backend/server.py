@@ -400,6 +400,38 @@ async def get_automation_history(session_id: str):
         logger.error(f"Automation history error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/memory/stats")
+async def get_memory_system_stats():
+    """Get comprehensive memory system statistics and health information"""
+    try:
+        system_stats = await conversation_memory.get_memory_stats()
+        
+        return {
+            "success": True,
+            "message": "Memory system statistics retrieved successfully",
+            "stats": system_stats,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        logger.error(f"Memory system stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/memory/stats/{session_id}")
+async def get_session_memory_stats(session_id: str):
+    """Get memory statistics for a specific session"""
+    try:
+        session_stats = await conversation_memory.get_memory_stats(session_id)
+        
+        return {
+            "success": True,
+            "message": f"Memory statistics retrieved for session: {session_id}",
+            "stats": session_stats,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        logger.error(f"Session memory stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/conversation-memory/{session_id}")
 async def get_conversation_memory_info(session_id: str):
     """Get conversation memory information and statistics for a session"""
