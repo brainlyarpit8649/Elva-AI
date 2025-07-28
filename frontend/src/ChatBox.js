@@ -666,10 +666,61 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     );
   };
 
-  const renderAIAvatar = () => {
+  // Enhanced message rendering with better structure
+  const renderMessageContent = (message) => {
+    const formatTimestamp = (timestamp) => {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
-      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
-        <span className="text-white text-sm font-bold">🤖</span>
+      <div className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+        <div className={`max-w-3xl ${message.isUser ? 'order-2' : 'order-1'}`}>
+          <div className={`message-bubble p-4 rounded-xl shadow-lg ${
+            message.isUser 
+              ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white ml-auto' 
+              : message.isSystem 
+                ? 'bg-cyan-900/30 border border-cyan-500/30 text-cyan-100'
+                : message.isEdit
+                  ? 'bg-green-900/30 border border-green-500/30 text-green-100'
+                  : message.isWelcome
+                    ? 'bg-gradient-to-br from-purple-900/40 to-blue-900/40 border border-purple-500/30 text-purple-100'
+                    : message.isGmailSuccess
+                      ? 'bg-transparent border-0 p-0' // Special styling for Gmail success
+                      : 'bg-gray-800/40 backdrop-blur-sm border border-gray-600/30 text-white'
+          }`}>
+            {!message.isUser && (
+              <div className="flex items-start space-x-3">
+                {!message.isGmailSuccess && renderAIAvatar()}
+                <div className="flex-1">
+                  {message.isGmailSuccess ? (
+                    renderGmailSuccessMessage()
+                  ) : (
+                    <div className="whitespace-pre-wrap">
+                      {message.response ? renderEmailDisplay(message.response) : message.message}
+                    </div>
+                  )}
+                  {renderIntentData(message.intent_data)}
+                  <div className="text-xs opacity-70 mt-2">
+                    {formatTimestamp(message.timestamp)}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {message.isUser && (
+              <div>
+                <div className="whitespace-pre-wrap">
+                  {message.message}
+                </div>
+                <div className="text-xs opacity-70 mt-2">
+                  {formatTimestamp(message.timestamp)}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
