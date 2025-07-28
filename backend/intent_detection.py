@@ -96,7 +96,7 @@ friendly_prompt = ChatPromptTemplate.from_messages([
 Respond based on intent type:
 
 - send_email → Draft a friendly email
-- linkedin_post → Draft a professional LinkedIn post
+- generate_post_prompt_package → Help prepare LinkedIn post content and instructions
 - create_event / add_todo / set_reminder → Summarize task or reminder
 - general_chat → Return the user message
 
