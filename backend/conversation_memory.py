@@ -23,11 +23,19 @@ logger = logging.getLogger(__name__)
 class ElvaConversationMemory:
     """
     Enhanced conversation memory system that combines Langchain's memory modules
-    with Elva AI's hybrid architecture for optimal context retention and retrieval.
+    with Redis caching and Elva AI's hybrid architecture for optimal context retention and retrieval.
     """
     
     def __init__(self, db):
         self.db = db
+        
+        # Validate API keys early
+        self._validate_api_keys()
+        
+        # Initialize Redis connection
+        self.redis = None
+        self.redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.redis_ttl = int(os.getenv("REDIS_TTL", 21600))  # 6 hours default
         
         # Initialize Groq LLM for memory summarization
         self.groq_llm = ChatOpenAI(
@@ -47,9 +55,43 @@ class ElvaConversationMemory:
         # Memory settings
         self.max_token_limit = 1000  # For summary buffer memory
         self.buffer_window_size = 10  # Number of recent messages to keep in buffer
-        self.memory_cleanup_interval = timedelta(hours=24)  # Clean old memories
+        self.memory_cleanup_hours = int(os.getenv("MEMORY_CLEANUP_HOURS", 24))
+        self.memory_cleanup_interval = timedelta(hours=self.memory_cleanup_hours)
         
-        logger.info("🧠 Enhanced Conversation Memory System initialized")
+        # Initialize Redis connection
+        asyncio.create_task(self._init_redis())
+        
+        logger.info("🧠 Enhanced Conversation Memory System with Redis caching initialized")
+
+    def _validate_api_keys(self):
+        """Validate LLM API keys early and log warnings if missing"""
+        groq_key = os.getenv("GROQ_API_KEY")
+        claude_key = os.getenv("CLAUDE_API_KEY")
+        
+        if not groq_key:
+            logger.warning("⚠️ GROQ_API_KEY is missing - memory summarization may fail")
+        
+        if not claude_key:
+            logger.warning("⚠️ CLAUDE_API_KEY is missing - enhanced context analysis unavailable")
+        
+        if groq_key and claude_key:
+            logger.info("✅ All LLM API keys validated successfully")
+
+    async def _init_redis(self):
+        """Initialize Redis connection with error handling"""
+        try:
+            self.redis = await aioredis.from_url(
+                self.redis_url,
+                decode_responses=False,  # We'll handle serialization
+                retry_on_timeout=True,
+                socket_connect_timeout=5
+            )
+            # Test connection
+            await self.redis.ping()
+            logger.info(f"✅ Redis connected successfully at {self.redis_url}")
+        except Exception as e:
+            logger.warning(f"⚠️ Redis connection failed: {e}. Using MongoDB-only mode")
+            self.redis = None
 
     async def get_buffer_memory(self, session_id: str) -> ConversationBufferMemory:
         """
