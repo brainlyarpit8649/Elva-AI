@@ -489,9 +489,21 @@ backend:
         -agent: "main"
         -comment: "MAJOR FIX: Implementing Gmail authentication persistence fixes as requested by user. 1) Updated credentials.json with real Gmail OAuth2 credentials including correct client_secret and redirect URIs for current backend URL, 2) Fixed hardcoded redirect URLs in server.py to use correct backend URL, 3) Updated frontend .env with correct backend URL. Next: Fix session-based token storage and status checking, update UI to show proper connection state with Connected ✅ button state."
 
+  - task: "Enhanced Memory System with Redis Integration"
+    implemented: true
+    working: "NA"
+    file: "conversation_memory.py, server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "MAJOR MEMORY SYSTEM ENHANCEMENT: Implemented comprehensive memory system enhancements with Redis integration while keeping all LangChain components. 🧠 KEY ENHANCEMENTS: 1) Added Redis caching for buffer sessions with configurable TTL (6-24h), 2) Enhanced with native MongoDBChatMessageHistory integration, 3) Implemented shared _get_memory() utility method to eliminate code duplication, 4) Added early API key validation for GROQ and Claude, 5) Enhanced fallback messaging with detailed error explanations, 6) Added MongoDB pagination warnings for 1000+ message truncation, 7) Created comprehensive memory stats API endpoints (/api/memory/stats, /api/memory/stats/{session_id}), 8) Updated health check with Redis integration status. 🔧 TECHNICAL IMPROVEMENTS: Redis TTL automatic cleanup, improved error handling, enhanced memory statistics with Redis cache status, fallback to MongoDB when Redis unavailable, comprehensive logging for all memory operations. All LangChain memory components preserved and enhanced."
+
 agent_communication:
     -agent: "main"
-    -message: "🎯 WEBHOOK URL UPDATE & GMAIL CREDENTIALS SETUP COMPLETED! Successfully completed Phase 1 and Phase 2 tasks: 1) N8N WEBHOOK URL UPDATE - Updated webhook URL from 'https://kumararpit9468.app.n8n.cloud/webhook/elva-entry' to 'https://kumararpit8649.app.n8n.cloud/webhook/main-controller' in both .env and webhook_handler.py fallback, 2) GMAIL CREDENTIALS UPDATE - Created credentials.json with new OAuth2 configuration including proper client_id, redirect_uri, and javascript_origins for the current backend URL. Backend service restarted successfully to load new configuration. Ready for comprehensive testing to verify webhook integration and Gmail OAuth2 functionality are working correctly with new settings."
+    -message: "🎯 MEMORY SYSTEM ENHANCEMENT COMPLETED! Successfully implemented comprehensive memory system enhancements with Redis integration while preserving all LangChain functionality. Added Redis caching for buffer sessions with TTL, native MongoDB integration, shared utility methods, enhanced fallback messaging, API key validation, and comprehensive memory stats API endpoints. The system now provides faster memory access through Redis while maintaining full LangChain compatibility. Backend restarted successfully and ready for comprehensive testing of enhanced memory capabilities."
 
   - task: "Playwright Web Automation Integration"
     implemented: true
