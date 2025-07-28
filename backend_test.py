@@ -2817,6 +2817,325 @@ class ElvaBackendTester:
             self.log_test("Gmail Authentication Persistence", False, f"Error: {str(e)}")
             return False
 
+    def test_generate_post_prompt_package_intent_detection(self):
+        """Test 26: Generate Post Prompt Package Intent Detection - NEW SYSTEM"""
+        try:
+            payload = {
+                "message": "Help me prepare a LinkedIn post about my calculator project",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check intent classification - should be generate_post_prompt_package NOT linkedin_post
+                intent_data = data.get("intent_data", {})
+                detected_intent = intent_data.get("intent")
+                
+                if detected_intent != "generate_post_prompt_package":
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, f"Wrong intent detected: {detected_intent}, expected: generate_post_prompt_package", data)
+                    return False
+                
+                # Check needs_approval is False (key difference from old linkedin_post)
+                if data.get("needs_approval") != False:
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, f"needs_approval should be False, got: {data.get('needs_approval')}", data)
+                    return False
+                
+                # Check that intent_data contains post_description and ai_instructions fields
+                required_fields = ["post_description", "ai_instructions"]
+                missing_fields = [field for field in required_fields if field not in intent_data]
+                
+                if missing_fields:
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, f"Missing required fields: {missing_fields}", intent_data)
+                    return False
+                
+                # Verify no "post_content" field exists (old linkedin_post format)
+                if "post_content" in intent_data:
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, "Found old 'post_content' field - should not exist in new system", intent_data)
+                    return False
+                
+                # Check that post_description and ai_instructions have content
+                post_description = intent_data.get("post_description", "")
+                ai_instructions = intent_data.get("ai_instructions", "")
+                
+                if not post_description or post_description.strip() == "":
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, "post_description field is empty", intent_data)
+                    return False
+                
+                if not ai_instructions or ai_instructions.strip() == "":
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, "ai_instructions field is empty", intent_data)
+                    return False
+                
+                # Check response contains confirmation instruction
+                response_text = data.get("response", "")
+                if "send" not in response_text.lower() or "go ahead" not in response_text.lower():
+                    self.log_test("Generate Post Prompt Package - Intent Detection", False, "Response missing send confirmation instruction", data)
+                    return False
+                
+                self.message_ids.append(data["id"])
+                self.log_test("Generate Post Prompt Package - Intent Detection", True, f"✅ NEW SYSTEM WORKING: Intent={detected_intent}, needs_approval={data.get('needs_approval')}, has post_description and ai_instructions blocks")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package - Intent Detection", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package - Intent Detection", False, f"Error: {str(e)}")
+            return False
+
+    def test_generate_post_prompt_package_send_confirmation(self):
+        """Test 27: Generate Post Prompt Package Send Confirmation - NEW WORKFLOW"""
+        try:
+            # First create a generate_post_prompt_package intent
+            payload = {
+                "message": "Help me create a LinkedIn post about my AI chatbot project",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code != 200:
+                self.log_test("Generate Post Prompt Package - Send Confirmation", False, "Failed to create initial post prompt package")
+                return False
+            
+            data = response.json()
+            if data.get("intent_data", {}).get("intent") != "generate_post_prompt_package":
+                self.log_test("Generate Post Prompt Package - Send Confirmation", False, "Initial request didn't create generate_post_prompt_package intent")
+                return False
+            
+            # Now send follow-up message: "send"
+            send_payload = {
+                "message": "send",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            send_response = requests.post(f"{BACKEND_URL}/chat", json=send_payload, timeout=15)
+            
+            if send_response.status_code == 200:
+                send_data = send_response.json()
+                
+                # Check that it triggers webhook sending
+                intent_data = send_data.get("intent_data", {})
+                detected_intent = intent_data.get("intent")
+                
+                if detected_intent != "post_package_sent":
+                    self.log_test("Generate Post Prompt Package - Send Confirmation", False, f"Wrong intent after send: {detected_intent}, expected: post_package_sent", send_data)
+                    return False
+                
+                # Check success response
+                response_text = send_data.get("response", "")
+                if "Post Prompt Package Sent Successfully" not in response_text:
+                    self.log_test("Generate Post Prompt Package - Send Confirmation", False, "Missing success message in response", send_data)
+                    return False
+                
+                # Check webhook_result is present
+                if "webhook_result" not in intent_data:
+                    self.log_test("Generate Post Prompt Package - Send Confirmation", False, "No webhook_result in intent_data", intent_data)
+                    return False
+                
+                self.log_test("Generate Post Prompt Package - Send Confirmation", True, "✅ Send confirmation working: Package sent to N8N webhook successfully")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package - Send Confirmation", False, f"HTTP {send_response.status_code}", send_response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package - Send Confirmation", False, f"Error: {str(e)}")
+            return False
+
+    def test_generate_post_prompt_package_follow_up_questions(self):
+        """Test 28: Generate Post Prompt Package Follow-up Questions"""
+        try:
+            payload = {
+                "message": "Help me create LinkedIn content",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if system asks follow-up questions for project details
+                response_text = data.get("response", "").lower()
+                
+                # Look for follow-up question indicators
+                follow_up_indicators = [
+                    "project", "tech stack", "achievements", "what", "tell me", 
+                    "describe", "details", "about", "which", "name"
+                ]
+                
+                has_follow_up = any(indicator in response_text for indicator in follow_up_indicators)
+                
+                if not has_follow_up:
+                    self.log_test("Generate Post Prompt Package - Follow-up Questions", False, "Response doesn't contain follow-up questions for project details", data)
+                    return False
+                
+                # Check that it's either general_chat or generate_post_prompt_package intent
+                intent_data = data.get("intent_data", {})
+                detected_intent = intent_data.get("intent")
+                
+                valid_intents = ["general_chat", "generate_post_prompt_package"]
+                if detected_intent not in valid_intents:
+                    self.log_test("Generate Post Prompt Package - Follow-up Questions", False, f"Unexpected intent: {detected_intent}, expected one of: {valid_intents}", data)
+                    return False
+                
+                self.log_test("Generate Post Prompt Package - Follow-up Questions", True, f"✅ System asks follow-up questions for project details. Intent: {detected_intent}")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package - Follow-up Questions", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package - Follow-up Questions", False, f"Error: {str(e)}")
+            return False
+
+    def test_generate_post_prompt_package_error_handling(self):
+        """Test 29: Generate Post Prompt Package Error Handling - Send without pending package"""
+        try:
+            # Create a new session to ensure no pending package
+            new_session_id = str(uuid.uuid4())
+            
+            # Send "send" without any pending package
+            payload = {
+                "message": "send",
+                "session_id": new_session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check proper error message about no pending package
+                intent_data = data.get("intent_data", {})
+                detected_intent = intent_data.get("intent")
+                
+                if detected_intent != "no_pending_package":
+                    self.log_test("Generate Post Prompt Package - Error Handling", False, f"Wrong intent: {detected_intent}, expected: no_pending_package", data)
+                    return False
+                
+                # Check error message content
+                response_text = data.get("response", "")
+                if "don't see any pending" not in response_text.lower() or "linkedin post" not in response_text.lower():
+                    self.log_test("Generate Post Prompt Package - Error Handling", False, "Missing proper error message about no pending package", data)
+                    return False
+                
+                self.log_test("Generate Post Prompt Package - Error Handling", True, "✅ Proper error handling: No pending package message displayed correctly")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package - Error Handling", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package - Error Handling", False, f"Error: {str(e)}")
+            return False
+
+    def test_generate_post_prompt_package_health_check(self):
+        """Test 30: Generate Post Prompt Package Health Check - Verify routing configuration"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check that linkedin_post is removed from routing stats
+                hybrid_ai_system = data.get("advanced_hybrid_ai_system", {})
+                routing_models = hybrid_ai_system.get("routing_models", {})
+                
+                # Check Claude tasks (should include generate_post_prompt_package)
+                claude_tasks = routing_models.get("claude_tasks", [])
+                
+                # linkedin_post should NOT be in any routing configuration
+                all_tasks = []
+                for task_list in routing_models.values():
+                    if isinstance(task_list, list):
+                        all_tasks.extend(task_list)
+                
+                if "linkedin_post" in all_tasks:
+                    self.log_test("Generate Post Prompt Package - Health Check", False, "linkedin_post still found in routing configuration - should be removed", data)
+                    return False
+                
+                # Check that generate_post_prompt_package is properly configured
+                # It should be handled by Claude for better content generation
+                if "generate_post_prompt_package" not in str(data):
+                    self.log_test("Generate Post Prompt Package - Health Check", False, "generate_post_prompt_package not found in health check configuration", data)
+                    return False
+                
+                self.log_test("Generate Post Prompt Package - Health Check", True, "✅ Health check shows proper routing: linkedin_post removed, generate_post_prompt_package configured")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package - Health Check", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package - Health Check", False, f"Error: {str(e)}")
+            return False
+
+    def test_generate_post_prompt_package_content_structure(self):
+        """Test 31: Generate Post Prompt Package Content Structure Verification"""
+        try:
+            payload = {
+                "message": "Help me prepare a LinkedIn post about my React calculator app with TypeScript and modern UI",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                intent_data = data.get("intent_data", {})
+                
+                # Verify intent_data contains proper structure
+                if intent_data.get("intent") != "generate_post_prompt_package":
+                    self.log_test("Generate Post Prompt Package - Content Structure", False, f"Wrong intent: {intent_data.get('intent')}")
+                    return False
+                
+                # Check content is properly extracted from Claude's response
+                post_description = intent_data.get("post_description", "")
+                ai_instructions = intent_data.get("ai_instructions", "")
+                
+                # Verify content quality and structure
+                if len(post_description) < 50:
+                    self.log_test("Generate Post Prompt Package - Content Structure", False, f"post_description too short: {len(post_description)} chars", intent_data)
+                    return False
+                
+                if len(ai_instructions) < 50:
+                    self.log_test("Generate Post Prompt Package - Content Structure", False, f"ai_instructions too short: {len(ai_instructions)} chars", intent_data)
+                    return False
+                
+                # Check for project-specific content
+                content_combined = (post_description + " " + ai_instructions).lower()
+                project_indicators = ["calculator", "react", "typescript", "app", "project"]
+                
+                found_indicators = [indicator for indicator in project_indicators if indicator in content_combined]
+                if len(found_indicators) < 2:
+                    self.log_test("Generate Post Prompt Package - Content Structure", False, f"Content doesn't reflect project details. Found: {found_indicators}", intent_data)
+                    return False
+                
+                # Ensure no "post_content" field exists (old format)
+                if "post_content" in intent_data:
+                    self.log_test("Generate Post Prompt Package - Content Structure", False, "Found deprecated 'post_content' field", intent_data)
+                    return False
+                
+                self.log_test("Generate Post Prompt Package - Content Structure", True, f"✅ Content structure verified: post_description ({len(post_description)} chars), ai_instructions ({len(ai_instructions)} chars), project-specific content included")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package - Content Structure", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package - Content Structure", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests with focus on review request areas"""
         print("🚀 Starting Comprehensive Elva AI Backend Testing...")
