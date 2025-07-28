@@ -404,7 +404,7 @@ async def get_automation_history(session_id: str):
 async def get_conversation_memory_info(session_id: str):
     """Get conversation memory information and statistics for a session"""
     try:
-        memory_stats = conversation_memory.get_memory_stats(session_id)
+        memory_stats = await conversation_memory.get_memory_stats(session_id)
         conversation_context = await conversation_memory.get_conversation_context(session_id)
         session_summary = await conversation_memory.get_session_summary(session_id)
         
