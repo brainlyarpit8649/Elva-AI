@@ -613,10 +613,7 @@ The content you generate will be used EXACTLY as written in the approval modal."
                     # Clean up extracted content
                     extracted_content = extracted_content.replace('""', '"').strip()
                     
-                    if intent == "linkedin_post":
-                        intent_data["post_content"] = extracted_content
-                        logger.info(f"🎯 LinkedIn post content unified: {len(extracted_content)} characters")
-                    elif intent == "creative_writing":
+                    if intent == "creative_writing":
                         intent_data["content"] = extracted_content
                         logger.info(f"🎯 Creative content unified: {len(extracted_content)} characters")
                 else:
