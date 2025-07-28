@@ -545,7 +545,22 @@ The content you generate will be used EXACTLY as written in the approval modal."
                     intent_data["body"] = extracted_body
                     logger.info(f"📧 Body synchronized: {len(extracted_body)} characters")
                     
-            elif intent == "linkedin_post" or intent == "creative_writing":
+            elif intent == "generate_post_prompt_package":
+                # Extract Post Description and AI Instructions from Claude's response
+                desc_match = re.search(r'📝.*?Post Description.*?\n+(.*?)(?=🤖|$)', claude_response, re.DOTALL)
+                instructions_match = re.search(r'🤖.*?AI Instructions.*?\n+(.*?)(?=DO NOT|$)', claude_response, re.DOTALL)
+                
+                if desc_match:
+                    extracted_desc = desc_match.group(1).strip()
+                    intent_data["post_description"] = extracted_desc
+                    logger.info(f"📝 Post description extracted: {len(extracted_desc)} characters")
+                    
+                if instructions_match:
+                    extracted_instructions = instructions_match.group(1).strip()
+                    intent_data["ai_instructions"] = extracted_instructions
+                    logger.info(f"🤖 AI instructions extracted: {len(extracted_instructions)} characters")
+                    
+            elif intent == "creative_writing":
                 # Enhanced LinkedIn post content extraction with multiple fallback patterns
                 content_patterns = [
                     # Pattern 1: Content after 📱 emoji with various formats
