@@ -738,52 +738,8 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       {/* Chat Messages - Scrollable Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-blue-500/50 scrollbar-track-transparent">
         {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} mb-4`}>
-            <div className={`max-w-3xl ${message.isUser ? 'order-2' : 'order-1'}`}>
-              <div className={`message-bubble p-4 rounded-xl shadow-lg ${
-                message.isUser 
-                  ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white ml-auto' 
-                  : message.isSystem 
-                    ? 'bg-cyan-900/30 border border-cyan-500/30 text-cyan-100'
-                    : message.isEdit
-                      ? 'bg-green-900/30 border border-green-500/30 text-green-100'
-                      : message.isWelcome
-                        ? 'bg-gradient-to-br from-purple-900/40 to-blue-900/40 border border-purple-500/30 text-purple-100'
-                        : message.isGmailSuccess
-                          ? 'bg-transparent border-0 p-0' // Special styling for Gmail success
-                          : 'bg-gray-800/40 backdrop-blur-sm border border-gray-600/30 text-white'
-              }`}>
-                {!message.isUser && (
-                  <div className="flex items-start space-x-3">
-                    {!message.isGmailSuccess && renderAIAvatar()}
-                    <div className="flex-1">
-                      {message.isGmailSuccess ? (
-                        renderGmailSuccessMessage()
-                      ) : (
-                        <div className="whitespace-pre-wrap">
-                          {message.response ? renderEmailDisplay(message.response) : message.message}
-                        </div>
-                      )}
-                      {renderIntentData(message.intent_data)}
-                      <div className="text-xs opacity-70 mt-2">
-                        {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {message.isUser && (
-                  <div>
-                    <div className="whitespace-pre-wrap">
-                      {message.message}
-                    </div>
-                    <div className="text-xs opacity-70 mt-2">
-                      {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+          <div key={message.id}>
+            {renderMessageContent(message)}
           </div>
         ))}
         
