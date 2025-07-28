@@ -10,7 +10,7 @@ import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory
-from langchain.memory.chat_message_histories import MongoDBChatMessageHistory
+from langchain_community.chat_message_histories import MongoDBChatMessageHistory
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from motor.motor_asyncio import AsyncIOMotorClient
