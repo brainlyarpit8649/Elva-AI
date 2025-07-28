@@ -379,10 +379,10 @@ metadata:
     status_history:
         -working: "NA"
         -agent: "main"
-        -comment: "UPDATE: Updated Gmail OAuth2 credentials with new client configuration. Added proper redirect URI (https://aac17c76-bf24-4440-9340-97ce1bd35c08.preview.emergentagent.com/api/gmail/callback) and JavaScript origins for the current backend URL. Backend restarted to load new credentials."
+        -comment: "UPDATE: Updated Gmail OAuth2 credentials with new client configuration. Added proper redirect URI (https://1a7f264a-155b-4a63-9088-2d8c37076fb0.preview.emergentagent.com/api/gmail/callback) and JavaScript origins for the current backend URL. Backend restarted to load new credentials."
         -working: true
         -agent: "testing"
-        -comment: "✅ GMAIL CREDENTIALS UPDATE VERIFIED: New Gmail OAuth2 credentials successfully loaded and working perfectly. Verified new client_id (191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com) is properly configured and appears in generated OAuth URLs. New redirect URI (https://aac17c76-bf24-4440-9340-97ce1bd35c08.preview.emergentagent.com/api/gmail/callback) correctly configured. Gmail status endpoint reports credentials_configured: true. Health check shows Gmail integration as 'ready' with OAuth2 flow 'implemented'. All Gmail API endpoints responding correctly with new credentials. System ready for actual Gmail OAuth2 authentication flow."
+        -comment: "✅ GMAIL CREDENTIALS UPDATE VERIFIED: New Gmail OAuth2 credentials successfully loaded and working perfectly. Verified new client_id (191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com) is properly configured and appears in generated OAuth URLs. New redirect URI (https://1a7f264a-155b-4a63-9088-2d8c37076fb0.preview.emergentagent.com/api/gmail/callback) correctly configured. Gmail status endpoint reports credentials_configured: true. Health check shows Gmail integration as 'ready' with OAuth2 flow 'implemented'. All Gmail API endpoints responding correctly with new credentials. System ready for actual Gmail OAuth2 authentication flow."
 
   - task: "Approval Modal Theme Styling"
     implemented: true
