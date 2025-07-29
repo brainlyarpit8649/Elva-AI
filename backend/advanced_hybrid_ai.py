@@ -497,13 +497,13 @@ The content you write for Subject and Body will be used EXACTLY as written in th
 CRITICAL: When helping prepare a LinkedIn post prompt package, structure your response EXACTLY as follows:
 
 📝 **Post Description**
-[Don't just summarize what the user said - ENHANCE it with your knowledge! Add technical context, industry relevance, skills demonstrated, and broader impact. Examples:
+[Write this for the OTHER AI to understand what the user accomplished - use THIRD PERSON perspective. Don't congratulate or address the user directly. Instead, objectively describe their achievement with enhanced technical context. Examples:
 
-- For "I built a calculator": "A fully functional calculator application developed using modern web technologies. This project demonstrates proficiency in JavaScript programming, DOM manipulation, responsive design principles, and user interface development. The calculator features error handling, memory functions, and clean architecture - showcasing problem-solving skills and attention to user experience that are highly valued in frontend development roles."
+- For "I built a calculator": "The user developed a fully functional calculator application using modern web technologies. This project demonstrates their proficiency in JavaScript programming, DOM manipulation, responsive design principles, and user interface development. The calculator includes error handling, memory functions, and clean architecture - showcasing their problem-solving skills and attention to user experience that are highly valued in frontend development roles."
 
-- For "I got certified in cybersecurity": "Successfully completed cybersecurity certification from Infosys Springboard, a comprehensive program covering network security, threat analysis, ethical hacking, and security protocols. This certification validates expertise in identifying vulnerabilities, implementing security measures, and understanding compliance frameworks - critical skills in today's digital landscape where cybersecurity professionals are in high demand across all industries."
+- For "I got certified in cybersecurity": "The user successfully completed a cybersecurity certification from Infosys Springboard, a comprehensive program covering network security, threat analysis, ethical hacking, and security protocols. This certification validates their expertise in identifying vulnerabilities, implementing security measures, and understanding compliance frameworks - critical skills in today's digital landscape where cybersecurity professionals are in high demand across all industries."
 
-Make the description rich, informative, and highlight the professional value and skills involved.]
+Write objectively about THEIR achievement so the other AI understands what to create a LinkedIn post about.]
 
 🤖 **AI Instructions**  
 [Write direct, specific instructions to the AI that will generate the LinkedIn post. Analyze the user's topic and create tailored commands. Examples:
