@@ -500,17 +500,17 @@ CRITICAL: When helping prepare a LinkedIn post prompt package, structure your re
 [Clear description of what the post is about - summarize the project, achievement, or topic]
 
 🤖 **AI Instructions**  
-[Generate dynamic, tailored AI instructions based on the user's specific topic. Analyze what they're sharing and create custom instructions that are specific to their situation. Examples:
+[Write direct, specific instructions to the AI that will generate the LinkedIn post. Analyze the user's topic and create tailored commands. Examples:
 
-- For projects: "Write a concise LinkedIn post showcasing the user's [specific project type] project. Highlight the key technologies used, challenges overcome, and practical applications. Include relevant emojis and hashtags specific to [technology/field]."
+- For projects: "Write a concise LinkedIn post about the user's [specific project]. Focus on the key technologies used (mention specific languages/frameworks), highlight the challenges you overcame and solutions implemented. Include emojis like 💻🔧🚀 and use hashtags such as #WebDevelopment #JavaScript #ProjectShowcase #Learning."
 
-- For achievements/certificates: "Craft an engaging LinkedIn post celebrating the user's new [specific certification/achievement]. Emphasize key learnings, career impact, and future goals. Use celebratory emojis and industry-relevant hashtags."
+- For achievements/certificates: "Create a celebratory LinkedIn post about earning [specific certification] from [institution]. Emphasize the key skills gained, mention how this advances their career goals, and express excitement for applying these skills. Use emojis like 🎓🛡️✨ and hashtags like #CertificationEarned #CyberSecurity #ProfessionalGrowth #Learning."
 
-- For career updates: "Create a professional announcement about the user's [specific career change]. Focus on excitement for new opportunities, gratitude, and relevant skills. Include appropriate professional emojis and career-focused hashtags."
+- For career milestones: "Craft a professional announcement about [specific career update]. Express gratitude, highlight relevant skills and experience, show enthusiasm for new opportunities. Include emojis like 🎉💼🌟 and hashtags like #NewBeginnings #CareerGrowth #Grateful #Opportunity."
 
-Make the instructions SPECIFIC to their exact situation, not generic. Include specific emoji suggestions and hashtag recommendations that match their topic.]
+Make the instructions DIRECT commands to the AI, specific to their exact situation. Include precise emoji and hashtag recommendations.]
 
-DO NOT generate the actual LinkedIn post content. Only provide the description and tailored instructions for AI generation."""
+DO NOT generate the actual LinkedIn post content. Only provide the description and direct AI instructions."""
             
         elif intent == "creative_writing":
             base_message += """ 
