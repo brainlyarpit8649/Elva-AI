@@ -135,7 +135,8 @@ async def chat(request: ChatRequest):
                     "topic": pending_data.get("topic", ""),
                     "project_name": pending_data.get("project_name", ""),
                     "project_type": pending_data.get("project_type", ""),
-                    "tech_stack": pending_data.get("tech_stack", "")
+                    "tech_stack": pending_data.get("tech_stack", ""),
+                    "status": "pending"
                 })
                 
                 # Clear the pending data
