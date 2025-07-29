@@ -497,7 +497,13 @@ The content you write for Subject and Body will be used EXACTLY as written in th
 CRITICAL: When helping prepare a LinkedIn post prompt package, structure your response EXACTLY as follows:
 
 📝 **Post Description**
-[Clear description of what the post is about - summarize the project, achievement, or topic]
+[Don't just summarize what the user said - ENHANCE it with your knowledge! Add technical context, industry relevance, skills demonstrated, and broader impact. Examples:
+
+- For "I built a calculator": "A fully functional calculator application developed using modern web technologies. This project demonstrates proficiency in JavaScript programming, DOM manipulation, responsive design principles, and user interface development. The calculator features error handling, memory functions, and clean architecture - showcasing problem-solving skills and attention to user experience that are highly valued in frontend development roles."
+
+- For "I got certified in cybersecurity": "Successfully completed cybersecurity certification from Infosys Springboard, a comprehensive program covering network security, threat analysis, ethical hacking, and security protocols. This certification validates expertise in identifying vulnerabilities, implementing security measures, and understanding compliance frameworks - critical skills in today's digital landscape where cybersecurity professionals are in high demand across all industries."
+
+Make the description rich, informative, and highlight the professional value and skills involved.]
 
 🤖 **AI Instructions**  
 [Write direct, specific instructions to the AI that will generate the LinkedIn post. Analyze the user's topic and create tailored commands. Examples:
@@ -510,7 +516,7 @@ CRITICAL: When helping prepare a LinkedIn post prompt package, structure your re
 
 Make the instructions DIRECT commands to the AI, specific to their exact situation. Include precise emoji and hashtag recommendations.]
 
-DO NOT generate the actual LinkedIn post content. Only provide the description and direct AI instructions."""
+DO NOT generate the actual LinkedIn post content. Only provide the enhanced description and direct AI instructions."""
             
         elif intent == "creative_writing":
             base_message += """ 
