@@ -459,7 +459,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       setInputMessage('');
       
       const helpMessage = {
-        id: Date.now() + 1,
+        id: generateStableId('response') + 1,
         response: "🤔 I don't see any pending actions to approve. Try asking me to do something first, like 'Send an email to John about the meeting' or 'Create a reminder for tomorrow'!",
         isUser: false,
         isSystem: true,
