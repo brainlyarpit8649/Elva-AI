@@ -23,6 +23,12 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   const [isDirectAutomation, setIsDirectAutomation] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Stable ID generator to prevent flickering
+  const generateStableId = useCallback((prefix = 'msg') => {
+    messageCounter += 1;
+    return `${prefix}_${sessionId}_${messageCounter}_${Date.now()}`;
+  }, [sessionId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
