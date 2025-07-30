@@ -332,13 +332,13 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       const lines = response.split('\n');
       const headerLine = lines[0];
       
-      // Extract count from header
+      // Extract count from header - improved pattern matching
       const countMatch = headerLine.match(/(\d+)\s+(?:unread\s+)?emails?/i);
       const count = countMatch ? parseInt(countMatch[1]) : 0;
       
       if (count === 0) {
         return (
-          <div className="email-display-card">
+          <div className="email-display-card premium-gmail-card">
             <div className="email-header">
               ✅ No unread emails! Your inbox is all caught up.
             </div>
@@ -346,13 +346,14 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
         );
       }
 
-      // Parse individual email blocks
+      // Parse individual email blocks - improved parsing
       const emailBlocks = [];
       let currentBlock = null;
       
-      for (let i = 1; i < lines.length; i++) {
+      for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         
+        // Match email number pattern like "**1.**" or "**2.**"
         if (line.match(/^\*\*\d+\.\*\*/)) {
           if (currentBlock) {
             emailBlocks.push(currentBlock);
@@ -360,6 +361,9 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
           currentBlock = { lines: [line] };
         } else if (currentBlock && line) {
           currentBlock.lines.push(line);
+        } else if (!currentBlock && line.includes('**From:**')) {
+          // Handle cases where email starts directly with From field
+          currentBlock = { lines: [line] };
         }
       }
       
