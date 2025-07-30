@@ -435,7 +435,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       const isApproval = approvalKeywords.some(keyword => message.includes(keyword));
       
       const userMessage = {
-        id: Date.now(),
+        id: generateStableId('user'),
         message: inputMessage,
         isUser: true,
         timestamp: new Date()
