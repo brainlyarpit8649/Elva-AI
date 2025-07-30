@@ -218,7 +218,7 @@ function App() {
         
         // Add success message to chat
         const successMsg = {
-          id: 'export_success_' + Date.now(),
+          id: 'export_success_' + generateUUID(),
           response: `📄 **Chat exported successfully!**\n\n` +
                    `📁 **File**: ${result.fileName}\n` +
                    `📊 **Messages**: ${result.messageCount} messages exported\n` +
