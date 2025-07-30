@@ -24,7 +24,7 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = 'success', duration = 4000) => {
-    const id = Date.now() + Math.random();
+    const id = generateUUID();
     const toast = {
       id,
       message,
