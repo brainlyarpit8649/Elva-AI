@@ -229,7 +229,7 @@ const GmailAuthHandler = ({
       const debugInfo = response.data;
       
       const debugMessage = {
-        id: 'gmail_debug_detailed_' + Date.now(),
+        id: 'gmail_debug_detailed_' + generateUUID(),
         response: '🔧 **Gmail Integration Debug Report**\n\n' +
                  `📁 **Credentials File**: ${debugInfo.debug_info.gmail_service_status.credentials_file_exists ? 'Found ✅' : 'Missing ❌'}\n` +
                  `📂 **File Path**: ${debugInfo.debug_info.gmail_service_status.credentials_file_path}\n` +
