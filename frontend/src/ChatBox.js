@@ -560,6 +560,60 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     }
   };
 
+  // Helper function to format updated email details nicely
+  const formatUpdatedDetails = (data) => {
+    if (!data) return 'No updates made.';
+    
+    const intent = data.intent || 'unknown';
+    let formattedMessage = '';
+    
+    if (intent === 'send_email') {
+      const recipientName = data.recipient_name || 'Unknown';
+      formattedMessage = `📧 **Here's the updated email for ${recipientName}:**\n\n`;
+      formattedMessage += `**Subject:** ${data.subject || 'No subject'}\n\n`;
+      formattedMessage += `**Body:**\n${data.body || 'No content'}\n\n`;
+      if (data.recipient_email) {
+        formattedMessage += `**To:** ${data.recipient_email}`;
+      }
+    } else if (intent === 'create_event') {
+      formattedMessage = `📅 **Here's the updated meeting details:**\n\n`;
+      formattedMessage += `**Event:** ${data.event_title || data.title || 'No title'}\n\n`;
+      if (data.date) formattedMessage += `**Date:** ${data.date}\n`;
+      if (data.time) formattedMessage += `**Time:** ${data.time}\n`;
+      if (data.location) formattedMessage += `**Location:** ${data.location}\n`;
+      if (data.participants && Array.isArray(data.participants)) {
+        formattedMessage += `**Participants:** ${data.participants.join(', ')}\n`;
+      }
+      if (data.description) formattedMessage += `\n**Description:**\n${data.description}`;
+    } else if (intent === 'add_todo') {
+      formattedMessage = `✅ **Here's the updated todo:**\n\n`;
+      formattedMessage += `**Task:** ${data.task || 'No task specified'}\n`;
+      if (data.priority) formattedMessage += `**Priority:** ${data.priority}\n`;
+      if (data.due_date) formattedMessage += `**Due Date:** ${data.due_date}\n`;
+      if (data.description) formattedMessage += `\n**Notes:**\n${data.description}`;
+    } else if (intent === 'set_reminder') {
+      formattedMessage = `⏰ **Here's the updated reminder:**\n\n`;
+      formattedMessage += `**Reminder:** ${data.reminder_text || data.text || 'No reminder text'}\n`;
+      if (data.date) formattedMessage += `**Date:** ${data.date}\n`;
+      if (data.time) formattedMessage += `**Time:** ${data.time}\n`;
+    } else {
+      // Generic formatting for other intents
+      formattedMessage = `📋 **Here are the updated details:**\n\n`;
+      Object.entries(data).forEach(([key, value]) => {
+        if (key !== 'intent') {
+          const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          if (Array.isArray(value)) {
+            formattedMessage += `**${formattedKey}:** ${value.join(', ')}\n`;
+          } else {
+            formattedMessage += `**${formattedKey}:** ${value}\n`;
+          }
+        }
+      });
+    }
+    
+    return formattedMessage;
+  };
+
   const handleApproval = async (approved) => {
     if (!pendingApproval) return;
 
@@ -569,7 +623,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       if (editMode && editedData) {
         const editSummary = {
           id: Date.now(),
-          response: `📝 Updated details:\n${JSON.stringify(editedData, null, 2)}`,
+          response: formatUpdatedDetails(editedData),
           isUser: false,
           isEdit: true,
           timestamp: new Date()
