@@ -268,7 +268,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     );
   };
 
-  const renderEmailDisplay = (response) => {
+  const renderEmailDisplay = useCallback((response) => {
     // Handle authentication prompts
     if (response.includes('🔐 Please connect your Gmail account')) {
       return (
