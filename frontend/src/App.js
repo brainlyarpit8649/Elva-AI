@@ -235,7 +235,7 @@ function App() {
         
         // Add error message to chat
         const errorMsg = {
-          id: 'export_error_' + Date.now(),
+          id: 'export_error_' + generateUUID(),
           response: `❌ **Export failed**\n\n` +
                    `Sorry, there was an issue exporting your chat to PDF: ${result.error}\n\n` +
                    `Please try again or contact support if the issue persists.`,
