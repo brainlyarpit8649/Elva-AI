@@ -473,7 +473,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     }
 
     const userMessage = {
-      id: Date.now(),
+      id: generateStableId('user'),
       message: inputMessage,
       isUser: true,
       timestamp: new Date()
