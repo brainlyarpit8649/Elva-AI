@@ -682,7 +682,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     } catch (error) {
       console.error('Error handling approval:', error);
       const errorMessage = {
-        id: Date.now(),
+        id: generateStableId('response'),
         response: '⚠️ Something went wrong with the approval. Please try again!',
         isUser: false,
         timestamp: new Date()
