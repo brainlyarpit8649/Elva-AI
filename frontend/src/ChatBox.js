@@ -278,29 +278,9 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   };
 
   const renderEmailDisplay = useCallback((response) => {
-    // Handle authentication prompts
+    // Handle authentication prompts - plain text format
     if (response.includes('🔐 Please connect your Gmail account')) {
-      return (
-        <div className="email-display-card premium-gmail-card">
-          <div className="email-header">
-            🔐 Gmail Connection Required
-          </div>
-          <div className="email-item">
-            <div className="email-field">
-              <span className="email-field-icon">📧</span>
-              <span className="email-field-content">
-                Please connect your Gmail account to let Elva AI access your inbox.
-              </span>
-            </div>
-            <div className="email-field">
-              <span className="email-field-icon">👆</span>
-              <span className="email-field-content">
-                Click the <strong>"Connect Gmail"</strong> button above to continue.
-              </span>
-            </div>
-          </div>
-        </div>
-      );
+      return `🔐 Gmail Connection Required\n\nPlease connect your Gmail account to let Elva AI access your inbox.\nClick the "Connect Gmail" button above to continue.`;
     }
 
     // Check if this is an email display response - Enhanced Gmail detection
@@ -316,18 +296,12 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       return response;
     }
 
-    // Handle "no unread emails" message
+    // Handle "no unread emails" message - plain text format
     if (response.includes('No unread emails') || response.includes('all caught up') || response.includes('inbox is empty')) {
-      return (
-        <div className="email-display-card premium-gmail-card">
-          <div className="email-header no-emails-header">
-            ✅ No unread emails! Your inbox is all caught up.
-          </div>
-        </div>
-      );
+      return '✅ No unread emails! Your inbox is all caught up.';
     }
 
-    // If the response contains the special email format, parse and render it
+    // If the response contains the special email format, parse and render it as plain text
     if (response.includes('**From:**') && response.includes('**Subject:**')) {
       const lines = response.split('\n');
       const headerLine = lines[0];
@@ -337,13 +311,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       const count = countMatch ? parseInt(countMatch[1]) : 0;
       
       if (count === 0) {
-        return (
-          <div className="email-display-card premium-gmail-card">
-            <div className="email-header">
-              ✅ No unread emails! Your inbox is all caught up.
-            </div>
-          </div>
-        );
+        return '✅ No unread emails! Your inbox is all caught up.';
       }
 
       // Parse individual email blocks - improved parsing
@@ -371,63 +339,41 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
         emailBlocks.push(currentBlock);
       }
 
-      return (
-        <div className="email-display-card premium-gmail-card">
-          <div className="email-header">
-            📥 You have <span className="email-count-badge-enhanced">{count}</span> unread email{count !== 1 ? 's' : ''}
-          </div>
-          
-          {emailBlocks.map((block, index) => {
-            const lines = block.lines;
-            let sender = '', subject = '', date = '', snippet = '';
-            
-            lines.forEach(line => {
-              // Enhanced pattern matching for current format
-              if (line.includes('**From:**') || line.includes('🧑 **From:**')) {
-                sender = line.replace(/.*\*\*From:\*\*\s*/, '').replace(/^🧑\s*/, '').trim();
-              } else if (line.includes('**Subject:**') || line.includes('📨 **Subject:**')) {
-                subject = line.replace(/.*\*\*Subject:\*\*\s*/, '').replace(/^📨\s*/, '').trim();
-              } else if (line.includes('**Received:**') || line.includes('🕒 **Received:**')) {
-                date = line.replace(/.*\*\*Received:\*\*\s*/, '').replace(/^🕒\s*/, '').trim();
-              } else if (line.includes('**Snippet:**') || line.includes('✏️ **Snippet:**')) {
-                snippet = line.replace(/.*\*\*Snippet:\*\*\s*"?/, '').replace(/^✏️\s*/, '').replace(/"$/, '').trim();
-              }
-            });
-            
-            return (
-              <div key={index} className="email-item">
-                <div className="email-field">
-                  <span className="email-field-icon">🧑</span>
-                  <span className="email-field-label">From:</span>
-                  <span className="email-field-content">{sender || 'Unknown Sender'}</span>
-                </div>
-                
-                <div className="email-field">
-                  <span className="email-field-icon">📨</span>
-                  <span className="email-field-label">Subject:</span>
-                  <span className="email-field-content">{subject || 'No Subject'}</span>
-                </div>
-                
-                <div className="email-field">
-                  <span className="email-field-icon">🕒</span>
-                  <span className="email-field-label">Received:</span>
-                  <span className="email-field-content">{date || 'Unknown Date'}</span>
-                </div>
-                
-                {snippet && (
-                  <div className="email-field">
-                    <span className="email-field-icon">✏️</span>
-                    <span className="email-field-label">Snippet:</span>
-                    <div className="email-field-content">
-                      <div className="email-snippet">"{snippet}"</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
+      // Format as plain text with horizontal lines
+      let plainTextResult = `📥 You have ${count} unread email${count !== 1 ? 's' : ''}\n\n`;
+      
+      emailBlocks.forEach((block, index) => {
+        const lines = block.lines;
+        let sender = '', subject = '', date = '', snippet = '';
+        
+        lines.forEach(line => {
+          // Enhanced pattern matching for current format
+          if (line.includes('**From:**') || line.includes('🧑 **From:**')) {
+            sender = line.replace(/.*\*\*From:\*\*\s*/, '').replace(/^🧑\s*/, '').trim();
+          } else if (line.includes('**Subject:**') || line.includes('📨 **Subject:**')) {
+            subject = line.replace(/.*\*\*Subject:\*\*\s*/, '').replace(/^📨\s*/, '').trim();
+          } else if (line.includes('**Received:**') || line.includes('🕒 **Received:**')) {
+            date = line.replace(/.*\*\*Received:\*\*\s*/, '').replace(/^🕒\s*/, '').trim();
+          } else if (line.includes('**Snippet:**') || line.includes('✏️ **Snippet:**')) {
+            snippet = line.replace(/.*\*\*Snippet:\*\*\s*"?/, '').replace(/^✏️\s*/, '').replace(/"$/, '').trim();
+          }
+        });
+        
+        // Add email info as plain text
+        plainTextResult += `From: ${sender || 'Unknown Sender'}\n`;
+        plainTextResult += `Subject: ${subject || 'No Subject'}\n`;
+        plainTextResult += `Received: ${date || 'Unknown Date'}\n`;
+        if (snippet) {
+          plainTextResult += `Snippet: ${snippet}\n`;
+        }
+        
+        // Add horizontal line after each email (except the last one)
+        if (index < emailBlocks.length - 1) {
+          plainTextResult += '\n────────────────────────────────────────\n\n';
+        }
+      });
+      
+      return plainTextResult;
     }
 
     return response;
