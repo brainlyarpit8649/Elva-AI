@@ -257,7 +257,7 @@ const GmailAuthHandler = ({
     } catch (error) {
       console.error('Failed to get debug info:', error);
       const errorMessage = {
-        id: 'debug_error_' + Date.now(),
+        id: 'debug_error_' + generateUUID(),
         response: '❌ **Debug Error**: Failed to retrieve Gmail debug information. Check console for details.',
         isUser: false,
         isSystem: true,
