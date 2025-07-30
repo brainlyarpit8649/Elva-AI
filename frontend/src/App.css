@@ -1879,8 +1879,7 @@ button:active:not(:disabled) {
   padding: 24px;
   margin: 16px 0;
   
-  /* Subtle floating animation */
-  animation: glass-card-float 6s ease-in-out infinite;
+  /* Removed glass-card-float animation to prevent UI flickering */
 }
 
 /* Gradient border effect using pseudo-element */
