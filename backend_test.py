@@ -3136,6 +3136,238 @@ class ElvaBackendTester:
             self.log_test("Generate Post Prompt Package - Content Structure", False, f"Error: {str(e)}")
             return False
 
+    def test_email_intent_detection_comprehensive(self):
+        """Test: Comprehensive email intent detection with various message formats"""
+        test_cases = [
+            {
+                "message": "Send an email to John about meeting tomorrow",
+                "expected_intent": "send_email",
+                "description": "Basic email intent with recipient and topic",
+                "should_have_approval": True
+            },
+            {
+                "message": "Send an email to sarah@company.com about the quarterly report",
+                "expected_intent": "send_email", 
+                "description": "Email intent with email address",
+                "should_have_approval": True
+            },
+            {
+                "message": "Write an email to the team about project updates",
+                "expected_intent": "send_email",
+                "description": "Email intent with 'write' keyword",
+                "should_have_approval": True
+            },
+            {
+                "message": "Email John to schedule a meeting for next week",
+                "expected_intent": "send_email",
+                "description": "Email intent starting with 'Email'",
+                "should_have_approval": True
+            },
+            {
+                "message": "I need to send an email to my manager about vacation request",
+                "expected_intent": "send_email",
+                "description": "Email intent in conversational format",
+                "should_have_approval": True
+            }
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for test_case in test_cases:
+            try:
+                payload = {
+                    "message": test_case["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    intent_data = data.get("intent_data", {})
+                    detected_intent = intent_data.get("intent")
+                    needs_approval = data.get("needs_approval", False)
+                    
+                    # Check intent detection
+                    if detected_intent == test_case["expected_intent"]:
+                        # Check approval requirement
+                        if needs_approval == test_case["should_have_approval"]:
+                            # Check if intent data has required fields
+                            required_fields = ["recipient_name", "subject", "body"]
+                            missing_fields = [field for field in required_fields if not intent_data.get(field)]
+                            
+                            if not missing_fields:
+                                results.append(f"✅ {test_case['description']}: Intent={detected_intent}, Approval={needs_approval}, Fields populated")
+                                self.message_ids.append(data["id"])
+                            else:
+                                results.append(f"❌ {test_case['description']}: Missing fields: {missing_fields}")
+                                all_passed = False
+                        else:
+                            results.append(f"❌ {test_case['description']}: Wrong approval requirement - Expected {test_case['should_have_approval']}, got {needs_approval}")
+                            all_passed = False
+                    else:
+                        results.append(f"❌ {test_case['description']}: Expected {test_case['expected_intent']}, got {detected_intent}")
+                        all_passed = False
+                else:
+                    results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ {test_case['description']}: Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("Email Intent Detection - Comprehensive", all_passed, result_summary)
+        return all_passed
+
+    def test_send_command_detection_fix(self):
+        """Test: Send command detection fix - short 'send' vs longer email messages"""
+        test_cases = [
+            {
+                "message": "send",
+                "description": "Short send command",
+                "should_trigger_post_package": True,
+                "expected_behavior": "post_package_logic"
+            },
+            {
+                "message": "send it",
+                "description": "Short send it command",
+                "should_trigger_post_package": True,
+                "expected_behavior": "post_package_logic"
+            },
+            {
+                "message": "yes, go ahead",
+                "description": "Confirmation command",
+                "should_trigger_post_package": True,
+                "expected_behavior": "post_package_logic"
+            },
+            {
+                "message": "submit",
+                "description": "Submit command",
+                "should_trigger_post_package": True,
+                "expected_behavior": "post_package_logic"
+            },
+            {
+                "message": "Send an email to John about the meeting",
+                "description": "Long email message with 'send'",
+                "should_trigger_post_package": False,
+                "expected_behavior": "email_intent_detection"
+            },
+            {
+                "message": "Send a message to Sarah about project updates",
+                "description": "Long message with 'send'",
+                "should_trigger_post_package": False,
+                "expected_behavior": "email_intent_detection"
+            },
+            {
+                "message": "Send an email to team@company.com with quarterly report",
+                "description": "Long email message with email address",
+                "should_trigger_post_package": False,
+                "expected_behavior": "email_intent_detection"
+            }
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for test_case in test_cases:
+            try:
+                payload = {
+                    "message": test_case["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    intent_data = data.get("intent_data", {})
+                    detected_intent = intent_data.get("intent")
+                    response_text = data.get("response", "")
+                    
+                    if test_case["should_trigger_post_package"]:
+                        # Should trigger post package logic (no pending package scenario)
+                        if "don't see any pending" in response_text or "no pending" in response_text.lower():
+                            results.append(f"✅ {test_case['description']}: Correctly triggered post package logic")
+                        else:
+                            results.append(f"❌ {test_case['description']}: Did not trigger post package logic. Response: {response_text[:100]}...")
+                            all_passed = False
+                    else:
+                        # Should trigger email intent detection
+                        if detected_intent == "send_email":
+                            results.append(f"✅ {test_case['description']}: Correctly detected as email intent")
+                            self.message_ids.append(data["id"])
+                        else:
+                            results.append(f"❌ {test_case['description']}: Expected send_email intent, got {detected_intent}")
+                            all_passed = False
+                else:
+                    results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ {test_case['description']}: Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("Send Command Detection Fix", all_passed, result_summary)
+        return all_passed
+
+    def test_intent_json_display_in_chat(self):
+        """Test: Verify intent JSON is properly displayed in chat responses"""
+        try:
+            payload = {
+                "message": "Send an email to John about meeting tomorrow",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                intent_data = data.get("intent_data", {})
+                
+                # Check if intent_data is properly structured
+                if not intent_data:
+                    self.log_test("Intent JSON Display", False, "No intent_data in response", data)
+                    return False
+                
+                # Check if intent_data contains expected fields
+                required_fields = ["intent", "recipient_name", "subject", "body"]
+                missing_fields = [field for field in required_fields if field not in intent_data]
+                
+                if missing_fields:
+                    self.log_test("Intent JSON Display", False, f"Missing fields in intent_data: {missing_fields}", intent_data)
+                    return False
+                
+                # Check if intent_data values are populated (not empty)
+                empty_fields = [field for field in required_fields if not intent_data.get(field) or str(intent_data.get(field)).strip() == ""]
+                
+                if empty_fields:
+                    self.log_test("Intent JSON Display", False, f"Empty fields in intent_data: {empty_fields}", intent_data)
+                    return False
+                
+                # Check if the intent_data is JSON serializable
+                try:
+                    import json
+                    json_str = json.dumps(intent_data, indent=2)
+                    self.log_test("Intent JSON Display", True, f"Intent JSON properly structured and serializable. Intent: {intent_data.get('intent')}, Recipient: {intent_data.get('recipient_name')}")
+                    self.message_ids.append(data["id"])
+                    return True
+                except Exception as json_error:
+                    self.log_test("Intent JSON Display", False, f"Intent data not JSON serializable: {str(json_error)}", intent_data)
+                    return False
+            else:
+                self.log_test("Intent JSON Display", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Intent JSON Display", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests with focus on review request areas"""
         print("🚀 Starting Comprehensive Elva AI Backend Testing...")
