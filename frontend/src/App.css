@@ -830,10 +830,10 @@ button:active:not(:disabled) {
     rgba(236, 72, 153, 0.3),
     rgba(59, 130, 246, 0.3)
   );
-  background-size: 400% 400%;
+  background-size: 100% 100%;
   z-index: -1;
-  opacity: 0.7;
-  animation: header-border-glow 12s linear infinite;
+  opacity: 0.5;
+  /* Removed header-border-glow animation to prevent flickering */
 }
 
 @keyframes header-border-glow {
