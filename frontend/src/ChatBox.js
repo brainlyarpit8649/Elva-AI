@@ -542,7 +542,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       // Add special handling for Gmail debug commands
       if (inputMessage.toLowerCase().includes('gmail debug') || inputMessage.toLowerCase().includes('test gmail')) {
         const debugTestMessage = {
-          id: Date.now() + 1,
+          id: generateStableId('response') + 1,
           response: `🔧 **Gmail Integration Test**\n\n` +
                    `🔗 **Current Status**: ${gmailAuthStatus.authenticated ? 'Connected ✅' : 'Not Connected ❌'}\n` +
                    `🔑 **Credentials**: ${gmailAuthStatus.credentialsConfigured ? 'Configured ✅' : 'Missing ❌'}\n` +
