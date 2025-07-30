@@ -785,13 +785,13 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     );
   };
 
-  const renderAIAvatar = () => {
+  const renderAIAvatar = useCallback(() => {
     return (
       <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
         <span className="text-white text-sm font-bold">🤖</span>
       </div>
     );
-  };
+  }, []);
 
   // Memoized message rendering to prevent flickering
   const renderMessageContent = useCallback((message) => {
