@@ -119,7 +119,18 @@ async def chat(request: ChatRequest):
         # Check if this is a send confirmation for a pending post prompt package
         user_msg_lower = request.message.lower().strip()
         send_commands = ["send", "yes, go ahead", "submit", "send it", "yes go ahead", "go ahead"]
-        is_send_command = any(cmd in user_msg_lower for cmd in send_commands)
+        
+        # Only consider it a send command if it's a short message (likely confirmation)
+        # and doesn't contain email-related keywords
+        email_keywords = ["email", "mail", "@", "message to", "write to"]
+        is_likely_email = any(keyword in user_msg_lower for keyword in email_keywords)
+        is_short_message = len(request.message.split()) <= 5  # Short confirmation messages
+        
+        is_send_command = (
+            any(cmd in user_msg_lower for cmd in send_commands) and 
+            is_short_message and 
+            not is_likely_email
+        )
         
         if is_send_command and request.session_id in pending_post_packages:
             # User wants to send the pending post prompt package to n8n
