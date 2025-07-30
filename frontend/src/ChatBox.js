@@ -793,8 +793,8 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     );
   };
 
-  // Enhanced message rendering with better structure
-  const renderMessageContent = (message) => {
+  // Memoized message rendering to prevent flickering
+  const renderMessageContent = useCallback((message) => {
     const formatTimestamp = (timestamp) => {
       if (!timestamp) return '';
       const date = new Date(timestamp);
@@ -853,7 +853,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
         </div>
       </div>
     );
-  };
+  }, [renderEmailDisplay, renderAIAvatar, renderGmailSuccessMessage, renderPostPromptPackage, renderIntentData]);
 
   return (
     <div className="flex flex-col h-full">
