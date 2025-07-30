@@ -639,6 +639,11 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       return null;
     }
 
+    // Hide intent data for email intents as the draft is already shown nicely
+    if (intentData.intent === 'send_email') {
+      return null;
+    }
+
     return (
       <div className="mt-3 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
         <div className="text-xs text-blue-300 mb-2 font-medium">
