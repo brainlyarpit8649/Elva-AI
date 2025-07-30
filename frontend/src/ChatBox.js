@@ -303,13 +303,21 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       );
     }
 
-    // Check if this is an email display response
-    if (!response.includes('📥') && !response.includes('have') && !response.includes('emails') && !response.includes('unread')) {
+    // Check if this is an email display response - Enhanced Gmail detection
+    const isGmailResponse = response.includes('📥') || 
+                           response.includes('unread email') || 
+                           response.includes('Gmail inbox') || 
+                           response.includes('**From:**') ||
+                           response.includes('**Subject:**') ||
+                           response.includes('**Received:**') ||
+                           response.includes('**Snippet:**');
+    
+    if (!isGmailResponse) {
       return response;
     }
 
     // Handle "no unread emails" message
-    if (response.includes('No unread emails') || response.includes('all caught up')) {
+    if (response.includes('No unread emails') || response.includes('all caught up') || response.includes('inbox is empty')) {
       return (
         <div className="email-display-card premium-gmail-card">
           <div className="email-header no-emails-header">
