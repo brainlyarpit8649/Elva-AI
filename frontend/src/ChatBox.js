@@ -32,10 +32,10 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   const [isDirectAutomation, setIsDirectAutomation] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Stable ID generator to prevent flickering
+  // Stable ID generator to prevent flickering - using UUID instead of Date.now()
   const generateStableId = useCallback((prefix = 'msg') => {
     messageCounter += 1;
-    return `${prefix}_${sessionId}_${messageCounter}_${Date.now()}`;
+    return `${prefix}_${sessionId}_${messageCounter}_${generateUUID()}`;
   }, [sessionId]);
 
   const scrollToBottom = () => {
