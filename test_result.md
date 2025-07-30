@@ -463,7 +463,7 @@ backend:
         -agent: "testing"
         -comment: "✅ N8N WEBHOOK URL UPDATE VERIFIED: Comprehensive testing confirms the new webhook URL (https://kumararpit8649.app.n8n.cloud/webhook/main-controller) is loaded correctly from environment variables and being used by the webhook handler. Tested approval workflow and confirmed webhook is called with new URL. Health check shows N8N webhook as 'configured'. The webhook URL update is working correctly and ready for production use."
 
-  - task: "Gmail Credentials.json Update"
+  - task: "Gmail Credentials.json Update & Authentication Fix"
     implemented: true
     working: true
     file: "credentials.json"
@@ -480,6 +480,9 @@ backend:
         -working: true
         -agent: "main"
         -comment: "✅ CREDENTIALS UPDATED & VERIFIED: Updated Gmail OAuth2 credentials with new client_secret and configurations. Backend service restarted successfully. Health check confirms Gmail integration is ready with proper OAuth2 flow implementation. All API endpoints responding correctly."
+        -working: true
+        -agent: "main"
+        -comment: "🔧 FINAL CREDENTIALS UPDATE: Updated credentials.json with provided client_secret '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' and proper redirect URIs. Gmail authentication endpoints tested and working - /api/gmail/auth generates proper OAuth URLs with correct client_id. Gmail button functionality restored."
 
   - task: "ChatBox Consolidation & Cleanup"
     implemented: true
