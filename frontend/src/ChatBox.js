@@ -91,7 +91,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
         console.log('🔧 Gmail Auth Issues Detected:', data);
         
         const debugMessage = {
-          id: 'gmail_debug_' + Date.now(),
+          id: generateStableId('gmail_debug'),
           response: `🔧 **Gmail Connection Debug**\n\n` +
             `📋 **Status**: ${data.success ? 'Service Running' : 'Service Error'}\n` +
             `🔑 **Credentials**: ${data.credentials_configured ? 'Configured ✅' : 'Missing ❌'}\n` +
