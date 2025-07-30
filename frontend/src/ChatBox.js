@@ -595,16 +595,17 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
 
       setMessages(prev => [...prev, statusMessage]);
 
-      if (approved && response.data.n8n_response) {
-        const n8nMessage = {
-          id: Date.now() + 1,
-          response: `🔗 Automation Response: ${JSON.stringify(response.data.n8n_response, null, 2)}`,
-          isUser: false,
-          isSystem: true,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, n8nMessage]);
-      }
+      // Note: Automation response display removed as requested by user
+      // if (approved && response.data.n8n_response) {
+      //   const n8nMessage = {
+      //     id: Date.now() + 1,
+      //     response: `🔗 Automation Response: ${JSON.stringify(response.data.n8n_response, null, 2)}`,
+      //     isUser: false,
+      //     isSystem: true,
+      //     timestamp: new Date()
+      //   };
+      //   setMessages(prev => [...prev, n8nMessage]);
+      // }
 
     } catch (error) {
       console.error('Error handling approval:', error);
