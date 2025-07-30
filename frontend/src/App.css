@@ -1936,15 +1936,7 @@ button:active:not(:disabled) {
   background-size: 400% 400%;
 }
 
-/* Floating animation */
-@keyframes glass-card-float {
-  0%, 100% { 
-    transform: perspective(1000px) rotateX(2deg) translateZ(20px) translateY(0px);
-  }
-  50% { 
-    transform: perspective(1000px) rotateX(2deg) translateZ(20px) translateY(-3px);
-  }
-}
+/* Removed glass-card-float animation to prevent UI flickering */
 
 /* Gradient flow animation */
 @keyframes gradient-flow {
