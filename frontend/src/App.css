@@ -61,14 +61,19 @@ html, body {
 .elva-logo {
   width: 48px;
   height: 48px;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid rgba(79, 70, 229, 0.3);
   filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.3));
   transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .elva-logo:hover {
   filter: drop-shadow(0 0 15px rgba(79, 70, 229, 0.5));
   transform: scale(1.05);
+  border-color: rgba(79, 70, 229, 0.5);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
 }
 
 .logo-container {
