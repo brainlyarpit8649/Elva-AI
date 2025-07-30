@@ -657,7 +657,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       });
 
       const statusMessage = {
-        id: Date.now(),
+        id: generateStableId('response'),
         response: approved ? 
           '✅ Perfect! Action executed successfully! Your request has been sent to the automation system.' : 
           '❌ No worries! Action cancelled as requested.',
