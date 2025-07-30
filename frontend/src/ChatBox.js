@@ -571,7 +571,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       const recipientName = data.recipient_name || 'Unknown';
       formattedMessage = `📧 Here's the updated email for ${recipientName}:\n\n`;
       formattedMessage += `Subject: ${data.subject || 'No subject'}\n\n`;
-      formattedMessage += `Body:\n${data.body || 'No content'}`;
+      formattedMessage += `Body: ${data.body || 'No content'}`;
       if (data.recipient_email) {
         formattedMessage += `\n\nTo: ${data.recipient_email}`;
       }
