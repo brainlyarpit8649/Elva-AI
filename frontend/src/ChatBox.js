@@ -528,7 +528,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
         setShowApprovalModal(true);
         
         const modalHelpMessage = {
-          id: Date.now() + 1,
+          id: generateStableId('response') + 1,
           response: "📋 I've opened the approval modal with pre-filled details. You can review and edit the information above, then click 'Approve' or just type 'Send it' to execute! Type 'Cancel' to abort.",
           isUser: false,
           isSystem: true,
