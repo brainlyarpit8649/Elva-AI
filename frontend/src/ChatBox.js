@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from './context/ToastContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Stable ID generator to prevent flickering
+let messageCounter = 0;
+const generateStableId = (prefix = 'msg') => {
+  messageCounter += 1;
+  return `${prefix}_${sessionId}_${messageCounter}_${Date.now()}`;
+};
 
 function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, setMessages }) {
   const { showGmailSuccess, showGmailError } = useToast();
