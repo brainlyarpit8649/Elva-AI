@@ -382,14 +382,15 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
             let sender = '', subject = '', date = '', snippet = '';
             
             lines.forEach(line => {
-              if (line.includes('**From:**')) {
-                sender = line.replace(/.*\*\*From:\*\*\s*/, '').trim();
-              } else if (line.includes('**Subject:**')) {
-                subject = line.replace(/.*\*\*Subject:\*\*\s*/, '').trim();
-              } else if (line.includes('**Received:**')) {
-                date = line.replace(/.*\*\*Received:\*\*\s*/, '').trim();
-              } else if (line.includes('**Snippet:**')) {
-                snippet = line.replace(/.*\*\*Snippet:\*\*\s*"?/, '').replace(/"$/, '').trim();
+              // Enhanced pattern matching for current format
+              if (line.includes('**From:**') || line.includes('🧑 **From:**')) {
+                sender = line.replace(/.*\*\*From:\*\*\s*/, '').replace(/^🧑\s*/, '').trim();
+              } else if (line.includes('**Subject:**') || line.includes('📨 **Subject:**')) {
+                subject = line.replace(/.*\*\*Subject:\*\*\s*/, '').replace(/^📨\s*/, '').trim();
+              } else if (line.includes('**Received:**') || line.includes('🕒 **Received:**')) {
+                date = line.replace(/.*\*\*Received:\*\*\s*/, '').replace(/^🕒\s*/, '').trim();
+              } else if (line.includes('**Snippet:**') || line.includes('✏️ **Snippet:**')) {
+                snippet = line.replace(/.*\*\*Snippet:\*\*\s*"?/, '').replace(/^✏️\s*/, '').replace(/"$/, '').trim();
               }
             });
             
@@ -398,19 +399,19 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
                 <div className="email-field">
                   <span className="email-field-icon">🧑</span>
                   <span className="email-field-label">From:</span>
-                  <span className="email-field-content">{sender}</span>
+                  <span className="email-field-content">{sender || 'Unknown Sender'}</span>
                 </div>
                 
                 <div className="email-field">
                   <span className="email-field-icon">📨</span>
                   <span className="email-field-label">Subject:</span>
-                  <span className="email-field-content">{subject}</span>
+                  <span className="email-field-content">{subject || 'No Subject'}</span>
                 </div>
                 
                 <div className="email-field">
                   <span className="email-field-icon">🕒</span>
                   <span className="email-field-label">Received:</span>
-                  <span className="email-field-content">{date}</span>
+                  <span className="email-field-content">{date || 'Unknown Date'}</span>
                 </div>
                 
                 {snippet && (
