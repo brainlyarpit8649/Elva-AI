@@ -450,7 +450,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     // If user says approval keywords but there's no pending approval, provide helpful message
     if (!pendingApproval && approvalKeywords.some(keyword => message.includes(keyword))) {
       const userMessage = {
-        id: Date.now(),
+        id: generateStableId('user'),
         message: inputMessage,
         isUser: true,
         timestamp: new Date()
