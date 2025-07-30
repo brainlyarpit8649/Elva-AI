@@ -565,7 +565,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage = {
-        id: Date.now(),
+        id: generateStableId('loading'),
         response: 'Sorry, I encountered an error. Please try again! 🤖',
         isUser: false,
         timestamp: new Date()
