@@ -52,7 +52,7 @@ The issue was caused by:
    - Choose "Web application"
    - Add this redirect URI:
      ```
-     https://d21ccbdd-878c-41ae-9c4d-8d938c68c420.preview.emergentagent.com/api/gmail/callback
+     https://3dca2afa-3a51-4514-aa3a-92cbfa0b4ecc.preview.emergentagent.com/api/gmail/callback
      ```
 
 ### Step 2: Replace Placeholder Credentials
@@ -65,7 +65,7 @@ Replace the content of `/app/backend/credentials.json` with your actual Google O
     "client_id": "YOUR_ACTUAL_CLIENT_ID.apps.googleusercontent.com",
     "client_secret": "YOUR_ACTUAL_CLIENT_SECRET", 
     "redirect_uris": [
-      "https://d21ccbdd-878c-41ae-9c4d-8d938c68c420.preview.emergentagent.com/api/gmail/callback"
+      "https://3dca2afa-3a51-4514-aa3a-92cbfa0b4ecc.preview.emergentagent.com/api/gmail/callback"
     ],
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token",
