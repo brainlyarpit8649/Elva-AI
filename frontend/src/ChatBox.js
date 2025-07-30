@@ -409,7 +409,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     }
 
     return response;
-  };
+  }, []); // Empty dependency array since function doesn't depend on any props/state
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
