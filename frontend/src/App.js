@@ -342,9 +342,9 @@ function GmailAuthHandlerWrapper({
           <div className="flex items-center space-x-4">
             <div className="logo-container">
               <img 
-                src="/logo.svg" 
+                src="/elva-logo.jpg" 
                 alt="Elva AI Logo" 
-                className="elva-logo"
+                className="elva-logo w-12 h-12 rounded-full object-cover shadow-lg"
                 onError={(e) => {
                   // Fallback to gradient logo if image fails to load
                   e.target.style.display = 'none';
