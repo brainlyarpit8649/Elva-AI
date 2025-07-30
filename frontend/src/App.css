@@ -2019,25 +2019,33 @@ button:active:not(:disabled) {
 }
 
 .email-header {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #e2e8f0;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+  
+  /* Enhanced glassmorphism header */
+  background: rgba(139, 92, 246, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 16px 20px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  
+  /* Subtle 3D elevation */
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 4px 10px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  transform: translateZ(10px);
   
   /* Gradient text effect */
-  background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+  background: linear-gradient(135deg, #e2e8f0, #a78bfa, #c084fc);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  
-  /* Subtle glow */
-  filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.4));
-  
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
 }
 
 .no-emails-header {
