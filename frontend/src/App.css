@@ -2007,8 +2007,8 @@ button:active:not(:disabled) {
     rgba(251, 188, 4, 0.7),    /* Gmail yellow */
     rgba(66, 133, 244, 0.7)    /* Gmail blue */
   );
-  background-size: 300% 300%;
-  animation: gmail-gradient-flow 6s ease infinite;
+  background-size: 100% 100%;
+  /* Removed animation to prevent flickering */
 }
 
 @keyframes gmail-gradient-flow {
