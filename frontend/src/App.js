@@ -148,7 +148,7 @@ function App() {
         : "\n\n⚠️ **Note:** Gmail integration is not configured. Contact support to enable email features.";
     
     const welcomeMessage = {
-      id: 'welcome_' + Date.now(),
+      id: 'welcome_' + generateUUID(),
       response: baseMessage + gmailMessage,
       isUser: false,
       isWelcome: true,
