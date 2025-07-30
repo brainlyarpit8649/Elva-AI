@@ -1246,13 +1246,7 @@ button:active:not(:disabled) {
   /* Removed animation to prevent flickering */
 }
 
-@keyframes gmail-colors {
-  0% { background-position: 0% 50%; }
-  25% { background-position: 25% 50%; }
-  50% { background-position: 50% 50%; }
-  75% { background-position: 75% 50%; }
-  100% { background-position: 100% 50%; }
-}
+/* Removed gmail-gradient-flow and gmail-colors animations to prevent flickering */
 
 .circular-icon-btn.gmail-connected {
   border-color: rgba(52, 168, 83, 0.6);
