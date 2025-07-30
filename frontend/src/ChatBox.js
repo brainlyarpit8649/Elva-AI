@@ -569,43 +569,43 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     
     if (intent === 'send_email') {
       const recipientName = data.recipient_name || 'Unknown';
-      formattedMessage = `📧 **Here's the updated email for ${recipientName}:**\n\n`;
-      formattedMessage += `**Subject:** ${data.subject || 'No subject'}\n\n`;
-      formattedMessage += `**Body:**\n${data.body || 'No content'}\n\n`;
+      formattedMessage = `📧 Here's the updated email for ${recipientName}:\n\n`;
+      formattedMessage += `Subject: ${data.subject || 'No subject'}\n\n`;
+      formattedMessage += `Body:\n${data.body || 'No content'}`;
       if (data.recipient_email) {
-        formattedMessage += `**To:** ${data.recipient_email}`;
+        formattedMessage += `\n\nTo: ${data.recipient_email}`;
       }
     } else if (intent === 'create_event') {
-      formattedMessage = `📅 **Here's the updated meeting details:**\n\n`;
-      formattedMessage += `**Event:** ${data.event_title || data.title || 'No title'}\n\n`;
-      if (data.date) formattedMessage += `**Date:** ${data.date}\n`;
-      if (data.time) formattedMessage += `**Time:** ${data.time}\n`;
-      if (data.location) formattedMessage += `**Location:** ${data.location}\n`;
+      formattedMessage = `📅 Here's the updated meeting details:\n\n`;
+      formattedMessage += `Event: ${data.event_title || data.title || 'No title'}\n\n`;
+      if (data.date) formattedMessage += `Date: ${data.date}\n`;
+      if (data.time) formattedMessage += `Time: ${data.time}\n`;
+      if (data.location) formattedMessage += `Location: ${data.location}\n`;
       if (data.participants && Array.isArray(data.participants)) {
-        formattedMessage += `**Participants:** ${data.participants.join(', ')}\n`;
+        formattedMessage += `Participants: ${data.participants.join(', ')}\n`;
       }
-      if (data.description) formattedMessage += `\n**Description:**\n${data.description}`;
+      if (data.description) formattedMessage += `\nDescription:\n${data.description}`;
     } else if (intent === 'add_todo') {
-      formattedMessage = `✅ **Here's the updated todo:**\n\n`;
-      formattedMessage += `**Task:** ${data.task || 'No task specified'}\n`;
-      if (data.priority) formattedMessage += `**Priority:** ${data.priority}\n`;
-      if (data.due_date) formattedMessage += `**Due Date:** ${data.due_date}\n`;
-      if (data.description) formattedMessage += `\n**Notes:**\n${data.description}`;
+      formattedMessage = `✅ Here's the updated todo:\n\n`;
+      formattedMessage += `Task: ${data.task || 'No task specified'}\n`;
+      if (data.priority) formattedMessage += `Priority: ${data.priority}\n`;
+      if (data.due_date) formattedMessage += `Due Date: ${data.due_date}\n`;
+      if (data.description) formattedMessage += `\nNotes:\n${data.description}`;
     } else if (intent === 'set_reminder') {
-      formattedMessage = `⏰ **Here's the updated reminder:**\n\n`;
-      formattedMessage += `**Reminder:** ${data.reminder_text || data.text || 'No reminder text'}\n`;
-      if (data.date) formattedMessage += `**Date:** ${data.date}\n`;
-      if (data.time) formattedMessage += `**Time:** ${data.time}\n`;
+      formattedMessage = `⏰ Here's the updated reminder:\n\n`;
+      formattedMessage += `Reminder: ${data.reminder_text || data.text || 'No reminder text'}\n`;
+      if (data.date) formattedMessage += `Date: ${data.date}\n`;
+      if (data.time) formattedMessage += `Time: ${data.time}\n`;
     } else {
       // Generic formatting for other intents
-      formattedMessage = `📋 **Here are the updated details:**\n\n`;
+      formattedMessage = `📋 Here are the updated details:\n\n`;
       Object.entries(data).forEach(([key, value]) => {
         if (key !== 'intent') {
           const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           if (Array.isArray(value)) {
-            formattedMessage += `**${formattedKey}:** ${value.join(', ')}\n`;
+            formattedMessage += `${formattedKey}: ${value.join(', ')}\n`;
           } else {
-            formattedMessage += `**${formattedKey}:** ${value}\n`;
+            formattedMessage += `${formattedKey}: ${value}\n`;
           }
         }
       });
@@ -625,7 +625,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
           id: Date.now(),
           response: formatUpdatedDetails(editedData),
           isUser: false,
-          isEdit: true,
+          isEdit: false, // Changed from true to false so it doesn't use green edit styling
           timestamp: new Date()
         };
         setMessages(prev => [...prev, editSummary]);
