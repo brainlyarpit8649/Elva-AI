@@ -836,24 +836,7 @@ button:active:not(:disabled) {
   /* Removed header-border-glow animation to prevent flickering */
 }
 
-@keyframes header-border-glow {
-  0%, 100% {
-    background-position: 0% 50%;
-    opacity: 0.7;
-  }
-  25% {
-    background-position: 100% 50%;
-    opacity: 0.9;
-  }
-  50% {
-    background-position: 100% 100%;
-    opacity: 0.8;
-  }
-  75% {
-    background-position: 0% 100%;
-    opacity: 0.9;
-  }
-}
+/* Removed header-border-glow animation to prevent flickering */
 
 /* Enhanced hover effect for header interactivity */
 .glassy-header:hover {
