@@ -216,7 +216,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     return getAutomationStatusMessage(message) !== null;
   };
 
-  const renderGmailSuccessMessage = useCallback(() => {
+  const renderGmailSuccessMessage = () => {
     return (
       <div className="gmail-success-message">
         <div className="gmail-success-title">
