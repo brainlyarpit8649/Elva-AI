@@ -275,7 +275,7 @@ function App() {
       
       // Add fallback message
       const fallbackMsg = {
-        id: 'export_fallback_' + Date.now(),
+        id: 'export_fallback_' + generateUUID(),
         response: `📄 **Chat exported as text file**\n\n` +
                  `PDF export encountered an issue, so your chat has been saved as a text file instead.\n` +
                  `Check your Downloads folder for: elva-chat-${new Date().toISOString().split('T')[0]}.txt`,
