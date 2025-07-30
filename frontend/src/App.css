@@ -2059,32 +2059,14 @@ button:active:not(:disabled) {
 
 .email-count-badge-enhanced {
   display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  padding: 4px 8px;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  font-size: 1rem;
   font-weight: bold;
-  margin: 0 4px;
-  box-shadow: 
-    0 0 20px rgba(239, 68, 68, 0.5),
-    0 4px 10px rgba(0, 0, 0, 0.3);
-  animation: badge-pulse 2s ease-in-out infinite;
-}
-
-@keyframes badge-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 
-      0 0 20px rgba(239, 68, 68, 0.5),
-      0 4px 10px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 
-      0 0 30px rgba(239, 68, 68, 0.7),
-      0 6px 15px rgba(0, 0, 0, 0.4);
-  }
+  margin: 0 2px;
+  /* Removed all animations and glow effects to prevent flickering */
 }
 
 .email-item {
