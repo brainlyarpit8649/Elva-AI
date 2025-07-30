@@ -2012,12 +2012,7 @@ button:active:not(:disabled) {
   /* Removed animation to prevent flickering */
 }
 
-@keyframes gmail-gradient-flow {
-  0% { background-position: 0% 50%; }
-  33% { background-position: 100% 50%; }
-  66% { background-position: 100% 0%; }
-  100% { background-position: 0% 50%; }
-}
+/* Removed gmail-gradient-flow and gmail-colors animations to prevent flickering */
 
 .email-header {
   font-size: 1.2rem;
