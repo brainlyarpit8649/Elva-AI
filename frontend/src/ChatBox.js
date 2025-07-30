@@ -640,7 +640,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       
       if (editMode && editedData) {
         const editSummary = {
-          id: Date.now(),
+          id: generateStableId('response'),
           response: formatUpdatedDetails(editedData),
           isUser: false,
           isEdit: false, // Changed from true to false so it doesn't use green edit styling
