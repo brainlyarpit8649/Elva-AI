@@ -45,7 +45,7 @@ function App() {
     }
     
     // Generate new session ID and store it
-    const newSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const newSessionId = 'session_' + generateUUID();
     localStorage.setItem('elva-session-id', newSessionId);
     return newSessionId;
   }
