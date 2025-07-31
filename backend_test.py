@@ -3670,6 +3670,355 @@ class ElvaBackendTester:
             self.log_test("Error Handling - External Services", False, f"Error: {str(e)}")
             return False
 
+    def test_mcp_write_context_direct(self):
+        """Test MCP write context endpoint directly"""
+        try:
+            payload = {
+                "session_id": self.session_id,
+                "user_id": "test_user",
+                "intent": "test_intent",
+                "data": {
+                    "user_message": "Test message for MCP context",
+                    "ai_response": "Test AI response",
+                    "intent_data": {"intent": "test_intent", "test_field": "test_value"},
+                    "routing_info": {
+                        "model": "claude",
+                        "confidence": 0.95,
+                        "reasoning": "Test routing decision"
+                    }
+                }
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/mcp/write-context", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("MCP Write Context Direct", False, f"Write failed: {data.get('message')}", data)
+                    return False
+                
+                self.log_test("MCP Write Context Direct", True, f"Context written successfully to MCP service")
+                return True
+            else:
+                self.log_test("MCP Write Context Direct", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Write Context Direct", False, f"Error: {str(e)}")
+            return False
+
+    def test_mcp_read_context(self):
+        """Test MCP read context endpoint"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/mcp/read-context/{self.session_id}", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if context was found
+                if data.get("success") == False and "not found" in data.get("message", "").lower():
+                    self.log_test("MCP Read Context", True, "No context found (expected for new session)")
+                    return True
+                elif "user_message" in data or "ai_response" in data:
+                    self.log_test("MCP Read Context", True, f"Context retrieved successfully from MCP service")
+                    return True
+                else:
+                    self.log_test("MCP Read Context", False, "Unexpected response format", data)
+                    return False
+            else:
+                self.log_test("MCP Read Context", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Read Context", False, f"Error: {str(e)}")
+            return False
+
+    def test_mcp_append_context(self):
+        """Test MCP append context endpoint"""
+        try:
+            payload = {
+                "session_id": self.session_id,
+                "output": {
+                    "action": "test_append_action",
+                    "result": "Test append result",
+                    "timestamp": datetime.now().isoformat(),
+                    "success": True
+                },
+                "source": "elva_test"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/mcp/append-context", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("MCP Append Context", False, f"Append failed: {data.get('message')}", data)
+                    return False
+                
+                self.log_test("MCP Append Context", True, f"Context appended successfully to MCP service")
+                return True
+            else:
+                self.log_test("MCP Append Context", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Append Context", False, f"Error: {str(e)}")
+            return False
+
+    def test_mcp_integration_via_chat(self):
+        """Test MCP integration through chat endpoint - verify context writing works"""
+        try:
+            # Send a message that should trigger MCP context writing
+            payload = {
+                "message": "Hello, this is a test message for MCP integration",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if response is valid
+                if not data.get("response") or len(data.get("response", "").strip()) == 0:
+                    self.log_test("MCP Integration via Chat", False, "Empty AI response", data)
+                    return False
+                
+                # Now check if context was written to MCP
+                time.sleep(2)  # Give MCP time to process
+                
+                context_response = requests.get(f"{BACKEND_URL}/mcp/read-context/{self.session_id}", timeout=15)
+                
+                if context_response.status_code == 200:
+                    context_data = context_response.json()
+                    
+                    # Check if our message context was stored
+                    if ("user_message" in context_data and 
+                        "ai_response" in context_data and
+                        payload["message"] in str(context_data)):
+                        self.log_test("MCP Integration via Chat", True, f"Chat message successfully stored in MCP context")
+                        return True
+                    else:
+                        self.log_test("MCP Integration via Chat", False, "Context not properly stored in MCP", context_data)
+                        return False
+                else:
+                    self.log_test("MCP Integration via Chat", False, f"Failed to read context: HTTP {context_response.status_code}")
+                    return False
+            else:
+                self.log_test("MCP Integration via Chat", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Integration via Chat", False, f"Error: {str(e)}")
+            return False
+
+    def test_mcp_session_consistency(self):
+        """Test MCP session ID consistency across multiple requests"""
+        try:
+            # Create a new session for this test
+            test_session_id = str(uuid.uuid4())
+            
+            # Send multiple messages with the same session ID
+            messages = [
+                "First message for session consistency test",
+                "Second message for the same session",
+                "Third message to verify session continuity"
+            ]
+            
+            for i, message in enumerate(messages):
+                payload = {
+                    "message": message,
+                    "session_id": test_session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+                
+                if response.status_code != 200:
+                    self.log_test("MCP Session Consistency", False, f"Message {i+1} failed: HTTP {response.status_code}")
+                    return False
+                
+                time.sleep(1)  # Small delay between messages
+            
+            # Now read the context and verify all messages are there
+            context_response = requests.get(f"{BACKEND_URL}/mcp/read-context/{test_session_id}", timeout=15)
+            
+            if context_response.status_code == 200:
+                context_data = context_response.json()
+                context_str = str(context_data)
+                
+                # Check if all messages are in the context
+                messages_found = sum(1 for msg in messages if msg in context_str)
+                
+                if messages_found >= 2:  # At least 2 out of 3 messages should be found
+                    self.log_test("MCP Session Consistency", True, f"Session consistency verified: {messages_found}/3 messages found in context")
+                    return True
+                else:
+                    self.log_test("MCP Session Consistency", False, f"Only {messages_found}/3 messages found in context", context_data)
+                    return False
+            else:
+                self.log_test("MCP Session Consistency", False, f"Failed to read context: HTTP {context_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Session Consistency", False, f"Error: {str(e)}")
+            return False
+
+    def test_ai_response_error_fix(self):
+        """Test that AI responses are working and not giving 'sorry I've encountered an error' messages"""
+        try:
+            test_messages = [
+                "How are you doing today?",
+                "What's the weather like?",
+                "Tell me a joke",
+                "Explain artificial intelligence",
+                "What can you help me with?"
+            ]
+            
+            error_responses = 0
+            successful_responses = 0
+            
+            for message in test_messages:
+                payload = {
+                    "message": message,
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    response_text = data.get("response", "").lower()
+                    
+                    # Check for error messages
+                    error_indicators = [
+                        "sorry i've encountered an error",
+                        "sorry, i've encountered an error", 
+                        "encountered an error",
+                        "something went wrong",
+                        "error occurred"
+                    ]
+                    
+                    if any(indicator in response_text for indicator in error_indicators):
+                        error_responses += 1
+                    elif len(response_text.strip()) > 10:  # Valid response
+                        successful_responses += 1
+                
+                time.sleep(1)  # Small delay between requests
+            
+            if error_responses == 0 and successful_responses >= 3:
+                self.log_test("AI Response Error Fix", True, f"All AI responses working correctly: {successful_responses}/5 successful, 0 errors")
+                return True
+            else:
+                self.log_test("AI Response Error Fix", False, f"AI response issues: {successful_responses} successful, {error_responses} errors out of 5 messages")
+                return False
+                
+        except Exception as e:
+            self.log_test("AI Response Error Fix", False, f"Error: {str(e)}")
+            return False
+
+    def test_generate_post_prompt_package_intent(self):
+        """Test generate_post_prompt_package intent implementation"""
+        try:
+            payload = {
+                "message": "Help me create a LinkedIn post about my new AI project",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+            
+            if response.status_code == 200:
+                data = response.json()
+                intent_data = data.get("intent_data", {})
+                
+                # Check if intent was detected as generate_post_prompt_package
+                if intent_data.get("intent") != "generate_post_prompt_package":
+                    self.log_test("Generate Post Prompt Package Intent", False, f"Wrong intent detected: {intent_data.get('intent')}", data)
+                    return False
+                
+                # Check that it doesn't need approval (should show blocks instead)
+                if data.get("needs_approval") != False:
+                    self.log_test("Generate Post Prompt Package Intent", False, "generate_post_prompt_package should not need approval", data)
+                    return False
+                
+                # Check for post description and AI instructions in intent data
+                expected_fields = ["post_description", "ai_instructions"]
+                missing_fields = [field for field in expected_fields if not intent_data.get(field)]
+                
+                if missing_fields:
+                    self.log_test("Generate Post Prompt Package Intent", False, f"Missing fields: {missing_fields}", intent_data)
+                    return False
+                
+                # Check response contains confirmation instruction
+                response_text = data.get("response", "")
+                if "send" not in response_text.lower() or "go ahead" not in response_text.lower():
+                    self.log_test("Generate Post Prompt Package Intent", False, "Response missing send confirmation instruction", data)
+                    return False
+                
+                self.log_test("Generate Post Prompt Package Intent", True, f"Post prompt package intent working correctly with blocks display")
+                return True
+            else:
+                self.log_test("Generate Post Prompt Package Intent", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Generate Post Prompt Package Intent", False, f"Error: {str(e)}")
+            return False
+
+    def test_post_prompt_package_send_confirmation(self):
+        """Test send confirmation for post prompt package"""
+        try:
+            # First create a post prompt package
+            payload = {
+                "message": "Help me create a LinkedIn post about my machine learning project",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+            
+            if response.status_code != 200:
+                self.log_test("Post Prompt Package Send Confirmation", False, "Failed to create post prompt package")
+                return False
+            
+            # Now send confirmation
+            time.sleep(1)
+            
+            confirm_payload = {
+                "message": "send",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            confirm_response = requests.post(f"{BACKEND_URL}/chat", json=confirm_payload, timeout=20)
+            
+            if confirm_response.status_code == 200:
+                confirm_data = confirm_response.json()
+                
+                # Check if confirmation was processed
+                intent_data = confirm_data.get("intent_data", {})
+                response_text = confirm_data.get("response", "")
+                
+                if ("post_package_sent" in intent_data.get("intent", "") or 
+                    "sent successfully" in response_text.lower()):
+                    self.log_test("Post Prompt Package Send Confirmation", True, "Send confirmation processed successfully")
+                    return True
+                else:
+                    self.log_test("Post Prompt Package Send Confirmation", False, "Send confirmation not properly processed", confirm_data)
+                    return False
+            else:
+                self.log_test("Post Prompt Package Send Confirmation", False, f"HTTP {confirm_response.status_code}", confirm_response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Post Prompt Package Send Confirmation", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests with focus on review request areas"""
         print("🚀 Starting Comprehensive Elva AI Backend Testing...")
