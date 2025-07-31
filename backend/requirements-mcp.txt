@@ -1,0 +1,48 @@
+# MCP Service Requirements
+# Optimized for free-tier cloud deployment
+
+# Core FastAPI and server
+fastapi==0.110.1
+uvicorn==0.25.0
+pydantic>=2.6.4
+
+# Database connections
+motor==3.3.1  # MongoDB async driver
+pymongo==4.5.0  # MongoDB sync driver (for compatibility)
+redis>=4.5.0  # Redis client
+
+# HTTP client and security
+httpx>=0.25.0
+python-jose>=3.3.0
+python-multipart>=0.0.9
+cryptography>=42.0.8
+
+# Environment and configuration
+python-dotenv>=1.0.1
+pyyaml>=6.0.0
+
+# Date/time handling
+tzdata>=2024.2
+
+# Logging and monitoring
+structlog>=24.1.0
+
+# Development dependencies (optional)
+pytest>=8.0.0
+black>=24.1.1
+isort>=5.13.2
+
+# For JSON handling and validation
+jsonschema>=4.0.0
+jsonpatch>=1.32
+jsonpointer>=3.0.0
+
+# Async utilities
+asyncio-throttle>=1.0.2
+aiofiles>=24.1.0
+
+# Memory optimization for free tier
+psutil>=5.9.0
+
+# CORS middleware
+python-cors>=1.7.0
