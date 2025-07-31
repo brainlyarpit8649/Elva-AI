@@ -598,33 +598,23 @@ async def write_mcp_context(request: MCPContextRequest):
     try:
         logger.info(f"📝 Writing MCP context for session: {request.session_id}")
         
-        # Prepare context data
-        context_data = {
-            "session_id": request.session_id,
-            "user_id": request.user_id,
-            "intent": request.intent,
-            "data": request.data,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-        # Send to MCP service
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{MCP_SERVICE_URL}/context/write",
-                json=context_data,
-                headers={"Authorization": f"Bearer {MCP_API_TOKEN}"}
-            )
+        # Use the MCP integration service
+        result = await mcp_service.write_context(
+            session_id=request.session_id,
+            intent=request.intent,
+            data=request.data,
+            user_id=request.user_id
+        )
             
-            if response.status_code == 200:
-                mcp_response = response.json()
-                return {
-                    "success": True,
-                    "message": "Context written to MCP successfully",
-                    "mcp_response": mcp_response
-                }
-            else:
-                logger.error(f"MCP write failed: {response.status_code} - {response.text}")
-                raise HTTPException(status_code=response.status_code, detail="MCP write failed")
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "Context written to MCP successfully",
+                "mcp_response": result.get("mcp_response")
+            }
+        else:
+            logger.error(f"MCP write failed: {result.get('error')}")
+            raise HTTPException(status_code=500, detail=f"MCP write failed: {result.get('error')}")
         
     except HTTPException:
         raise
