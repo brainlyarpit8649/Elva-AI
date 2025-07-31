@@ -1,0 +1,23 @@
+# Railway Configuration for MCP Service
+# railway.json - Railway deployment configuration
+
+{
+  "build": {
+    "builder": "dockerfile",
+    "dockerfilePath": "Dockerfile.mcp"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "sleepApplication": false,
+    "restartPolicyType": "ON_FAILURE"
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "ENVIRONMENT": "production",
+        "LOG_LEVEL": "INFO",
+        "PORT": "$PORT"
+      }
+    }
+  }
+}
