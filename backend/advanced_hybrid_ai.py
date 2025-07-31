@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-from conversation_memory import get_conversation_memory
 from mcp_integration import get_mcp_service
 
 load_dotenv()
