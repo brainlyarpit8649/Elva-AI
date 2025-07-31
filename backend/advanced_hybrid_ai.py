@@ -76,6 +76,10 @@ class AdvancedHybridAI:
             "check_gmail_inbox",
             "check_gmail_unread", 
             "email_inbox_check",  # Added new intent for natural language email checking
+            # Enhanced Gmail intents
+            "summarize_gmail_emails",  # Summarize N latest emails with count limit
+            "search_gmail_emails",     # Search emails with natural language queries
+            "categorize_gmail_emails", # Categorize emails by type
             "scrape_price", 
             "scrape_product_listings",
             "linkedin_job_alerts",
