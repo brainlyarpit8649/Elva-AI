@@ -560,6 +560,28 @@ async def run_superagi_task(request: SuperAGITaskRequest):
                 intent_data={"intent": "superagi_task_result", "agent": request.agent_type}
             )
             await db.chat_messages.insert_one(chat_msg.dict())
+            
+            # Append SuperAGI results to MCP context
+            try:
+                append_result = await mcp_service.append_context(
+                    session_id=request.session_id,
+                    output={
+                        "agent_type": request.agent_type,
+                        "goal": request.goal,
+                        "superagi_result": result,
+                        "execution_status": "success" if result.get("success") else "failed",
+                        "timestamp": datetime.utcnow().isoformat()
+                    },
+                    source="superagi"
+                )
+                
+                if append_result.get("success"):
+                    logger.info(f"📝 SuperAGI result appended to MCP - Session: {request.session_id}")
+                else:
+                    logger.warning(f"⚠️ MCP append failed for SuperAGI result: {append_result.get('error')}")
+                    
+            except Exception as mcp_error:
+                logger.warning(f"⚠️ MCP append error for SuperAGI: {mcp_error}")
         
         return result
         
