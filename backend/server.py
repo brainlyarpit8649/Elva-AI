@@ -21,6 +21,7 @@ from direct_automation_handler import direct_automation_handler
 from gmail_oauth_service import GmailOAuthService
 from conversation_memory import initialize_conversation_memory
 from superagi_client import superagi_client
+from mcp_integration import get_mcp_service, initialize_mcp_service
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
