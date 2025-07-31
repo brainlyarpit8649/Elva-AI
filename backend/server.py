@@ -11,6 +11,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 import json
+import httpx
 
 # Import our enhanced hybrid AI system
 from advanced_hybrid_ai import detect_intent, generate_friendly_draft, handle_general_chat, advanced_hybrid_ai
@@ -19,6 +20,7 @@ from playwright_service import playwright_service, AutomationResult
 from direct_automation_handler import direct_automation_handler
 from gmail_oauth_service import GmailOAuthService
 from conversation_memory import initialize_conversation_memory
+from superagi_client import superagi_client
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
