@@ -1,0 +1,15 @@
+{
+  "session_id": "test-session-001",
+  "user_id": "elva-user-123", 
+  "intent": "send_email",
+  "data": {
+    "emails": [
+      {"from": "user@example.com", "subject": "Test Email", "body": "Test content"}
+    ],
+    "calendar_events": [],
+    "chat_history": [
+      {"role": "user", "content": "Send an email to John about the meeting"},
+      {"role": "assistant", "content": "I will help you send that email"}
+    ]
+  }
+}
