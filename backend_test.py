@@ -4420,14 +4420,14 @@ class ElvaBackendTester:
             return False
 
     def run_all_tests(self):
-        """Run all backend tests with focus on MCP integration and review request areas"""
-        print("🚀 Starting Comprehensive Elva AI Backend Testing with MCP Integration Focus")
-        print("🎯 Focus: MCP Integration, AI Response Testing, Gmail Integration, and End-to-End Flow Testing")
+        """Run all backend tests with focus on SuperAGI + MCP integration testing"""
+        print("🚀 Starting Comprehensive SuperAGI + MCP Integration Testing...")
+        print("🎯 Focus: SuperAGI + MCP Integration, Chat Responses, Gmail Authentication")
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Session ID: {self.session_id}")
         print("=" * 80)
         
-        # Priority tests based on review request - MCP Integration Focus
+        # SuperAGI + MCP Integration Tests as requested in review
         priority_tests = [
             # 1. Basic health check to verify services are running
             ("Basic Health Check", [
@@ -4435,16 +4435,39 @@ class ElvaBackendTester:
                 self.test_health_endpoint,
             ]),
             
-            # 2. MCP Integration Testing (PRIORITY FOCUS)
-            ("MCP Integration Testing", [
-                self.test_mcp_write_context_direct,
-                self.test_mcp_read_context,
-                self.test_mcp_append_context,
-                self.test_mcp_integration_via_chat,
-                self.test_mcp_session_consistency,
+            # 2. MCP Context Management Tests (PRIORITY FOCUS)
+            ("MCP Context Management Tests", [
+                self.test_mcp_write_context,
+                self.test_mcp_read_context_session,
+                self.test_mcp_append_context_results,
             ]),
             
-            # 3. AI Response Testing (Fix for "sorry I've encountered an error")
+            # 3. SuperAGI Agent Execution Tests (PRIORITY FOCUS)
+            ("SuperAGI Agent Execution Tests", [
+                self.test_superagi_email_agent_execution,
+                self.test_superagi_linkedin_agent_execution,
+                self.test_superagi_research_agent_execution,
+            ]),
+            
+            # 4. Complete Integration Flow Test (PRIORITY FOCUS)
+            ("Complete Integration Flow Test", [
+                self.test_complete_integration_flow_mcp_superagi,
+            ]),
+            
+            # 5. Chat Integration Tests (PRIORITY FOCUS)
+            ("Chat Integration Tests", [
+                self.test_chat_superagi_triggerable_intents,
+                self.test_chat_general_non_superagi_responses,
+            ]),
+            
+            # 6. Gmail Integration Tests (PRIORITY FOCUS)
+            ("Gmail Integration Tests", [
+                self.test_gmail_auth_new_credentials_oauth,
+                self.test_gmail_oauth_url_generation_verification,
+                self.test_gmail_oauth_status_check,
+            ]),
+            
+            # 7. Core AI Response Testing (Fix for "sorry I've encountered an error")
             ("AI Response Testing", [
                 self.test_ai_response_error_fix,
                 self.test_intent_detection_general_chat,
@@ -4454,27 +4477,32 @@ class ElvaBackendTester:
                 self.test_intent_detection_set_reminder,
             ]),
             
-            # 4. Generate Post Prompt Package Testing
+            # 8. Generate Post Prompt Package Testing
             ("Generate Post Prompt Package Testing", [
                 self.test_generate_post_prompt_package_intent,
                 self.test_post_prompt_package_send_confirmation,
             ]),
             
-            # 5. Gmail Integration Testing
-            ("Gmail Integration Testing", [
-                self.test_gmail_credentials_update,
-                self.test_gmail_oauth_status_check,
-                self.test_gmail_oauth_authorization_url,
-                self.test_gmail_intent_detection,
-            ]),
-            
-            # 6. End-to-End Flow Testing
+            # 9. End-to-End Flow Testing
             ("End-to-End Flow Testing", [
                 self.test_approval_workflow_approved,
                 self.test_approval_workflow_rejected,
                 self.test_approval_workflow_edited_data,
                 self.test_chat_history_retrieval,
                 self.test_chat_history_clearing,
+            ]),
+            
+            # 10. Additional Gmail Integration Tests
+            ("Additional Gmail Integration Tests", [
+                self.test_gmail_credentials_update,
+                self.test_gmail_oauth_authorization_url,
+                self.test_gmail_intent_detection,
+            ]),
+            
+            # 11. MCP Integration via Chat (Additional)
+            ("MCP Integration via Chat", [
+                self.test_mcp_integration_via_chat,
+                self.test_mcp_session_consistency,
             ]),
         ]
         
