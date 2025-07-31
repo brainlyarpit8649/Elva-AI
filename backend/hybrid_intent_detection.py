@@ -207,6 +207,13 @@ For "Help me prepare a LinkedIn post about my project":
   "tech_stack": "HTML, CSS, JavaScript"
 }}
 
+For "Search for latest AI trends" or "Find information about machine learning":
+{{
+  "intent": "web_search",
+  "query": "latest AI trends machine learning 2025",
+  "search_type": "general"
+}}
+
 For anything else:
 {{
   "intent": "general_chat",
