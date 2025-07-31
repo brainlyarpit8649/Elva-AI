@@ -316,35 +316,59 @@ async def chat(request: ChatRequest):
             
         else:
             # Traditional flow for non-direct automation intents
-            web_automation_intents = ["web_scraping", "linkedin_insights", "email_automation", "data_extraction"]
-            # generate_post_prompt_package doesn't need approval - it just shows blocks for user review
-            needs_approval = intent_data.get("intent") not in ["general_chat", "generate_post_prompt_package"]
+            web_automation_intents = ["linkedin_insights", "email_automation", "data_extraction"]
+            superagi_intents = ["web_research"]  # New SuperAGI handled intents
+            
+            # generate_post_prompt_package and web_research don't need approval - they show results directly
+            needs_approval = intent_data.get("intent") not in ["general_chat", "generate_post_prompt_package", "web_research"]
+            
+            # Handle SuperAGI web research intents
+            if intent_data.get("intent") in superagi_intents:
+                try:
+                    logger.info(f"🤖 Executing SuperAGI task: {intent_data.get('intent')}")
+                    
+                    # Execute SuperAGI research agent
+                    research_result = await superagi_client.run_task(
+                        session_id=request.session_id,
+                        goal=intent_data.get("research_query", request.message),
+                        agent_type="research_agent"
+                    )
+                    
+                    if research_result.get("success"):
+                        # Format research results for display
+                        research_summary = research_result.get("research_summary", "Research completed")
+                        trending_topics = research_result.get("trending_topics", [])
+                        key_findings = research_result.get("key_findings", [])
+                        
+                        response_text = f"🔍 **Research Results:**\n\n"
+                        response_text += f"**Summary:** {research_summary}\n\n"
+                        
+                        if trending_topics:
+                            response_text += f"**📈 Trending Topics:**\n"
+                            for topic in trending_topics[:5]:  # Show top 5
+                                response_text += f"• {topic}\n"
+                            response_text += "\n"
+                        
+                        if key_findings:
+                            response_text += f"**🔑 Key Findings:**\n"
+                            for finding in key_findings[:3]:  # Show top 3
+                                response_text += f"• {finding}\n"
+                        
+                        # Don't need approval, show results directly
+                        needs_approval = False
+                        intent_data["superagi_result"] = research_result
+                        
+                    else:
+                        response_text += f"\n\n⚠️ **Research Error:** {research_result.get('error', 'Unknown error')}"
+                        
+                except Exception as e:
+                    logger.error(f"SuperAGI research error: {e}")
+                    response_text += f"\n\n❌ **Research Error:** {str(e)}"
             
             # For web automation intents, check if we have required credentials
-            if intent_data.get("intent") in web_automation_intents:
-                # Check if this is a web scraping request that can be executed directly
-                if intent_data.get("intent") == "web_scraping" and intent_data.get("url"):
-                    # Execute web scraping directly if we have URL and selectors
-                    try:
-                        automation_result = await playwright_service.extract_dynamic_data(
-                            intent_data.get("url"),
-                            intent_data.get("selectors", {}),
-                            intent_data.get("wait_for_element")
-                        )
-                        
-                        # Update response with automation results
-                        if automation_result.success:
-                            response_text += f"\n\n🔍 **Web Scraping Results:**\n{json.dumps(automation_result.data, indent=2)}"
-                            intent_data["automation_result"] = automation_result.data
-                            intent_data["automation_success"] = True
-                            needs_approval = False  # No approval needed for successful scraping
-                        else:
-                            response_text += f"\n\n⚠️ **Scraping Error:** {automation_result.message}"
-                            intent_data["automation_error"] = automation_result.message
-                            
-                    except Exception as e:
-                        logger.error(f"Direct web scraping error: {e}")
-                        response_text += f"\n\n❌ **Automation Error:** {str(e)}"
+            elif intent_data.get("intent") in web_automation_intents:
+                # Web automation intents will be handled by n8n workflows
+                pass
         
         # Handle generate_post_prompt_package intent - store pending data
         if intent_data.get("intent") == "generate_post_prompt_package":
