@@ -867,21 +867,16 @@ Return ONLY the JSON object."""
                 # Ultimate fallback
                 return (
                     {"intent": "general_chat", "message": user_input, "error": str(e)},
-                    "I apologize, but I'm experiencing some technical difficulties. Please try again.",
-                    routing_decision
+                    "I apologize, but I encountered an error processing your request. Please try again.",
+                    RoutingDecision(ModelChoice.CLAUDE, 0.5, "Error fallback")
                 )
                 
         except Exception as e:
-            logger.error(f"💥 Error in advanced hybrid processing: {e}")
-            # Ultimate fallback without memory
+            logger.error(f"Critical processing error: {e}")
             return (
                 {"intent": "general_chat", "message": user_input, "error": str(e)},
-                "I apologize, but I'm experiencing some technical difficulties. Please try again.",
-                RoutingDecision(
-                    primary_model=ModelChoice.CLAUDE,
-                    confidence=0.5,
-                    reasoning="Fallback due to processing error"
-                )
+                "I apologize, but I encountered a critical error. Please try again.",
+                RoutingDecision(ModelChoice.CLAUDE, 0.5, "Critical error fallback")
             )
 
     def get_routing_stats(self, session_id: str) -> dict:
