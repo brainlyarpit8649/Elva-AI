@@ -101,7 +101,12 @@ async def init_databases():
         
         # Redis connection - use MCP-specific Upstash URL if available
         redis_url = os.getenv("MCP_REDIS_URL") or os.getenv("REDIS_URL", "redis://localhost:6379")
-        redis_client = await redis.from_url(redis_url, decode_responses=True)
+        
+        # Handle SSL connections for Upstash Redis
+        if redis_url.startswith("rediss://"):
+            redis_client = await redis.from_url(redis_url, decode_responses=True, ssl_cert_reqs=None)
+        else:
+            redis_client = await redis.from_url(redis_url, decode_responses=True)
         
         # Test Redis connection
         await redis_client.ping()
