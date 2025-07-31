@@ -651,6 +651,45 @@ async def read_mcp_context(session_id: str):
     except Exception as e:
         logger.error(f"❌ MCP context read error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/mcp/append-context")
+async def append_mcp_context(request: dict):
+    """
+    Append agent results to existing context in MCP service
+    Used when SuperAGI or n8n agents complete tasks
+    """
+    try:
+        session_id = request.get("session_id")
+        output = request.get("output", {})
+        source = request.get("source", "elva")
+        
+        if not session_id:
+            raise HTTPException(status_code=400, detail="session_id is required")
+        
+        logger.info(f"➕ Appending to MCP context for session: {session_id} from source: {source}")
+        
+        # Use the MCP integration service
+        result = await mcp_service.append_context(
+            session_id=session_id,
+            output=output,
+            source=source
+        )
+        
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "Context appended to MCP successfully",
+                "mcp_response": result.get("mcp_response")
+            }
+        else:
+            logger.error(f"MCP append failed: {result.get('error')}")
+            raise HTTPException(status_code=500, detail=f"MCP append failed: {result.get('error')}")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ MCP context append error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 async def execute_web_automation(request: MCPContextRequest):
     """
     Execute web automation tasks using Playwright
