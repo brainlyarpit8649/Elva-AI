@@ -708,6 +708,7 @@ Create event: {{"intent": "create_event", "event_title": "Title", "date": "Date"
 Add todo: {{"intent": "add_todo", "task": "Task description", "due_date": "Date"}}
 Set reminder: {{"intent": "set_reminder", "reminder_text": "Text", "reminder_date": "Date"}}
 LinkedIn post: {{"intent": "generate_post_prompt_package", "topic": "Topic", "project_name": "Project name", "project_type": "Type"}}
+Web search: {{"intent": "web_search", "query": "search query terms", "search_type": "general"}}
 Creative writing: {{"intent": "creative_writing", "content": "Creative content", "topic": "Topic"}}
 
 Web research (SuperAGI): 
