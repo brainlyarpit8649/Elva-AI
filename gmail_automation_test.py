@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://e6e527f6-9110-4ca4-bcbc-e7c575b313b4.preview.emergentagent.com/api"
+BACKEND_URL = "https://1ab9abda-2e09-4ee4-938d-5e66a04385d9.preview.emergentagent.com/api"
 
 class GmailAutomationTester:
     def __init__(self):
