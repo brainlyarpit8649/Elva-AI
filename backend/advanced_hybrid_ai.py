@@ -712,40 +712,61 @@ CRITICAL INSTRUCTIONS:
 - All JSON must be complete and properly formatted  
 - For all intents except general_chat, populate ALL fields with realistic content
 
-Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, web_search, creative_writing, web_research, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, general_chat
+Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, web_search, creative_writing, web_research, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, summarize_gmail_emails, search_gmail_emails, categorize_gmail_emails, gmail_smart_actions, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, general_chat
 
 Example JSON responses:
 
-Send email: {{"intent": "send_email", "recipient_name": "Name", "subject": "Subject", "body": "Content"}}
-Create event: {{"intent": "create_event", "event_title": "Title", "date": "Date", "time": "Time"}}
-Add todo: {{"intent": "add_todo", "task": "Task description", "due_date": "Date"}}
-Set reminder: {{"intent": "set_reminder", "reminder_text": "Text", "reminder_date": "Date"}}
-LinkedIn post: {{"intent": "generate_post_prompt_package", "topic": "Topic", "project_name": "Project name", "project_type": "Type"}}
-Web search: {{"intent": "web_search", "query": "search query terms", "search_type": "general"}}
-Creative writing: {{"intent": "creative_writing", "content": "Creative content", "topic": "Topic"}}
+Send email: {"intent": "send_email", "recipient_name": "Name", "subject": "Subject", "body": "Content"}
+Create event: {"intent": "create_event", "event_title": "Title", "date": "Date", "time": "Time"}
+Add todo: {"intent": "add_todo", "task": "Task description", "due_date": "Date"}
+Set reminder: {"intent": "set_reminder", "reminder_text": "Text", "reminder_date": "Date"}
+LinkedIn post: {"intent": "generate_post_prompt_package", "topic": "Topic", "project_name": "Project name", "project_type": "Type"}
+Web search: {"intent": "web_search", "query": "search query terms", "search_type": "general"}
+Creative writing: {"intent": "creative_writing", "content": "Creative content", "topic": "Topic"}
 
 Web research (SuperAGI): 
-Research/trending topics: {{"intent": "web_research", "research_query": "trending AI topics this week", "research_type": "trending_analysis", "focus_area": "artificial intelligence"}}
+Research/trending topics: {"intent": "web_research", "research_query": "trending AI topics this week", "research_type": "trending_analysis", "focus_area": "artificial intelligence"}
+
+ENHANCED GMAIL INTENTS (NEW):
+
+Gmail Summarization with Count Limiting:
+"Summarize my last 5 emails" → {"intent": "summarize_gmail_emails", "count": 5, "time_filter": "latest", "include_unread_only": false}
+"Summarize my recent unread emails" → {"intent": "summarize_gmail_emails", "count": 10, "time_filter": "recent", "include_unread_only": true}
+"Give me a summary of today's emails" → {"intent": "summarize_gmail_emails", "count": 20, "time_filter": "today", "include_unread_only": false}
+
+Gmail Search with Natural Language:
+"Find emails from John about the project report" → {"intent": "search_gmail_emails", "sender": "John", "keywords": ["project", "report"], "search_query": "from:John project report", "max_results": 10}
+"Show me emails from last week about meetings" → {"intent": "search_gmail_emails", "time_filter": "last_week", "keywords": ["meeting", "meetings"], "search_query": "meeting", "max_results": 15}
+"Search for emails with attachments from Sarah" → {"intent": "search_gmail_emails", "sender": "Sarah", "has_attachment": true, "search_query": "from:Sarah has:attachment", "max_results": 10}
+
+Gmail Categorization:
+"Categorize my emails" → {"intent": "categorize_gmail_emails", "categories": ["work", "personal", "promotions", "social", "important"], "count": 20, "time_filter": "recent"}
+"Show me work emails vs personal emails" → {"intent": "categorize_gmail_emails", "categories": ["work", "personal"], "count": 15, "focus_categories": ["work", "personal"]}
+
+Gmail Smart Actions (needs approval):
+"Mark my last 3 promotional emails as read" → {"intent": "gmail_smart_actions", "action": "mark_as_read", "target_count": 3, "email_category": "promotions", "confirmation_required": true}
+"Archive all emails from newsletters" → {"intent": "gmail_smart_actions", "action": "archive", "target_filter": "newsletters", "confirmation_required": true}
+"Reply to Sarah's latest email" → {"intent": "gmail_smart_actions", "action": "reply", "target_sender": "Sarah", "target_count": 1, "confirmation_required": true}
 
 Web automation (traditional - only for specific URL scraping): 
-LinkedIn insights: {{"intent": "linkedin_insights", "insight_type": "notifications/profile_views/connections", "email": "linkedin_email", "password": "password"}}
-Email automation: {{"intent": "email_automation", "provider": "outlook/yahoo/gmail", "email": "email", "password": "password", "action": "check_inbox/send_email"}}
+LinkedIn insights: {"intent": "linkedin_insights", "insight_type": "notifications/profile_views/connections", "email": "linkedin_email", "password": "password"}
+Email automation: {"intent": "email_automation", "provider": "outlook/yahoo/gmail", "email": "email", "password": "password", "action": "check_inbox/send_email"}
 
-Data extraction: {{"intent": "data_extraction", "url": "URL", "data_fields": ["field1", "field2"], "selectors": {{"field": "selector"}}}}
+Data extraction: {"intent": "data_extraction", "url": "URL", "data_fields": ["field1", "field2"], "selectors": {"field": "selector"}}
 
 Direct automation (no approval needed):
-Check LinkedIn notifications: {{"intent": "check_linkedin_notifications", "account_type": "personal/business"}}
-Check Gmail inbox: {{"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}}
-Check Gmail unread: {{"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"}}
-Email inbox check: {{"intent": "email_inbox_check", "user_email": "brainlyarpit8649@gmail.com", "check_type": "unread"}}
-Scrape price: {{"intent": "scrape_price", "product": "product name", "platform": "amazon/flipkart/ebay", "search_query": "search terms"}}
-Scrape product listings: {{"intent": "scrape_product_listings", "category": "category", "platform": "website", "filters": {{"price_range": "range", "brand": "brand"}}}}
-LinkedIn job alerts: {{"intent": "linkedin_job_alerts", "job_title": "title", "location": "location"}}
-Check website updates: {{"intent": "check_website_updates", "website": "website_name", "section": "section to monitor"}}
-Monitor competitors: {{"intent": "monitor_competitors", "company": "company_name", "data_type": "pricing/products/news"}}
-Scrape news articles: {{"intent": "scrape_news_articles", "topic": "news topic", "source": "news source"}}
+Check LinkedIn notifications: {"intent": "check_linkedin_notifications", "account_type": "personal/business"}
+Check Gmail inbox: {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
+Check Gmail unread: {"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"}
+Email inbox check: {"intent": "email_inbox_check", "user_email": "brainlyarpit8649@gmail.com", "check_type": "unread"}
+Scrape price: {"intent": "scrape_price", "product": "product name", "platform": "amazon/flipkart/ebay", "search_query": "search terms"}
+Scrape product listings: {"intent": "scrape_product_listings", "category": "category", "platform": "website", "filters": {"price_range": "range", "brand": "brand"}}
+LinkedIn job alerts: {"intent": "linkedin_job_alerts", "job_title": "title", "location": "location"}
+Check website updates: {"intent": "check_website_updates", "website": "website_name", "section": "section to monitor"}
+Monitor competitors: {"intent": "monitor_competitors", "company": "company_name", "data_type": "pricing/products/news"}
+Scrape news articles: {"intent": "scrape_news_articles", "topic": "news topic", "source": "news source"}
 
-General chat: {{"intent": "general_chat", "message": "original message"}}
+General chat: {"intent": "general_chat", "message": "original message"}
 
 Return ONLY the JSON object."""
 
