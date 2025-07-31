@@ -88,6 +88,17 @@ class WebAutomationRequest(BaseModel):
     automation_type: str  # "web_scraping", "linkedin_insights", "email_automation", "data_extraction"
     parameters: dict
 
+class SuperAGITaskRequest(BaseModel):
+    session_id: str
+    goal: str
+    agent_type: str = "auto"  # auto, email_agent, linkedin_agent, research_agent
+
+class MCPContextRequest(BaseModel):
+    session_id: str
+    user_id: str = "default_user"
+    intent: str
+    data: dict
+
 # Helper functions
 def convert_objectid_to_str(doc):
     """Convert MongoDB ObjectId to string for JSON serialization"""
