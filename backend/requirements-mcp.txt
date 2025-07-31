@@ -44,5 +44,4 @@ aiofiles>=24.1.0
 # Memory optimization for free tier
 psutil>=5.9.0
 
-# CORS middleware
-python-cors>=1.7.0
+# CORS middleware - removed python-cors as requested
