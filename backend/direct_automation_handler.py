@@ -96,7 +96,9 @@ class DirectAutomationHandler:
             # Route to appropriate automation handler
             automation_type = template_info["automation_type"]
             
-            if automation_type == "linkedin_insights":
+            if automation_type == "google_search":
+                result = await self._handle_google_search(intent, intent_data)
+            elif automation_type == "linkedin_insights":
                 result = await self._handle_linkedin_automation(intent, intent_data)
             elif automation_type == "gmail_automation":
                 result = await self._handle_gmail_automation(intent, intent_data, session_id)
