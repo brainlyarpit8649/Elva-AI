@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 from playwright_service import playwright_service
 
