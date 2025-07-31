@@ -416,6 +416,30 @@ async def approve_action(request: ApprovalRequest):
             }}
         )
         
+        # Append results to MCP context when action is approved
+        try:
+            append_result = await mcp_service.append_context(
+                session_id=request.session_id,
+                output={
+                    "action": "approved_action_result",
+                    "intent": final_data.get("intent"),
+                    "n8n_response": n8n_response,
+                    "edited_data": request.edited_data,
+                    "execution_status": "success" if n8n_response.get("success") else "partial",
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                source="elva"
+            )
+            
+            if append_result.get("success"):
+                logger.info(f"📝 Approval result appended to MCP - Session: {request.session_id}")
+            else:
+                logger.warning(f"⚠️ MCP append failed: {append_result.get('error')}")
+                
+        except Exception as mcp_error:
+            logger.warning(f"⚠️ MCP append error: {mcp_error}")
+            # Continue processing even if MCP append fails
+        
         return {
             "success": True,
             "message": "Action executed successfully!" if n8n_response.get("success") else "Action sent but n8n had issues",
