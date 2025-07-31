@@ -88,6 +88,7 @@ class AdvancedHybridAI:
     def get_automation_status_message(self, intent: str) -> str:
         """Get appropriate status message for automation intent"""
         status_messages = {
+            "web_search": "🔍 Searching the web for information...",
             "check_linkedin_notifications": "🔔 Checking LinkedIn notifications...",
             "check_gmail_inbox": "📧 Checking Gmail inbox...",
             "check_gmail_unread": "📧 Checking Gmail unread emails...",
