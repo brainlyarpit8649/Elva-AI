@@ -1297,8 +1297,368 @@ class ElvaBackendTester:
             self.log_test("Direct Automation Response Format", False, f"Error: {str(e)}")
             return False
 
+    def test_enhanced_gmail_intent_detection(self):
+        """Test 25: Enhanced Gmail Intent Detection - Test new Gmail intents"""
+        test_cases = [
+            {
+                "message": "Summarize my last 5 emails",
+                "expected_intent": "summarize_gmail_emails",
+                "expected_fields": ["count"],
+                "description": "Gmail email summarization with count"
+            },
+            {
+                "message": "Find emails from John about project",
+                "expected_intent": "search_gmail_emails", 
+                "expected_fields": ["sender", "keywords"],
+                "description": "Gmail search with sender and keywords"
+            },
+            {
+                "message": "Categorize my emails",
+                "expected_intent": "categorize_gmail_emails",
+                "expected_fields": ["categories"],
+                "description": "Gmail email categorization"
+            },
+            {
+                "message": "Show me work emails vs personal emails",
+                "expected_intent": "categorize_gmail_emails",
+                "expected_fields": ["focus_categories"],
+                "description": "Gmail categorization with focus categories"
+            },
+            {
+                "message": "Summarize my recent unread emails",
+                "expected_intent": "summarize_gmail_emails",
+                "expected_fields": ["include_unread_only"],
+                "description": "Gmail unread email summarization"
+            },
+            {
+                "message": "Search for emails with attachments from Sarah",
+                "expected_intent": "search_gmail_emails",
+                "expected_fields": ["sender", "has_attachment"],
+                "description": "Gmail search with attachment filter"
+            }
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for test_case in test_cases:
+            try:
+                payload = {
+                    "message": test_case["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    intent_data = data.get("intent_data", {})
+                    detected_intent = intent_data.get("intent")
+                    
+                    if detected_intent == test_case["expected_intent"]:
+                        # Check if expected fields are present
+                        missing_fields = []
+                        for field in test_case["expected_fields"]:
+                            if field not in intent_data:
+                                missing_fields.append(field)
+                        
+                        if not missing_fields:
+                            results.append(f"✅ {test_case['description']}: {detected_intent} with fields {test_case['expected_fields']}")
+                            self.message_ids.append(data["id"])
+                        else:
+                            results.append(f"❌ {test_case['description']}: Missing fields {missing_fields}")
+                            all_passed = False
+                    else:
+                        results.append(f"❌ {test_case['description']}: Expected {test_case['expected_intent']}, got {detected_intent}")
+                        all_passed = False
+                else:
+                    results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ {test_case['description']}: Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("Enhanced Gmail Intent Detection", all_passed, result_summary)
+        return all_passed
+
+    def test_enhanced_gmail_routing_to_groq(self):
+        """Test 26: Enhanced Gmail Routing - Verify Gmail intents route to Groq with high confidence"""
+        try:
+            payload = {
+                "message": "Summarize my last 3 emails",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+            
+            if response.status_code == 200:
+                data = response.json()
+                intent_data = data.get("intent_data", {})
+                
+                # Check if intent was detected as enhanced Gmail intent
+                if intent_data.get("intent") != "summarize_gmail_emails":
+                    self.log_test("Enhanced Gmail Routing to Groq", False, f"Wrong intent detected: {intent_data.get('intent')}")
+                    return False
+                
+                # Check routing information if available
+                routing_info = intent_data.get("_routing_info", {})
+                if routing_info:
+                    model_used = routing_info.get("model_used", "")
+                    confidence = routing_info.get("confidence", 0)
+                    
+                    if model_used != "groq":
+                        self.log_test("Enhanced Gmail Routing to Groq", False, f"Expected Groq routing, got {model_used}")
+                        return False
+                    
+                    if confidence < 0.8:
+                        self.log_test("Enhanced Gmail Routing to Groq", False, f"Low confidence: {confidence}")
+                        return False
+                
+                # Check if it's marked as direct automation (should bypass approval modal)
+                needs_approval = data.get("needs_approval", True)
+                if needs_approval:
+                    self.log_test("Enhanced Gmail Routing to Groq", False, "Enhanced Gmail intent should not need approval (direct_automation=True)")
+                    return False
+                
+                self.log_test("Enhanced Gmail Routing to Groq", True, f"Gmail intent routed to Groq with high confidence, direct_automation=True")
+                return True
+            else:
+                self.log_test("Enhanced Gmail Routing to Groq", False, f"HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Enhanced Gmail Routing to Groq", False, f"Error: {str(e)}")
+            return False
+
+    def test_enhanced_gmail_automation_handler(self):
+        """Test 27: Enhanced Gmail Automation Handler - Test automation processing"""
+        test_cases = [
+            {
+                "message": "Summarize my last 2 emails",
+                "expected_automation_type": "enhanced_gmail_automation",
+                "description": "Email summarization automation"
+            },
+            {
+                "message": "Search emails from test@example.com",
+                "expected_automation_type": "enhanced_gmail_automation", 
+                "description": "Email search automation"
+            },
+            {
+                "message": "Categorize my recent emails",
+                "expected_automation_type": "enhanced_gmail_automation",
+                "description": "Email categorization automation"
+            }
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for test_case in test_cases:
+            try:
+                payload = {
+                    "message": test_case["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=25)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    intent_data = data.get("intent_data", {})
+                    
+                    # Check if automation was processed
+                    has_automation_result = "automation_result" in intent_data
+                    has_execution_time = "execution_time" in intent_data
+                    has_direct_automation_flag = intent_data.get("direct_automation", False)
+                    
+                    if has_automation_result and has_execution_time and has_direct_automation_flag:
+                        results.append(f"✅ {test_case['description']}: Automation processed successfully")
+                    else:
+                        results.append(f"❌ {test_case['description']}: Missing automation flags - result: {has_automation_result}, time: {has_execution_time}, direct: {has_direct_automation_flag}")
+                        all_passed = False
+                else:
+                    results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ {test_case['description']}: Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("Enhanced Gmail Automation Handler", all_passed, result_summary)
+        return all_passed
+
+    def test_gmail_api_health_check(self):
+        """Test 28: Gmail API Health Check - Verify enhanced Gmail capabilities"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check Gmail API integration section
+                gmail_integration = data.get("gmail_api_integration", {})
+                
+                if not gmail_integration:
+                    self.log_test("Gmail API Health Check", False, "No gmail_api_integration section in health check")
+                    return False
+                
+                # Check required fields
+                required_fields = ["status", "oauth2_flow", "credentials_configured", "scopes", "endpoints"]
+                missing_fields = [field for field in required_fields if field not in gmail_integration]
+                
+                if missing_fields:
+                    self.log_test("Gmail API Health Check", False, f"Missing Gmail integration fields: {missing_fields}")
+                    return False
+                
+                # Check status is ready
+                if gmail_integration.get("status") != "ready":
+                    self.log_test("Gmail API Health Check", False, f"Gmail status not ready: {gmail_integration.get('status')}")
+                    return False
+                
+                # Check OAuth2 flow is implemented
+                if gmail_integration.get("oauth2_flow") != "implemented":
+                    self.log_test("Gmail API Health Check", False, f"OAuth2 flow not implemented: {gmail_integration.get('oauth2_flow')}")
+                    return False
+                
+                # Check scopes include required Gmail scopes
+                scopes = gmail_integration.get("scopes", [])
+                required_scopes = ["gmail.readonly", "gmail.send", "gmail.compose", "gmail.modify"]
+                missing_scopes = [scope for scope in required_scopes if not any(scope in s for s in scopes)]
+                
+                if missing_scopes:
+                    self.log_test("Gmail API Health Check", False, f"Missing Gmail scopes: {missing_scopes}")
+                    return False
+                
+                # Check endpoints include required Gmail endpoints
+                endpoints = gmail_integration.get("endpoints", [])
+                required_endpoints = ["/api/gmail/auth", "/api/gmail/callback", "/api/gmail/status", "/api/gmail/inbox"]
+                missing_endpoints = [ep for ep in required_endpoints if ep not in endpoints]
+                
+                if missing_endpoints:
+                    self.log_test("Gmail API Health Check", False, f"Missing Gmail endpoints: {missing_endpoints}")
+                    return False
+                
+                self.log_test("Gmail API Health Check", True, f"Gmail integration ready with {len(scopes)} scopes and {len(endpoints)} endpoints")
+                return True
+            else:
+                self.log_test("Gmail API Health Check", False, f"HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail API Health Check", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_status_endpoint(self):
+        """Test 29: Gmail Status Endpoint - Test /api/gmail/status"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/gmail/status", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check required fields
+                required_fields = ["success", "credentials_configured", "authenticated", "requires_auth", "scopes", "service"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Gmail Status Endpoint", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Check service is gmail
+                if data.get("service") != "gmail":
+                    self.log_test("Gmail Status Endpoint", False, f"Wrong service: {data.get('service')}")
+                    return False
+                
+                # Check credentials are configured
+                if not data.get("credentials_configured"):
+                    self.log_test("Gmail Status Endpoint", False, "Gmail credentials not configured")
+                    return False
+                
+                # Check scopes are present
+                scopes = data.get("scopes", [])
+                if len(scopes) < 4:
+                    self.log_test("Gmail Status Endpoint", False, f"Insufficient scopes: {len(scopes)}")
+                    return False
+                
+                self.log_test("Gmail Status Endpoint", True, f"Gmail status working with {len(scopes)} scopes, authenticated: {data.get('authenticated')}")
+                return True
+            else:
+                self.log_test("Gmail Status Endpoint", False, f"HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Status Endpoint", False, f"Error: {str(e)}")
+            return False
+
+    def test_enhanced_gmail_error_handling(self):
+        """Test 30: Enhanced Gmail Error Handling - Test proper error messages"""
+        test_cases = [
+            {
+                "message": "Check my Gmail inbox",
+                "description": "Gmail authentication required error"
+            },
+            {
+                "message": "Summarize my emails",
+                "description": "Gmail summarization authentication error"
+            },
+            {
+                "message": "Search my emails for important messages",
+                "description": "Gmail search authentication error"
+            }
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for test_case in test_cases:
+            try:
+                payload = {
+                    "message": test_case["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    response_text = data.get("response", "")
+                    intent_data = data.get("intent_data", {})
+                    
+                    # Check if proper authentication error message is provided
+                    auth_keywords = ["connect", "gmail", "authentication", "oauth", "authorize"]
+                    has_auth_message = any(keyword.lower() in response_text.lower() for keyword in auth_keywords)
+                    
+                    if has_auth_message:
+                        results.append(f"✅ {test_case['description']}: Proper authentication error message")
+                    else:
+                        # Check if automation result contains auth error
+                        automation_result = intent_data.get("automation_result", {})
+                        if isinstance(automation_result, dict) and automation_result.get("requires_auth"):
+                            results.append(f"✅ {test_case['description']}: Authentication error in automation result")
+                        else:
+                            results.append(f"❌ {test_case['description']}: No proper authentication error message")
+                            all_passed = False
+                else:
+                    results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ {test_case['description']}: Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("Enhanced Gmail Error Handling", all_passed, result_summary)
+        return all_passed
+
     def test_gmail_oauth_status_check(self):
-        """Test 25: Gmail OAuth Status Check - Verify credentials are loaded correctly"""
+        """Test 31: Gmail OAuth Status Check - Verify credentials are loaded correctly"""
         try:
             response = requests.get(f"{BACKEND_URL}/gmail/status", timeout=10)
             
