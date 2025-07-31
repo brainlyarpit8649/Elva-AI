@@ -245,11 +245,10 @@ async def chat(request: ChatRequest):
             logger.warning(f"⚠️ Error reading context from MCP: {context_error}")
             previous_context = ""
         
-        # Process message with context enhancement
+        # Process message with hybrid AI (context is handled internally)
         intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
             request.message, 
-            request.session_id,
-            context=previous_context  # Include context for better responses
+            request.session_id
         )
         
         logger.info(f"🧠 Advanced Routing: {routing_decision.primary_model.value} (confidence: {routing_decision.confidence:.2f})")
