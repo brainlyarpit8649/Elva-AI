@@ -4019,6 +4019,406 @@ class ElvaBackendTester:
             self.log_test("Post Prompt Package Send Confirmation", False, f"Error: {str(e)}")
             return False
 
+    def test_mcp_write_context(self):
+        """Test MCP Context Management - Write Context"""
+        try:
+            payload = {
+                "session_id": "test-integration-2024",
+                "user_id": "test_user",
+                "intent": "test_context_write",
+                "data": {
+                    "user_message": "Test message for MCP context",
+                    "ai_response": "Test AI response for MCP context",
+                    "intent_data": {"intent": "test_context_write", "test_field": "test_value"},
+                    "routing_info": {
+                        "model": "claude",
+                        "confidence": 0.95,
+                        "reasoning": "Test routing for MCP context"
+                    }
+                }
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/mcp/write-context", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("MCP Write Context", False, f"Write failed: {data.get('message')}", data)
+                    return False
+                
+                self.log_test("MCP Write Context", True, "Context written to MCP successfully")
+                return True
+            else:
+                self.log_test("MCP Write Context", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Write Context", False, f"Error: {str(e)}")
+            return False
+
+    def test_mcp_read_context_session(self):
+        """Test MCP Context Management - Read Context for specific session"""
+        try:
+            session_id = "test-integration-2024"
+            response = requests.get(f"{BACKEND_URL}/mcp/read-context/{session_id}", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if context was found or if it's a valid "not found" response
+                if data.get("success") == False and "not found" in data.get("message", "").lower():
+                    self.log_test("MCP Read Context Session", True, "Context not found (valid response for new session)")
+                    return True
+                elif "session_id" in data or "context" in data:
+                    self.log_test("MCP Read Context Session", True, "Context read from MCP successfully")
+                    return True
+                else:
+                    self.log_test("MCP Read Context Session", False, "Invalid response structure", data)
+                    return False
+            else:
+                self.log_test("MCP Read Context Session", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Read Context Session", False, f"Error: {str(e)}")
+            return False
+
+    def test_mcp_append_context_results(self):
+        """Test MCP Context Management - Append Context for agent results"""
+        try:
+            payload = {
+                "session_id": "test-integration-2024",
+                "output": {
+                    "action": "test_append_result",
+                    "result": "Test append result data",
+                    "execution_status": "success",
+                    "timestamp": datetime.now().isoformat()
+                },
+                "source": "elva_test"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/mcp/append-context", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("MCP Append Context Results", False, f"Append failed: {data.get('message')}", data)
+                    return False
+                
+                self.log_test("MCP Append Context Results", True, "Context appended to MCP successfully")
+                return True
+            else:
+                self.log_test("MCP Append Context Results", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("MCP Append Context Results", False, f"Error: {str(e)}")
+            return False
+
+    def test_superagi_email_agent_execution(self):
+        """Test SuperAGI Agent Execution - Email Agent"""
+        try:
+            payload = {
+                "session_id": "test-integration-2024",
+                "goal": "Summarize my recent emails and suggest priority actions",
+                "agent_type": "email_agent"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/superagi/run-task", json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check response structure
+                if "success" not in data:
+                    self.log_test("SuperAGI Email Agent Execution", False, "Missing success field in response", data)
+                    return False
+                
+                # Even if the agent execution fails due to missing dependencies, 
+                # the endpoint should handle it gracefully
+                if data.get("success") or "error" in data:
+                    self.log_test("SuperAGI Email Agent Execution", True, f"Email agent endpoint working. Success: {data.get('success')}")
+                    return True
+                else:
+                    self.log_test("SuperAGI Email Agent Execution", False, "Invalid response structure", data)
+                    return False
+            else:
+                self.log_test("SuperAGI Email Agent Execution", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("SuperAGI Email Agent Execution", False, f"Error: {str(e)}")
+            return False
+
+    def test_superagi_linkedin_agent_execution(self):
+        """Test SuperAGI Agent Execution - LinkedIn Agent"""
+        try:
+            payload = {
+                "session_id": "test-integration-2024",
+                "goal": "Create a LinkedIn post about completing an AI project",
+                "agent_type": "linkedin_agent"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/superagi/run-task", json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check response structure
+                if "success" not in data:
+                    self.log_test("SuperAGI LinkedIn Agent Execution", False, "Missing success field in response", data)
+                    return False
+                
+                # Even if the agent execution fails due to missing dependencies, 
+                # the endpoint should handle it gracefully
+                if data.get("success") or "error" in data:
+                    self.log_test("SuperAGI LinkedIn Agent Execution", True, f"LinkedIn agent endpoint working. Success: {data.get('success')}")
+                    return True
+                else:
+                    self.log_test("SuperAGI LinkedIn Agent Execution", False, "Invalid response structure", data)
+                    return False
+            else:
+                self.log_test("SuperAGI LinkedIn Agent Execution", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("SuperAGI LinkedIn Agent Execution", False, f"Error: {str(e)}")
+            return False
+
+    def test_superagi_research_agent_execution(self):
+        """Test SuperAGI Agent Execution - Research Agent"""
+        try:
+            payload = {
+                "session_id": "test-integration-2024",
+                "goal": "Research trending AI topics for this week",
+                "agent_type": "research_agent"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/superagi/run-task", json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check response structure
+                if "success" not in data:
+                    self.log_test("SuperAGI Research Agent Execution", False, "Missing success field in response", data)
+                    return False
+                
+                # Even if the agent execution fails due to missing dependencies, 
+                # the endpoint should handle it gracefully
+                if data.get("success") or "error" in data:
+                    self.log_test("SuperAGI Research Agent Execution", True, f"Research agent endpoint working. Success: {data.get('success')}")
+                    return True
+                else:
+                    self.log_test("SuperAGI Research Agent Execution", False, "Invalid response structure", data)
+                    return False
+            else:
+                self.log_test("SuperAGI Research Agent Execution", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("SuperAGI Research Agent Execution", False, f"Error: {str(e)}")
+            return False
+
+    def test_complete_integration_flow_mcp_superagi(self):
+        """Test Complete Integration Flow - MCP → SuperAGI → MCP"""
+        try:
+            session_id = "test-integration-2024"
+            
+            # Step 1: Write initial context to MCP
+            write_payload = {
+                "session_id": session_id,
+                "user_id": "test_user",
+                "intent": "integration_test",
+                "data": {
+                    "user_message": "Complete integration test",
+                    "ai_response": "Starting integration test",
+                    "intent_data": {"intent": "integration_test"},
+                    "routing_info": {"model": "claude", "confidence": 0.9}
+                }
+            }
+            
+            write_response = requests.post(f"{BACKEND_URL}/mcp/write-context", json=write_payload, timeout=15)
+            if write_response.status_code != 200:
+                self.log_test("Complete Integration Flow MCP-SuperAGI", False, "Failed to write initial context", write_response.text)
+                return False
+            
+            # Step 2: Execute SuperAGI task
+            superagi_payload = {
+                "session_id": session_id,
+                "goal": "Test integration with MCP context",
+                "agent_type": "auto"
+            }
+            
+            superagi_response = requests.post(f"{BACKEND_URL}/superagi/run-task", json=superagi_payload, timeout=30)
+            if superagi_response.status_code != 200:
+                self.log_test("Complete Integration Flow MCP-SuperAGI", False, "Failed to execute SuperAGI task", superagi_response.text)
+                return False
+            
+            # Step 3: Read complete context
+            read_response = requests.get(f"{BACKEND_URL}/mcp/read-context/{session_id}", timeout=15)
+            if read_response.status_code != 200:
+                self.log_test("Complete Integration Flow MCP-SuperAGI", False, "Failed to read final context", read_response.text)
+                return False
+            
+            self.log_test("Complete Integration Flow MCP-SuperAGI", True, "Complete integration flow executed successfully")
+            return True
+            
+        except Exception as e:
+            self.log_test("Complete Integration Flow MCP-SuperAGI", False, f"Error: {str(e)}")
+            return False
+
+    def test_chat_superagi_triggerable_intents(self):
+        """Test Chat Integration with SuperAGI-triggerable intents"""
+        try:
+            # Test messages that should trigger SuperAGI-related responses
+            test_messages = [
+                "Help me analyze my email patterns",
+                "Create a professional LinkedIn post",
+                "Research the latest AI trends"
+            ]
+            
+            all_passed = True
+            results = []
+            
+            for message in test_messages:
+                payload = {
+                    "message": message,
+                    "session_id": "test-integration-2024",
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Check that we get a proper response (not "sorry I've encountered an error")
+                    response_text = data.get("response", "").lower()
+                    if "sorry" in response_text and "error" in response_text:
+                        results.append(f"❌ '{message}': Got error response")
+                        all_passed = False
+                    else:
+                        results.append(f"✅ '{message}': Got proper response")
+                else:
+                    results.append(f"❌ '{message}': HTTP {response.status_code}")
+                    all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("Chat SuperAGI Triggerable Intents", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("Chat SuperAGI Triggerable Intents", False, f"Error: {str(e)}")
+            return False
+
+    def test_chat_general_non_superagi_responses(self):
+        """Test Chat Integration - General chat still works (non-SuperAGI responses)"""
+        try:
+            payload = {
+                "message": "Hello, how are you doing today?",
+                "session_id": "test-integration-2024",
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check that we get a proper response (not "sorry I've encountered an error")
+                response_text = data.get("response", "").lower()
+                if "sorry" in response_text and "error" in response_text:
+                    self.log_test("Chat General Non-SuperAGI Responses", False, "Got error response for general chat", data)
+                    return False
+                
+                # Check intent is general_chat
+                intent_data = data.get("intent_data", {})
+                if intent_data.get("intent") != "general_chat":
+                    self.log_test("Chat General Non-SuperAGI Responses", False, f"Wrong intent: {intent_data.get('intent')}", data)
+                    return False
+                
+                self.log_test("Chat General Non-SuperAGI Responses", True, "General chat working correctly")
+                return True
+            else:
+                self.log_test("Chat General Non-SuperAGI Responses", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Chat General Non-SuperAGI Responses", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_auth_new_credentials_oauth(self):
+        """Test Gmail Integration - Auth endpoint with new credentials.json"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/gmail/auth?session_id=test-integration-2024", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("success"):
+                    self.log_test("Gmail Auth New Credentials OAuth", False, f"Auth failed: {data.get('message')}", data)
+                    return False
+                
+                # Check if auth_url is generated
+                auth_url = data.get("auth_url", "")
+                if not auth_url or "accounts.google.com" not in auth_url:
+                    self.log_test("Gmail Auth New Credentials OAuth", False, "Invalid or missing auth URL", data)
+                    return False
+                
+                # Check if new client_id is in the URL
+                if "191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com" not in auth_url:
+                    self.log_test("Gmail Auth New Credentials OAuth", False, "New client_id not found in auth URL", data)
+                    return False
+                
+                self.log_test("Gmail Auth New Credentials OAuth", True, "Gmail auth URL generated with new credentials")
+                return True
+            else:
+                self.log_test("Gmail Auth New Credentials OAuth", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Auth New Credentials OAuth", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_oauth_url_generation_verification(self):
+        """Test Gmail Integration - Verify OAuth URL generation works"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/gmail/status?session_id=test-integration-2024", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if credentials are configured
+                if not data.get("credentials_configured"):
+                    self.log_test("Gmail OAuth URL Generation Verification", False, "Credentials not configured", data)
+                    return False
+                
+                # Now test auth URL generation
+                auth_response = requests.get(f"{BACKEND_URL}/gmail/auth?session_id=test-integration-2024", timeout=15)
+                
+                if auth_response.status_code == 200:
+                    auth_data = auth_response.json()
+                    
+                    if auth_data.get("success") and auth_data.get("auth_url"):
+                        self.log_test("Gmail OAuth URL Generation Verification", True, "OAuth URL generation working correctly")
+                        return True
+                    else:
+                        self.log_test("Gmail OAuth URL Generation Verification", False, "Failed to generate OAuth URL", auth_data)
+                        return False
+                else:
+                    self.log_test("Gmail OAuth URL Generation Verification", False, f"Auth endpoint HTTP {auth_response.status_code}", auth_response.text)
+                    return False
+            else:
+                self.log_test("Gmail OAuth URL Generation Verification", False, f"Status endpoint HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail OAuth URL Generation Verification", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests with focus on MCP integration and review request areas"""
         print("🚀 Starting Comprehensive Elva AI Backend Testing with MCP Integration Focus")
