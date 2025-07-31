@@ -89,18 +89,18 @@ async def init_databases():
     global mongo_client, mongo_db, redis_client
     
     try:
-        # MongoDB connection
-        mongo_url = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+        # MongoDB connection - use MCP-specific Atlas URL if available
+        mongo_url = os.getenv("MCP_MONGO_URI") or os.getenv("MONGO_ATLAS_URL") or os.getenv("MONGO_URL", "mongodb://localhost:27017")
         mongo_client = AsyncIOMotorClient(mongo_url)
-        db_name = os.getenv("DB_NAME", "mcp_database")
+        db_name = os.getenv("MCP_DB_NAME", "elva_mcp")
         mongo_db = mongo_client[db_name]
         
         # Test MongoDB connection
         await mongo_client.admin.command('ping')
         logger.info(f"✅ MongoDB connected: {db_name}")
         
-        # Redis connection
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        # Redis connection - use MCP-specific Upstash URL if available
+        redis_url = os.getenv("MCP_REDIS_URL") or os.getenv("REDIS_URL", "redis://localhost:6379")
         redis_client = await redis.from_url(redis_url, decode_responses=True)
         
         # Test Redis connection
