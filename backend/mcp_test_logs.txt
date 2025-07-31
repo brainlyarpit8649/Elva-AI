@@ -88,3 +88,74 @@ Bearer Token: kumararpit9468
   "source": "superagi"
 }
 
+=== STEP 5: FINAL CONTEXT READ (WITH APPENDS) ===
+{
+  "session_id": "comprehensive-test-001",
+  "context": {
+    "session_id": "comprehensive-test-001",
+    "user_id": "elva-test-user",
+    "intent": "send_email",
+    "data": {
+      "emails": [
+        {
+          "from": "elva@example.com",
+          "to": "client@example.com",
+          "subject": "MCP Service Integration Test",
+          "body": "This email confirms that the MCP service is working perfectly with Redis and MongoDB integration."
+        }
+      ],
+      "calendar_events": [
+        {
+          "title": "MCP Service Review",
+          "date": "2025-08-01",
+          "time": "10:00 AM",
+          "attendees": [
+            "elva-team@example.com"
+          ]
+        }
+      ],
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "Send an email to the client about our MCP service integration"
+        },
+        {
+          "role": "assistant",
+          "content": "I'll help you send that email and store the context for future reference"
+        }
+      ]
+    },
+    "timestamp": "2025-07-31 03:24:11.616780",
+    "expires_at": "2025-08-01 03:24:11.616780"
+  },
+  "appends": [
+    {
+      "id": "faf66262-50e3-4263-85a0-ceae644adfaa",
+      "session_id": "comprehensive-test-001",
+      "output": {
+        "superagi_response": {
+          "agent_name": "EmailComposerAgent",
+          "status": "completed",
+          "processing_time": "2.5s",
+          "confidence_score": 0.97,
+          "enhanced_content": {
+            "subject": "MCP Service Integration - Successful Implementation Update",
+            "body": "Dear Client, I'm excited to share that our MCP (Model Context Protocol) service integration has been successfully implemented with full Redis and MongoDB support."
+          }
+        },
+        "n8n_workflow": {
+          "workflow_id": "email-automation-v2",
+          "execution_status": "success",
+          "email_delivered": true,
+          "delivery_time": "2025-07-31T03:25:00Z"
+        }
+      },
+      "source": "superagi",
+      "timestamp": "2025-07-31 03:24:31.442467"
+    }
+  ],
+  "total_appends": 1,
+  "last_updated": "2025-07-31T03:24:11.616780",
+  "expires_at": "2025-08-01T03:24:11.616780"
+}
+
