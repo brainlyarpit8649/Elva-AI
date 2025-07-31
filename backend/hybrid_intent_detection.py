@@ -159,7 +159,8 @@ You can detect the following intents:
 3. add_todo
 4. set_reminder
 5. generate_post_prompt_package
-6. general_chat
+6. web_search
+7. general_chat
 
 Examples of COMPLETE JSON responses:
 
