@@ -39,7 +39,22 @@ class DirectAutomationHandler:
                 "error_template": "❌ Unable to check your inbox: {error}",
                 "automation_type": "gmail_automation"
             },
-
+            # Enhanced Gmail intents
+            "summarize_gmail_emails": {
+                "success_template": "📧 **Email Summary** ({count} emails processed)\n{summary}",
+                "error_template": "❌ Unable to summarize emails: {error}",
+                "automation_type": "enhanced_gmail_automation"
+            },
+            "search_gmail_emails": {
+                "success_template": "🔍 **Gmail Search Results** ({count} emails found)\n{search_results}",
+                "error_template": "❌ Unable to search emails: {error}",
+                "automation_type": "enhanced_gmail_automation"
+            },
+            "categorize_gmail_emails": {
+                "success_template": "📊 **Email Categories** ({count} emails categorized)\n{categories}",
+                "error_template": "❌ Unable to categorize emails: {error}",
+                "automation_type": "enhanced_gmail_automation"
+            },
             "scrape_product_listings": {
                 "success_template": "🛒 **Product Listings** ({count} found)\n{listings}",
                 "error_template": "❌ Unable to scrape product listings: {error}",
