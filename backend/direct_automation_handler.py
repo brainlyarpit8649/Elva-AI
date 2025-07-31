@@ -14,6 +14,11 @@ class DirectAutomationHandler:
     
     def __init__(self):
         self.automation_templates = {
+            "web_search": {
+                "success_template": "{search_results}",  # Google Search service already formats the results
+                "error_template": "❌ Unable to perform web search: {error}",
+                "automation_type": "google_search"
+            },
             "check_linkedin_notifications": {
                 "success_template": "🔔 **LinkedIn Notifications** ({count} new)\n{notifications}",
                 "error_template": "❌ Unable to check LinkedIn notifications: {error}",
