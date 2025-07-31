@@ -4,3 +4,24 @@ Backend URL: https://969188a0-8654-47a1-9086-abbecf0f74ce.preview.emergentagent.
 MCP Service URL: http://localhost:8003
 Bearer Token: kumararpit9468
 
+=== STEP 1: HEALTH CHECK ===
+{
+  "status": "healthy",
+  "service": "MCP (Model Context Protocol)",
+  "version": "1.0.0",
+  "databases": {
+    "mongodb": "connected",
+    "redis": "connected"
+  },
+  "endpoints": [
+    "POST /context/write",
+    "GET /context/read/{session_id}",
+    "POST /context/append",
+    "DELETE /context/{session_id}",
+    "GET /contexts/list",
+    "GET /health"
+  ],
+  "authentication": "Bearer token required",
+  "timestamp": "2025-07-31T03:23:57.889390"
+}
+
