@@ -1,0 +1,22 @@
+{
+  "session_id": "comprehensive-test-001",
+  "output": {
+    "superagi_response": {
+      "agent_name": "EmailComposerAgent",
+      "status": "completed",
+      "processing_time": "2.5s",
+      "confidence_score": 0.97,
+      "enhanced_content": {
+        "subject": "MCP Service Integration - Successful Implementation Update",
+        "body": "Dear Client, I'm excited to share that our MCP (Model Context Protocol) service integration has been successfully implemented with full Redis and MongoDB support."
+      }
+    },
+    "n8n_workflow": {
+      "workflow_id": "email-automation-v2",
+      "execution_status": "success",
+      "email_delivered": true,
+      "delivery_time": "2025-07-31T03:25:00Z"
+    }
+  },
+  "source": "superagi"
+}
