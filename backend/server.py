@@ -244,54 +244,38 @@ async def chat(request: ChatRequest):
         logger.info(f"🧠 Advanced Routing: {routing_decision.primary_model.value} (confidence: {routing_decision.confidence:.2f})")
         logger.info(f"💡 Routing Logic: {routing_decision.reasoning}")
         
-        # Write context to MCP for every detected intent (except general_chat)
-        if intent_data.get("intent") != "general_chat":
-            try:
-                # Prepare context data for MCP
-                mcp_context_data = {
-                    "session_id": request.session_id,
-                    "user_id": request.user_id,
-                    "intent": intent_data.get("intent"),
-                    "data": {
-                        "intent_data": intent_data,
-                        "user_message": request.message,
-                        "ai_response": response_text,
-                        "routing_info": {
-                            "model": routing_decision.primary_model.value,
-                            "confidence": routing_decision.confidence,
-                            "reasoning": routing_decision.reasoning
-                        },
-                        "emails": [],  # Will be populated by Gmail integration
-                        "calendar_events": [],  # Will be populated by calendar integration
-                        "chat_history": [
-                            {
-                                "role": "user",
-                                "content": request.message,
-                                "timestamp": datetime.utcnow().isoformat()
-                            },
-                            {
-                                "role": "assistant", 
-                                "content": response_text,
-                                "timestamp": datetime.utcnow().isoformat()
-                            }
-                        ]
-                    }
+        # Write context to MCP for every message interaction (not just non-general_chat)
+        # This provides better memory and context management for all conversations
+        try:
+            # Prepare enhanced context data for MCP
+            context_data = mcp_service.prepare_context_data(
+                user_message=request.message,
+                ai_response=response_text,
+                intent_data=intent_data,
+                routing_info={
+                    "model": routing_decision.primary_model.value,
+                    "confidence": routing_decision.confidence,
+                    "reasoning": routing_decision.reasoning
                 }
+            )
+            
+            # Write to MCP with detected intent
+            detected_intent = intent_data.get("intent", "general_chat")
+            mcp_result = await mcp_service.write_context(
+                session_id=request.session_id,
+                intent=detected_intent,
+                data=context_data,
+                user_id=request.user_id
+            )
+            
+            if mcp_result.get("success"):
+                logger.info(f"📝 Context written to MCP - Session: {request.session_id}, Intent: {detected_intent}")
+            else:
+                logger.warning(f"⚠️ MCP context write failed: {mcp_result.get('error')}")
                 
-                # Write to MCP asynchronously (don't block the response)
-                async with httpx.AsyncClient() as client:
-                    await client.post(
-                        f"{MCP_SERVICE_URL}/context/write",
-                        json=mcp_context_data,
-                        headers={"Authorization": f"Bearer {MCP_API_TOKEN}"},
-                        timeout=5.0  # Short timeout to not block user response
-                    )
-                    
-                logger.info(f"📝 Context written to MCP for intent: {intent_data.get('intent')}")
-                
-            except Exception as mcp_error:
-                logger.warning(f"⚠️ Failed to write context to MCP: {mcp_error}")
-                # Continue processing even if MCP write fails
+        except Exception as mcp_error:
+            logger.warning(f"⚠️ MCP context write error: {mcp_error}")
+            # Continue processing even if MCP write fails
         
         # Check if this is a direct automation intent
         intent = intent_data.get("intent", "general_chat")
