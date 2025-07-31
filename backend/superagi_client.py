@@ -396,15 +396,96 @@ Return your response in this JSON format:
             }
     
     async def _perform_web_research(self, goal: str) -> Dict[str, Any]:
-        """Perform web research using free APIs and scraping"""
+        """Perform web research using Google Search API"""
         try:
-            import time
-            from langchain_openai import ChatOpenAI
+            from google_search_service import google_search_service
             
             start_time = time.time()
+            logger.info(f"🔍 Performing Google Search API research: {goal}")
             
-            # For now, use Groq to generate research insights
-            # In production, this would use web scraping and search APIs
+            # Use Google Search API for real web results
+            search_result = await google_search_service.search_web(goal, max_results=5)
+            
+            if search_result["success"]:
+                # Extract insights using Groq for analysis
+                raw_results = search_result["raw_results"]
+                insights = await self._analyze_search_results_with_groq(goal, raw_results)
+                
+                return {
+                    "summary": search_result["formatted_results"],
+                    "topics": insights.get("topics", []),
+                    "findings": insights.get("findings", []),
+                    "sources": [result["link"] for result in raw_results],
+                    "search_count": search_result["count"],
+                    "execution_time": time.time() - start_time
+                }
+            else:
+                # Fallback to LLM-based research if API fails
+                logger.warning("🔄 Google Search API failed, falling back to LLM research")
+                return await self._fallback_llm_research(goal, start_time)
+                
+        except Exception as e:
+            logger.error(f"❌ Web research error: {e}")
+            return await self._fallback_llm_research(goal, time.time())
+    
+    async def _analyze_search_results_with_groq(self, goal: str, results: List[Dict]) -> Dict[str, Any]:
+        """Analyze search results using Groq to extract insights"""
+        try:
+            from langchain_openai import ChatOpenAI
+            from langchain.prompts import ChatPromptTemplate
+            
+            llm = ChatOpenAI(
+                temperature=0.2,
+                openai_api_key=os.getenv("GROQ_API_KEY"),
+                model="llama3-8b-8192",
+                base_url="https://api.groq.com/openai/v1"
+            )
+            
+            # Create analysis prompt
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", """You are a research analyst. Analyze the provided search results and extract key insights.
+                
+Return your response in this JSON format:
+{
+    "topics": ["key topic 1", "key topic 2", "key topic 3"],
+    "findings": ["key finding 1", "key finding 2", "key finding 3"]
+}"""),
+                ("user", "Research goal: {goal}\n\nSearch results to analyze:\n{results}")
+            ])
+            
+            # Format search results for analysis
+            results_text = ""
+            for i, result in enumerate(results[:5], 1):
+                results_text += f"Result {i}:\n"
+                results_text += f"Title: {result.get('title', '')}\n"
+                results_text += f"Snippet: {result.get('snippet', '')}\n"
+                results_text += f"Source: {result.get('domain', '')}\n\n"
+            
+            # Generate analysis
+            chain = prompt | llm
+            response = chain.invoke({"goal": goal, "results": results_text})
+            
+            # Parse JSON response
+            try:
+                return json.loads(response.content)
+            except json.JSONDecodeError:
+                return {
+                    "topics": [goal],
+                    "findings": ["Analysis completed based on search results"]
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Search results analysis error: {e}")
+            return {
+                "topics": [goal],
+                "findings": ["Search results analyzed"]
+            }
+    
+    async def _fallback_llm_research(self, goal: str, start_time: float) -> Dict[str, Any]:
+        """Fallback LLM-based research when Google Search API is unavailable"""
+        try:
+            from langchain_openai import ChatOpenAI
+            
             llm = ChatOpenAI(
                 temperature=0.2,
                 openai_api_key=os.getenv("GROQ_API_KEY"),
@@ -446,13 +527,13 @@ Return your response in this JSON format:
             return result
             
         except Exception as e:
-            logger.error(f"❌ Web research error: {e}")
+            logger.error(f"❌ Fallback research error: {e}")
             return {
-                "summary": f"Research failed: {str(e)}",
+                "summary": f"⚠️ **Research service temporarily unavailable**\n\nUnable to perform web research for: {goal}",
                 "topics": [],
                 "findings": [],
                 "sources": [],
-                "execution_time": 0
+                "execution_time": time.time() - start_time
             }
 
 # Global SuperAGI client instance
