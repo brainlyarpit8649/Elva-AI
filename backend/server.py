@@ -458,7 +458,115 @@ async def get_automation_status(intent: str):
         logger.error(f"Automation status error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.post("/web-automation")
+@api_router.post("/superagi/run-task")
+async def run_superagi_task(request: SuperAGITaskRequest):
+    """
+    Execute task with SuperAGI autonomous agents
+    Integrates with MCP for context sharing
+    """
+    try:
+        logger.info(f"🤖 SuperAGI Task Request: {request.goal} (agent: {request.agent_type})")
+        
+        # Execute task with SuperAGI
+        result = await superagi_client.run_task(
+            session_id=request.session_id,
+            goal=request.goal,
+            agent_type=request.agent_type
+        )
+        
+        # Store result in chat history for user review
+        if result.get("success"):
+            chat_msg = ChatMessage(
+                session_id=request.session_id,
+                user_id="superagi_system",
+                message=f"SuperAGI Task: {request.goal}",
+                response=json.dumps(result, indent=2),
+                intent_data={"intent": "superagi_task_result", "agent": request.agent_type}
+            )
+            await db.chat_messages.insert_one(chat_msg.dict())
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ SuperAGI task execution error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/mcp/write-context")
+async def write_mcp_context(request: MCPContextRequest):
+    """
+    Write context data to MCP service
+    Used by Elva to store structured context for SuperAGI agents
+    """
+    try:
+        logger.info(f"📝 Writing MCP context for session: {request.session_id}")
+        
+        # Prepare context data
+        context_data = {
+            "session_id": request.session_id,
+            "user_id": request.user_id,
+            "intent": request.intent,
+            "data": request.data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Send to MCP service
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{MCP_SERVICE_URL}/context/write",
+                json=context_data,
+                headers={"Authorization": f"Bearer {MCP_API_TOKEN}"}
+            )
+            
+            if response.status_code == 200:
+                mcp_response = response.json()
+                return {
+                    "success": True,
+                    "message": "Context written to MCP successfully",
+                    "mcp_response": mcp_response
+                }
+            else:
+                logger.error(f"MCP write failed: {response.status_code} - {response.text}")
+                raise HTTPException(status_code=response.status_code, detail="MCP write failed")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ MCP context write error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/mcp/read-context/{session_id}")
+async def read_mcp_context(session_id: str):
+    """
+    Read context data from MCP service
+    Used by SuperAGI agents and n8n workflows
+    """
+    try:
+        logger.info(f"📖 Reading MCP context for session: {session_id}")
+        
+        # Read from MCP service
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{MCP_SERVICE_URL}/context/read/{session_id}",
+                headers={"Authorization": f"Bearer {MCP_API_TOKEN}"}
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 404:
+                return {
+                    "success": False,
+                    "message": "Context not found",
+                    "session_id": session_id
+                }
+            else:
+                logger.error(f"MCP read failed: {response.status_code} - {response.text}")
+                raise HTTPException(status_code=response.status_code, detail="MCP read failed")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ MCP context read error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 async def execute_web_automation(request: MCPContextRequest):
     """
     Execute web automation tasks using Playwright
