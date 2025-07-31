@@ -880,6 +880,16 @@ class DirectAutomationHandler:
                     header = f"📥 **You have {count} {'unread email' if count == 1 else 'unread emails'}:**\n\n"
                     
                     return header + "\n\n".join(email_blocks)
+            
+            # Enhanced Gmail intent formatting
+            elif intent == "summarize_gmail_emails":
+                return data.get("summary", "No summary available")
+            
+            elif intent == "search_gmail_emails":
+                return data.get("search_results", "No search results available")
+            
+            elif intent == "categorize_gmail_emails":
+                return data.get("categories", "No categorization available")
                     
             elif intent in ["check_gmail_inbox", "check_gmail_unread"]:
                 emails_text = "\n".join([
