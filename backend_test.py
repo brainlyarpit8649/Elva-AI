@@ -4020,14 +4020,14 @@ class ElvaBackendTester:
             return False
 
     def run_all_tests(self):
-        """Run all backend tests with focus on review request areas"""
-        print("🚀 Starting Comprehensive Elva AI Backend Testing...")
-        print("🎯 Focus: ChatBox consolidation and credential updates testing")
+        """Run all backend tests with focus on MCP integration and review request areas"""
+        print("🚀 Starting Comprehensive Elva AI Backend Testing with MCP Integration Focus")
+        print("🎯 Focus: MCP Integration, AI Response Testing, Gmail Integration, and End-to-End Flow Testing")
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Session ID: {self.session_id}")
         print("=" * 80)
         
-        # Priority tests based on review request
+        # Priority tests based on review request - MCP Integration Focus
         priority_tests = [
             # 1. Basic health check to verify services are running
             ("Basic Health Check", [
@@ -4035,50 +4035,63 @@ class ElvaBackendTester:
                 self.test_health_endpoint,
             ]),
             
-            # 2. Gmail OAuth status endpoint to verify new credentials are loaded
-            ("Gmail OAuth & Credentials", [
+            # 2. MCP Integration Testing (PRIORITY FOCUS)
+            ("MCP Integration Testing", [
+                self.test_mcp_write_context_direct,
+                self.test_mcp_read_context,
+                self.test_mcp_append_context,
+                self.test_mcp_integration_via_chat,
+                self.test_mcp_session_consistency,
+            ]),
+            
+            # 3. AI Response Testing (Fix for "sorry I've encountered an error")
+            ("AI Response Testing", [
+                self.test_ai_response_error_fix,
+                self.test_intent_detection_general_chat,
+                self.test_intent_detection_send_email,
+                self.test_intent_detection_create_event,
+                self.test_intent_detection_add_todo,
+                self.test_intent_detection_set_reminder,
+            ]),
+            
+            # 4. Generate Post Prompt Package Testing
+            ("Generate Post Prompt Package Testing", [
+                self.test_generate_post_prompt_package_intent,
+                self.test_post_prompt_package_send_confirmation,
+            ]),
+            
+            # 5. Gmail Integration Testing
+            ("Gmail Integration Testing", [
                 self.test_gmail_credentials_update,
                 self.test_gmail_oauth_status_check,
-                self.test_gmail_authentication_persistence,
-                self.test_gmail_credentials_new_redirect_uri,
+                self.test_gmail_oauth_authorization_url,
+                self.test_gmail_intent_detection,
             ]),
             
-            # 3. Test chat endpoint for basic functionality
-            ("Chat Functionality", [
-                self.test_intent_detection_general_chat,
-                self.test_groq_api_key_update,
-            ]),
-            
-            # 4. Test approval workflow endpoints
-            ("Approval Workflow", [
-                self.test_intent_detection_send_email,
+            # 6. End-to-End Flow Testing
+            ("End-to-End Flow Testing", [
                 self.test_approval_workflow_approved,
-                self.test_n8n_webhook_url_update,
-            ]),
-            
-            # 5. Verify all critical API endpoints are responding correctly
-            ("Critical API Endpoints", [
+                self.test_approval_workflow_rejected,
+                self.test_approval_workflow_edited_data,
                 self.test_chat_history_retrieval,
-                self.test_memory_system_enhancement,
-                self.test_export_chat_message_id_handling,
+                self.test_chat_history_clearing,
             ]),
         ]
         
         # Additional comprehensive tests
         comprehensive_tests = [
             ("Additional Core Tests", [
-                self.test_intent_detection_create_event,
-                self.test_intent_detection_add_todo,
-                self.test_approval_workflow_rejected,
-                self.test_approval_workflow_edited_data,
-                self.test_chat_history_clearing,
+                self.test_groq_api_key_update,
+                self.test_n8n_webhook_url_update,
+                self.test_memory_system_enhancement,
+                self.test_export_chat_message_id_handling,
                 self.test_error_handling,
             ]),
             
-            ("Gmail Integration Tests", [
-                self.test_gmail_oauth_authorization_url,
-                self.test_gmail_intent_detection,
-                self.test_health_check_gmail_integration,
+            ("Web Automation Tests", [
+                self.test_web_automation_intent_detection,
+                self.test_web_automation_endpoint_data_extraction,
+                self.test_automation_history_endpoint,
             ])
         ]
         
