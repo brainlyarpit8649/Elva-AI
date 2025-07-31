@@ -696,7 +696,7 @@ CRITICAL INSTRUCTIONS:
 - All JSON must be complete and properly formatted  
 - For all intents except general_chat, populate ALL fields with realistic content
 
-Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, creative_writing, web_scraping, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, general_chat
+Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, creative_writing, web_research, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, general_chat
 
 Example JSON responses:
 
@@ -707,8 +707,10 @@ Set reminder: {{"intent": "set_reminder", "reminder_text": "Text", "reminder_dat
 LinkedIn post: {{"intent": "generate_post_prompt_package", "topic": "Topic", "project_name": "Project name", "project_type": "Type"}}
 Creative writing: {{"intent": "creative_writing", "content": "Creative content", "topic": "Topic"}}
 
-Web automation (traditional): 
-Web scraping: {{"intent": "web_scraping", "url": "target URL", "data_type": "type of data to extract", "selectors": {{"field": "css_selector"}}}}
+Web research (SuperAGI): 
+Research/trending topics: {{"intent": "web_research", "research_query": "trending AI topics this week", "research_type": "trending_analysis", "focus_area": "artificial intelligence"}}
+
+Web automation (traditional - only for specific URL scraping): 
 LinkedIn insights: {{"intent": "linkedin_insights", "insight_type": "notifications/profile_views/connections", "email": "linkedin_email", "password": "password"}}
 Email automation: {{"intent": "email_automation", "provider": "outlook/yahoo/gmail", "email": "email", "password": "password", "action": "check_inbox/send_email"}}
 
