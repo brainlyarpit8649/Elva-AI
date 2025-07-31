@@ -631,27 +631,23 @@ async def read_mcp_context(session_id: str):
     try:
         logger.info(f"📖 Reading MCP context for session: {session_id}")
         
-        # Read from MCP service
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{MCP_SERVICE_URL}/context/read/{session_id}",
-                headers={"Authorization": f"Bearer {MCP_API_TOKEN}"}
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            elif response.status_code == 404:
-                return {
-                    "success": False,
-                    "message": "Context not found",
-                    "session_id": session_id
-                }
-            else:
-                logger.error(f"MCP read failed: {response.status_code} - {response.text}")
-                raise HTTPException(status_code=response.status_code, detail="MCP read failed")
+        # Use the MCP integration service
+        result = await mcp_service.read_context(session_id)
         
-    except HTTPException:
-        raise
+        if result.get("success"):
+            return result.get("context") or {
+                "success": False,
+                "message": "Context not found",
+                "session_id": session_id
+            }
+        else:
+            logger.error(f"MCP read failed: {result.get('error')}")
+            return {
+                "success": False,
+                "message": result.get("error", "MCP read failed"),
+                "session_id": session_id
+            }
+        
     except Exception as e:
         logger.error(f"❌ MCP context read error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
