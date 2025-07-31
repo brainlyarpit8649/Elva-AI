@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Security
 security = HTTPBearer()
-MCP_API_TOKEN = os.getenv("MCP_API_TOKEN", "mcp-secret-token-elva-ai")
+MCP_API_TOKEN = os.getenv("MCP_API_TOKEN", "kumararpit9468")
 
 # Initialize FastAPI app
 app = FastAPI(
