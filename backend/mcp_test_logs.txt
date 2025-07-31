@@ -25,3 +25,11 @@ Bearer Token: kumararpit9468
   "timestamp": "2025-07-31T03:23:57.889390"
 }
 
+=== STEP 2: CONTEXT WRITE ===
+{
+  "success": true,
+  "message": "Context stored successfully",
+  "session_id": "comprehensive-test-001",
+  "expires_at": "2025-08-01T03:24:11.616780"
+}
+
