@@ -1,0 +1,377 @@
+{
+  "info": {
+    "name": "Elva MCP Service API Collection",
+    "description": "Complete API collection for testing MCP (Model Context Protocol) service endpoints",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "kumararpit9468",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8003",
+      "description": "Local MCP service URL (change to Railway URL after deployment)"
+    },
+    {
+      "key": "railwayUrl", 
+      "value": "https://mcp.your-project.railway.app",
+      "description": "Railway deployment URL (update after deployment)"
+    },
+    {
+      "key": "bearerToken",
+      "value": "kumararpit9468",
+      "description": "MCP API authentication token"
+    },
+    {
+      "key": "testSessionId",
+      "value": "elva-test-session-{{$timestamp}}",
+      "description": "Dynamic test session ID"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check MCP service health and database connections"
+      },
+      "response": []
+    },
+    {
+      "name": "Root Endpoint",
+      "request": {
+        "method": "GET", 
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        },
+        "description": "Get MCP service information"
+      },
+      "response": []
+    },
+    {
+      "name": "Context Write - Email Intent",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token", 
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"{{testSessionId}}\",\n  \"user_id\": \"elva-user-test\",\n  \"intent\": \"send_email\",\n  \"data\": {\n    \"emails\": [\n      {\n        \"from\": \"user@example.com\",\n        \"to\": \"recipient@example.com\",\n        \"subject\": \"Test Email from MCP\",\n        \"body\": \"This is a test email sent through the MCP service\"\n      }\n    ],\n    \"calendar_events\": [],\n    \"chat_history\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"Send an email to the recipient about the test\"\n      },\n      {\n        \"role\": \"assistant\", \n        \"content\": \"I'll help you send that email through the MCP service\"\n      }\n    ]\n  },\n  \"timestamp\": \"{{$isoTimestamp}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/write",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "write"]
+        },
+        "description": "Store email context with session data"
+      },
+      "response": []
+    },
+    {
+      "name": "Context Write - LinkedIn Post Intent",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"linkedin-session-{{$timestamp}}\",\n  \"user_id\": \"elva-linkedin-user\",\n  \"intent\": \"linkedin_post\",\n  \"data\": {\n    \"emails\": [],\n    \"calendar_events\": [],\n    \"chat_history\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"Create a LinkedIn post about AI advancements in 2025\"\n      },\n      {\n        \"role\": \"assistant\",\n        \"content\": \"I'll create an engaging LinkedIn post about AI advancements for you\"\n      }\n    ],\n    \"linkedin_data\": {\n      \"topic\": \"AI advancements in 2025\",\n      \"tone\": \"professional\",\n      \"length\": \"medium\"\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/write",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "write"]
+        },
+        "description": "Store LinkedIn post context"
+      },
+      "response": []
+    },
+    {
+      "name": "Context Read",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/read/{{testSessionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "read", "{{testSessionId}}"]
+        },
+        "description": "Read stored context for a session ID"
+      },
+      "response": []
+    },
+    {
+      "name": "Context Append - SuperAGI Response",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"{{testSessionId}}\",\n  \"output\": {\n    \"email_summary\": \"Email successfully processed by SuperAGI\",\n    \"superagi_response\": {\n      \"agent_name\": \"EmailAgent\",\n      \"status\": \"completed\",\n      \"processing_time\": \"3.2s\",\n      \"confidence_score\": 0.95\n    },\n    \"generated_content\": {\n      \"subject\": \"Enhanced subject line\",\n      \"body\": \"AI-enhanced email content with improved clarity and tone\"\n    }\n  },\n  \"source\": \"superagi\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/append",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "append"]
+        },
+        "description": "Append SuperAGI agent response to context"
+      },
+      "response": []
+    },
+    {
+      "name": "Context Append - N8N Response",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"{{testSessionId}}\",\n  \"output\": {\n    \"n8n_workflow_result\": {\n      \"workflow_id\": \"email-automation-workflow\",\n      \"execution_id\": \"exec-{{$timestamp}}\",\n      \"status\": \"success\",\n      \"message\": \"Email sent successfully to recipient@example.com\",\n      \"execution_time\": \"1.8s\"\n    },\n    \"delivery_confirmation\": {\n      \"delivered\": true,\n      \"delivery_time\": \"{{$isoTimestamp}}\",\n      \"message_id\": \"msg-{{$timestamp}}\"\n    }\n  },\n  \"source\": \"n8n\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/append",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "append"]
+        },
+        "description": "Append N8N workflow execution result to context"
+      },
+      "response": []
+    },
+    {
+      "name": "Context Append - Elva Response", 
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"{{testSessionId}}\",\n  \"output\": {\n    \"elva_response\": {\n      \"intent_confidence\": 0.98,\n      \"response_generated\": true,\n      \"user_satisfaction_predicted\": \"high\",\n      \"follow_up_suggestions\": [\n        \"Would you like to schedule a follow-up email?\",\n        \"Should I create a calendar reminder for this?\"\n      ]\n    },\n    \"context_analysis\": {\n      \"sentiment\": \"positive\",\n      \"urgency\": \"medium\",\n      \"complexity\": \"low\"\n    }\n  },\n  \"source\": \"elva\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/append",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "append"]
+        },
+        "description": "Append Elva AI analysis and response to context"
+      },
+      "response": []
+    },
+    {
+      "name": "List All Contexts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/contexts/list?limit=10&skip=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["contexts", "list"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "skip", 
+              "value": "0"
+            }
+          ]
+        },
+        "description": "List all stored contexts with pagination"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Context",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/{{testSessionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "{{testSessionId}}"]
+        },
+        "description": "Delete context and all appends for a session"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Authentication - Invalid Token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "invalid-token",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Test authentication with invalid token (should return 401)"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Error - Context Not Found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/context/read/non-existent-session",
+          "host": ["{{baseUrl}}"],
+          "path": ["context", "read", "non-existent-session"]
+        },
+        "description": "Test reading non-existent context (should return 404)"
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set dynamic session ID for testing",
+          "pm.collectionVariables.set('testSessionId', 'elva-test-session-' + Date.now());"
+        ]
+      }
+    }
+  ]
+}
