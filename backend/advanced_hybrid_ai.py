@@ -756,25 +756,25 @@ Return ONLY the JSON object."""
 
     async def process_message(self, user_input: str, session_id: str) -> Tuple[dict, str, RoutingDecision]:
         """
-        Enhanced message processing with conversation memory integration.
+        Enhanced message processing with MCP context management integration.
         
         Args:
             user_input: User's input message
-            session_id: Session identifier for memory retrieval
+            session_id: Session identifier for MCP context retrieval
             
         Returns:
             Tuple of (intent_data, response_text, routing_decision)
         """
-        logger.info(f"🚀 Processing message with memory context: {user_input[:50]}...")
+        logger.info(f"🚀 Processing message with MCP context: {user_input[:50]}...")
         
         try:
-            # Get conversation memory for context
+            # Get MCP context for enhanced responses
             try:
-                memory = get_conversation_memory()
-                conversation_context = await memory.get_relevant_context(session_id, user_input)
-                logger.info(f"📚 Retrieved conversation context: {len(conversation_context)} chars")
+                mcp_service = get_mcp_service()
+                conversation_context = await mcp_service.get_context_for_prompt(session_id)
+                logger.info(f"📚 Retrieved MCP context: {len(conversation_context)} chars")
             except Exception as e:
-                logger.warning(f"Could not retrieve conversation context: {e}")
+                logger.warning(f"Could not retrieve MCP context: {e}")
                 conversation_context = ""
             
             # Step 1: Advanced task classification with context
@@ -814,13 +814,25 @@ Return ONLY the JSON object."""
                         # Use Groq for structured response
                         response_text = f"I've analyzed your request: {intent_data.get('intent')}. Here are the details I extracted: {json.dumps(intent_data, indent=2)}"
                 
-                # Step 5: Store conversation in memory
+                # Step 5: Store conversation context in MCP
                 try:
-                    memory = get_conversation_memory()
-                    await memory.add_message_to_memory(session_id, user_input, response_text, intent_data)
-                    logger.info(f"💾 Stored conversation in memory for session: {session_id}")
+                    mcp_service = get_mcp_service()
+                    context_data = mcp_service.prepare_context_data(
+                        user_input, response_text, intent_data, 
+                        routing_info={
+                            "model_used": routing_decision.primary_model.value,
+                            "confidence": routing_decision.confidence,
+                            "reasoning": routing_decision.reasoning
+                        }
+                    )
+                    await mcp_service.write_context(
+                        session_id=session_id,
+                        intent=intent_data.get("intent", "general_chat"),
+                        data=context_data
+                    )
+                    logger.info(f"💾 Stored conversation context in MCP for session: {session_id}")
                 except Exception as e:
-                    logger.warning(f"Could not store conversation in memory: {e}")
+                    logger.warning(f"Could not store conversation context in MCP: {e}")
                 
                 return intent_data, response_text, routing_decision
                 
@@ -836,12 +848,17 @@ Return ONLY the JSON object."""
                             intent_data = await self._groq_intent_detection(user_input) 
                             response_text = f"Structured analysis: {json.dumps(intent_data, indent=2)}"
                         
-                        # Store fallback conversation in memory
+                        # Store fallback conversation in MCP
                         try:
-                            memory = get_conversation_memory()
-                            await memory.add_message_to_memory(session_id, user_input, response_text, intent_data)
+                            mcp_service = get_mcp_service()
+                            context_data = mcp_service.prepare_context_data(user_input, response_text, intent_data)
+                            await mcp_service.write_context(
+                                session_id=session_id,
+                                intent=intent_data.get("intent", "general_chat"),
+                                data=context_data
+                            )
                         except Exception as mem_e:
-                            logger.warning(f"Could not store fallback conversation in memory: {mem_e}")
+                            logger.warning(f"Could not store fallback conversation in MCP: {mem_e}")
                         
                         return intent_data, response_text, routing_decision
                     except Exception as fallback_error:
