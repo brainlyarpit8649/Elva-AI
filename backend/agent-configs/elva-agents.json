@@ -1,0 +1,319 @@
+# SuperAGI Agent Configurations for Elva AI Integration
+# agent-configs/elva-agents.json
+
+{
+  "agents": [
+    {
+      "id": "email-summarizer-agent",
+      "name": "Email Agent",
+      "description": "Summarizes emails and drafts responses using Gmail context from MCP",
+      "agent_type": "autonomous",
+      "model": {
+        "provider": "groq",
+        "model_name": "llama3-8b-8192",
+        "temperature": 0.1,
+        "max_tokens": 2048
+      },
+      "tools": [
+        {
+          "name": "mcp_context_reader",
+          "config": {
+            "mcp_url": "${MCP_SERVICE_URL}",
+            "api_token": "${MCP_API_TOKEN}",
+            "context_types": ["emails", "calendar", "chat_history"]
+          }
+        },
+        {
+          "name": "email_analyzer",
+          "config": {
+            "max_emails_to_analyze": 10,
+            "summary_type": "comprehensive",
+            "include_attachments": false
+          }
+        },
+        {
+          "name": "content_generator",
+          "config": {
+            "output_format": "structured",
+            "include_insights": true,
+            "include_actions": true
+          }
+        }
+      ],
+      "goals": [
+        "Read email context from MCP service",
+        "Analyze email content and patterns",
+        "Generate comprehensive email summaries",
+        "Suggest priority actions and responses",
+        "Write results back to MCP for Elva to display"
+      ],
+      "constraints": [
+        "Only process emails from authorized sessions",
+        "Maintain email privacy and security",
+        "Generate actionable insights only",
+        "Complete tasks within 5 minutes"
+      ],
+      "system_prompt": "You are an Email Analysis Agent for Elva AI. Your role is to read email context from the MCP service, analyze email content, and generate comprehensive summaries with actionable insights. Always maintain email privacy and focus on providing valuable, actionable information to help users manage their inbox effectively."
+    },
+    {
+      "id": "linkedin-post-agent",
+      "name": "LinkedIn Agent", 
+      "description": "Generates LinkedIn post descriptions and AI instructions for content creation",
+      "agent_type": "autonomous",
+      "model": {
+        "provider": "groq",
+        "model_name": "llama3-8b-8192", 
+        "temperature": 0.3,
+        "max_tokens": 1024
+      },
+      "tools": [
+        {
+          "name": "mcp_context_reader",
+          "config": {
+            "mcp_url": "${MCP_SERVICE_URL}",
+            "api_token": "${MCP_API_TOKEN}",
+            "context_types": ["intent_data", "project_info", "achievements"]
+          }
+        },
+        {
+          "name": "content_strategist",
+          "config": {
+            "platform": "linkedin",
+            "tone": "professional",
+            "include_hashtags": true,
+            "max_hashtags": 5
+          }
+        },
+        {
+          "name": "post_optimizer",
+          "config": {
+            "optimize_for": "engagement",
+            "include_call_to_action": true,
+            "professional_focus": true
+          }
+        }
+      ],
+      "goals": [
+        "Read project/achievement context from MCP",
+        "Generate compelling post descriptions in first-person perspective",
+        "Create specific AI instructions for LinkedIn post generation",
+        "Suggest relevant hashtags and themes",
+        "Write structured output back to MCP for n8n processing"
+      ],
+      "constraints": [
+        "Maintain professional tone appropriate for LinkedIn",
+        "Generate content that reflects actual user achievements", 
+        "Provide specific, actionable AI instructions",
+        "Complete tasks within 3 minutes"
+      ],
+      "system_prompt": "You are a LinkedIn Content Strategy Agent for Elva AI. Your role is to help users create compelling LinkedIn posts by generating detailed post descriptions and specific AI instructions. Always write in first-person as if the user accomplished the achievement, and provide clear, actionable instructions for AI post generation."
+    },
+    {
+      "id": "web-research-agent",
+      "name": "Web Research Agent",
+      "description": "Performs web research and finds trending topics using free search APIs",
+      "agent_type": "autonomous", 
+      "model": {
+        "provider": "groq",
+        "model_name": "llama3-8b-8192",
+        "temperature": 0.2,
+        "max_tokens": 2048
+      },
+      "tools": [
+        {
+          "name": "google_search",
+          "config": {
+            "api_key": "${GOOGLE_API_KEY}",
+            "cse_id": "${GOOGLE_CSE_ID}",
+            "max_results": 10,
+            "safe_search": "active"
+          }
+        },
+        {
+          "name": "web_scraper",
+          "config": {
+            "max_pages": 5,
+            "timeout": 30,
+            "respect_robots_txt": true,
+            "user_agent": "SuperAGI Research Bot 1.0"
+          }
+        },
+        {
+          "name": "trend_analyzer",
+          "config": {
+            "platforms": ["twitter", "reddit", "news"],
+            "time_range": "24h",
+            "relevance_threshold": 0.7
+          }
+        },
+        {
+          "name": "mcp_context_writer",
+          "config": {
+            "mcp_url": "${MCP_SERVICE_URL}",
+            "api_token": "${MCP_API_TOKEN}",
+            "output_format": "structured"
+          }
+        }
+      ],
+      "goals": [
+        "Research trending topics based on user query",
+        "Gather information from reliable sources",
+        "Analyze trends and patterns in data",
+        "Summarize findings into actionable insights",
+        "Write research results to MCP for Elva to access"
+      ],
+      "constraints": [
+        "Only use reliable and authoritative sources",
+        "Respect website terms of service and robots.txt",
+        "Focus on recent and trending information",
+        "Complete research within 10 minutes",
+        "Provide source attribution for all findings"
+      ],
+      "system_prompt": "You are a Web Research Agent for Elva AI. Your role is to conduct thorough web research on trending topics, analyze information from reliable sources, and provide comprehensive summaries with actionable insights. Always cite your sources and focus on recent, relevant information that adds value to user queries."
+    }
+  ],
+  "workflows": [
+    {
+      "name": "email_summary_workflow",
+      "description": "Complete email analysis and summarization workflow",
+      "agents": ["email-summarizer-agent"],
+      "triggers": [
+        {
+          "type": "api_call",
+          "endpoint": "/workflows/email-summary",
+          "agent": "email-summarizer-agent"
+        }
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "read_mcp_context",
+          "agent": "email-summarizer-agent",
+          "inputs": ["session_id"]
+        },
+        {
+          "step": 2, 
+          "action": "analyze_emails",
+          "agent": "email-summarizer-agent",
+          "inputs": ["email_data"]
+        },
+        {
+          "step": 3,
+          "action": "generate_summary",
+          "agent": "email-summarizer-agent", 
+          "inputs": ["analysis_results"]
+        },
+        {
+          "step": 4,
+          "action": "write_mcp_results",
+          "agent": "email-summarizer-agent",
+          "inputs": ["summary_data"]
+        }
+      ]
+    },
+    {
+      "name": "linkedin_content_workflow",
+      "description": "LinkedIn post preparation and instruction generation",
+      "agents": ["linkedin-post-agent"],
+      "triggers": [
+        {
+          "type": "api_call",
+          "endpoint": "/workflows/linkedin-content",
+          "agent": "linkedin-post-agent"
+        }
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "read_mcp_context",
+          "agent": "linkedin-post-agent",
+          "inputs": ["session_id"]
+        },
+        {
+          "step": 2,
+          "action": "analyze_achievement_data",
+          "agent": "linkedin-post-agent",
+          "inputs": ["context_data"]
+        },
+        {
+          "step": 3,
+          "action": "generate_post_description",
+          "agent": "linkedin-post-agent",
+          "inputs": ["achievement_info"]
+        },
+        {
+          "step": 4,
+          "action": "create_ai_instructions",
+          "agent": "linkedin-post-agent",
+          "inputs": ["post_description"]
+        },
+        {
+          "step": 5,
+          "action": "write_mcp_results",
+          "agent": "linkedin-post-agent",
+          "inputs": ["complete_package"]
+        }
+      ]
+    },
+    {
+      "name": "web_research_workflow",
+      "description": "Comprehensive web research and trend analysis",
+      "agents": ["web-research-agent"],
+      "triggers": [
+        {
+          "type": "api_call",
+          "endpoint": "/workflows/web-research", 
+          "agent": "web-research-agent"
+        }
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "parse_research_query",
+          "agent": "web-research-agent",
+          "inputs": ["goal"]
+        },
+        {
+          "step": 2,
+          "action": "search_web_sources",
+          "agent": "web-research-agent",
+          "inputs": ["query_terms"]
+        },
+        {
+          "step": 3,
+          "action": "scrape_relevant_content",
+          "agent": "web-research-agent", 
+          "inputs": ["search_results"]
+        },
+        {
+          "step": 4,
+          "action": "analyze_trends",
+          "agent": "web-research-agent",
+          "inputs": ["scraped_content"]
+        },
+        {
+          "step": 5,
+          "action": "generate_insights",
+          "agent": "web-research-agent",
+          "inputs": ["trend_analysis"]
+        },
+        {
+          "step": 6,
+          "action": "write_mcp_results",
+          "agent": "web-research-agent",
+          "inputs": ["research_summary"]
+        }
+      ]
+    }
+  ],
+  "global_settings": {
+    "max_execution_time": 600,
+    "memory_type": "summary_buffer",
+    "logging_level": "INFO",
+    "error_handling": "graceful_fallback",
+    "rate_limiting": {
+      "requests_per_minute": 60,
+      "concurrent_agents": 3
+    }
+  }
+}
