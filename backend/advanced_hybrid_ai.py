@@ -172,13 +172,8 @@ class AdvancedHybridAI:
             logger.info(f"🎯 Detected intent: {primary_intent}")
             
             # Get conversation context for better classification
-            try:
-                memory = get_conversation_memory()
-                conversation_context = await memory.get_conversation_context(session_id)
-                logger.info(f"📚 Using conversation context for classification: {len(conversation_context)} chars")
-            except Exception as e:
-                logger.warning(f"Could not retrieve context for classification: {e}")
-                conversation_context = ""
+            # Note: Using MCP context instead of conversation_memory
+            conversation_context = ""
             
             # Enhanced classification prompt with context and detected intent
             classification_prompt = f"""
