@@ -39,6 +39,10 @@ conversation_memory = initialize_conversation_memory(db)
 # In-memory store for pending post prompt packages
 pending_post_packages = {}
 
+# MCP Service Configuration
+MCP_SERVICE_URL = os.getenv("MCP_SERVICE_URL", "http://localhost:8002")
+MCP_API_TOKEN = os.getenv("MCP_API_TOKEN", "mcp-secret-token-elva-ai")
+
 # Create the main app without a prefix
 app = FastAPI()
 
