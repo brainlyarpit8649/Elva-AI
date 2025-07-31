@@ -1,0 +1,75 @@
+# SuperAGI Configuration for Elva AI Integration
+# docker-compose.yml for SuperAGI deployment
+
+version: '3.8'
+
+services:
+  superagi:
+    image: superagi/superagi:latest
+    container_name: superagi-elva
+    ports:
+      - "8001:8001"
+    environment:
+      # Database Configuration (Free PostgreSQL from Railway)
+      - DATABASE_URL=${POSTGRES_URL}
+      - REDIS_URL=${REDIS_URL}
+      
+      # LLM Configuration (Free Groq API)
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DEFAULT_LLM_MODEL=llama3-8b-8192
+      - LLM_PROVIDER=groq
+      
+      # SuperAGI Configuration
+      - SUPERAGI_API_KEY=${SUPERAGI_API_KEY}
+      - ENV=production
+      - FRONTEND_URL=https://your-superagi-domain.railway.app
+      - BACKEND_URL=https://your-superagi-api.railway.app
+      
+      # Agent Configuration
+      - AGENT_EXECUTION_TIMEOUT=300
+      - MAX_AGENT_ITERATIONS=10
+      - AGENT_MEMORY_TYPE=summary
+      
+      # MCP Integration
+      - MCP_SERVICE_URL=${MCP_SERVICE_URL}
+      - MCP_API_TOKEN=${MCP_API_TOKEN}
+      
+      # Tools Configuration
+      - ENABLE_WEB_SCRAPING=true
+      - ENABLE_EMAIL_TOOLS=true
+      - ENABLE_SEARCH_TOOLS=true
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
+      
+      # Security
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ALLOWED_ORIGINS=*
+      
+    volumes:
+      - ./superagi-data:/app/data
+      - ./agent-configs:/app/configs
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Separate database if not using Railway PostgreSQL
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: superagi-postgres
+  #   environment:
+  #     - POSTGRES_DB=superagi
+  #     - POSTGRES_USER=superagi
+  #     - POSTGRES_PASSWORD=superagi_password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
