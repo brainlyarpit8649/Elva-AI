@@ -37,6 +37,9 @@ gmail_oauth_service = GmailOAuthService(db=db)
 # Initialize conversation memory system
 conversation_memory = initialize_conversation_memory(db)
 
+# Initialize MCP (Model Context Protocol) integration service
+mcp_service = initialize_mcp_service()
+
 # In-memory store for pending post prompt packages
 pending_post_packages = {}
 
