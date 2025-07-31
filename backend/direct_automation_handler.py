@@ -290,6 +290,340 @@ class DirectAutomationHandler:
             logger.error(f"Gmail automation handler error: {e}")
             return {"success": False, "data": {}, "message": str(e)}
 
+    async def _handle_enhanced_gmail_automation(self, intent: str, intent_data: Dict[str, Any], session_id: str = None) -> Dict[str, Any]:
+        """Handle enhanced Gmail automation with summarization, search, and categorization"""
+        from server import gmail_oauth_service
+        from superagi_client import superagi_client  # Import SuperAGI for email processing
+        
+        try:
+            session_id = session_id or intent_data.get("session_id", "default_session")
+            logger.info(f"🧠 Enhanced Gmail automation: {intent} for session: {session_id}")
+            
+            if intent == "summarize_gmail_emails":
+                # Extract parameters for email summarization
+                count = intent_data.get("count", 5)  # Default to 5 emails
+                time_filter = intent_data.get("time_filter", "latest")
+                include_unread_only = intent_data.get("include_unread_only", False)
+                
+                # Build Gmail query based on parameters
+                if include_unread_only:
+                    query = 'is:unread'
+                elif time_filter == "today":
+                    query = 'newer_than:1d'
+                elif time_filter == "recent":
+                    query = 'newer_than:3d'
+                else:  # latest
+                    query = 'in:inbox'
+                
+                # Fetch emails from Gmail
+                gmail_result = await gmail_oauth_service.check_inbox(
+                    session_id=session_id,
+                    max_results=count,
+                    query=query
+                )
+                
+                if not gmail_result['success']:
+                    if gmail_result.get('requires_auth', False):
+                        return {
+                            "success": False,
+                            "data": {"count": 0, "summary": "", "requires_auth": True},
+                            "message": "🔐 Please connect your Gmail account to let Elva AI summarize your emails.\n\n👉 Click the 'Connect Gmail' button to continue."
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "data": {"count": 0, "summary": ""},
+                            "message": f"❌ Gmail API error: {gmail_result['message']}"
+                        }
+                
+                emails_data = gmail_result['data']['emails']
+                
+                if not emails_data:
+                    return {
+                        "success": True,
+                        "data": {
+                            "count": 0,
+                            "summary": f"📭 No {'unread ' if include_unread_only else ''}emails found for the specified criteria."
+                        },
+                        "message": "No emails to summarize"
+                    }
+                
+                # Use SuperAGI email agent for intelligent summarization
+                try:
+                    # Write email context to MCP for SuperAGI processing
+                    from mcp_integration import get_mcp_service
+                    mcp_service = get_mcp_service()
+                    
+                    context_data = {
+                        "emails": emails_data,
+                        "summary_request": {
+                            "count": count,
+                            "time_filter": time_filter,
+                            "include_unread_only": include_unread_only,
+                            "user_request": f"Summarize {count} {'unread ' if include_unread_only else ''}{time_filter} emails"
+                        }
+                    }
+                    
+                    await mcp_service.write_context(
+                        session_id=session_id,
+                        intent="email_summarization",
+                        data=context_data
+                    )
+                    
+                    # Execute SuperAGI email agent for summarization
+                    goal = f"Summarize the {count} {'unread ' if include_unread_only else ''}{time_filter} emails and provide key insights, priority actions, and important themes. Focus on actionable information."
+                    
+                    superagi_result = await superagi_client.run_task(
+                        session_id=session_id,
+                        goal=goal,
+                        agent_type="email_agent"
+                    )
+                    
+                    if superagi_result.get("success"):
+                        summary_text = superagi_result.get("email_summary", "")
+                        key_insights = superagi_result.get("key_insights", [])
+                        suggested_actions = superagi_result.get("suggested_actions", [])
+                        
+                        # Format the summary with proper structure
+                        formatted_summary = f"📧 **Email Summary ({count} emails analyzed)**\n\n"
+                        formatted_summary += f"📝 **Overview:**\n{summary_text}\n\n"
+                        
+                        if key_insights:
+                            formatted_summary += f"💡 **Key Insights:**\n"
+                            for insight in key_insights:
+                                formatted_summary += f"• {insight}\n"
+                            formatted_summary += "\n"
+                        
+                        if suggested_actions:
+                            formatted_summary += f"🎯 **Suggested Actions:**\n"
+                            for action in suggested_actions:
+                                formatted_summary += f"• {action}\n"
+                        
+                        return {
+                            "success": True,
+                            "data": {
+                                "count": len(emails_data),
+                                "summary": formatted_summary,
+                                "key_insights": key_insights,
+                                "suggested_actions": suggested_actions,
+                                "time_filter": time_filter,
+                                "include_unread_only": include_unread_only
+                            },
+                            "message": f"Successfully summarized {len(emails_data)} emails"
+                        }
+                    else:
+                        # Fallback to basic summarization
+                        return await self._basic_email_summarization(emails_data, count, time_filter, include_unread_only)
+                        
+                except Exception as superagi_error:
+                    logger.error(f"SuperAGI email summarization error: {superagi_error}")
+                    # Fallback to basic summarization
+                    return await self._basic_email_summarization(emails_data, count, time_filter, include_unread_only)
+            
+            elif intent == "search_gmail_emails":
+                # Extract search parameters
+                sender = intent_data.get("sender", "")
+                keywords = intent_data.get("keywords", [])
+                search_query = intent_data.get("search_query", "")
+                max_results = intent_data.get("max_results", 10)
+                time_filter = intent_data.get("time_filter", "")
+                has_attachment = intent_data.get("has_attachment", False)
+                
+                # Build comprehensive Gmail search query
+                if not search_query:
+                    query_parts = []
+                    if sender:
+                        query_parts.append(f"from:{sender}")
+                    if keywords:
+                        query_parts.extend(keywords)
+                    if has_attachment:
+                        query_parts.append("has:attachment")
+                    if time_filter == "last_week":
+                        query_parts.append("newer_than:7d")
+                    elif time_filter == "today":
+                        query_parts.append("newer_than:1d")
+                    
+                    search_query = " ".join(query_parts)
+                
+                if not search_query:
+                    return {
+                        "success": False,
+                        "data": {"count": 0, "search_results": []},
+                        "message": "❌ No search criteria specified"
+                    }
+                
+                # Search Gmail with the constructed query
+                gmail_result = await gmail_oauth_service.check_inbox(
+                    session_id=session_id,
+                    max_results=max_results,
+                    query=search_query
+                )
+                
+                if not gmail_result['success']:
+                    if gmail_result.get('requires_auth', False):
+                        return {
+                            "success": False,
+                            "data": {"count": 0, "search_results": [], "requires_auth": True},
+                            "message": "🔐 Please connect your Gmail account to search your emails.\n\n👉 Click the 'Connect Gmail' button to continue."
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "data": {"count": 0, "search_results": []},
+                            "message": f"❌ Gmail search error: {gmail_result['message']}"
+                        }
+                
+                emails_data = gmail_result['data']['emails']
+                
+                # Format search results
+                if not emails_data:
+                    return {
+                        "success": True,
+                        "data": {
+                            "count": 0,
+                            "search_results": f"🔍 No emails found matching your search criteria: '{search_query}'"
+                        },
+                        "message": "No emails found"
+                    }
+                
+                formatted_results = f"🔍 **Search Results for:** '{search_query}'\n\n"
+                for i, email in enumerate(emails_data, 1):
+                    sender = email.get('from', 'Unknown')
+                    if '<' in sender and '>' in sender:
+                        sender_name = sender.split('<')[0].strip().strip('"')
+                    else:
+                        sender_name = sender
+                    
+                    subject = email.get('subject', 'No Subject')
+                    date_str = email.get('date', 'Unknown Date')
+                    snippet = email.get('snippet', '')
+                    
+                    if len(snippet) > 80:
+                        snippet = snippet[:77] + '...'
+                    
+                    formatted_results += f"**{i}.** 👤 **{sender_name}**\n"
+                    formatted_results += f"   📧 **Subject:** {subject}\n"
+                    formatted_results += f"   📅 **Date:** {date_str}\n"
+                    formatted_results += f"   💬 **Preview:** {snippet or 'No preview available'}\n\n"
+                
+                return {
+                    "success": True,
+                    "data": {
+                        "count": len(emails_data),
+                        "search_results": formatted_results,
+                        "search_query": search_query,
+                        "emails": emails_data
+                    },
+                    "message": f"Found {len(emails_data)} emails matching your search"
+                }
+            
+            elif intent == "categorize_gmail_emails":
+                # Extract categorization parameters
+                count = intent_data.get("count", 20)
+                categories = intent_data.get("categories", ["work", "personal", "promotions", "social", "important"])
+                focus_categories = intent_data.get("focus_categories", categories)
+                time_filter = intent_data.get("time_filter", "recent")
+                
+                # Build query for recent emails
+                if time_filter == "today":
+                    query = 'newer_than:1d'
+                elif time_filter == "recent":
+                    query = 'newer_than:3d'
+                else:
+                    query = 'in:inbox'
+                
+                # Fetch emails for categorization
+                gmail_result = await gmail_oauth_service.check_inbox(
+                    session_id=session_id,
+                    max_results=count,
+                    query=query
+                )
+                
+                if not gmail_result['success']:
+                    if gmail_result.get('requires_auth', False):
+                        return {
+                            "success": False,
+                            "data": {"count": 0, "categories": {}, "requires_auth": True},
+                            "message": "🔐 Please connect your Gmail account to categorize your emails.\n\n👉 Click the 'Connect Gmail' button to continue."
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "data": {"count": 0, "categories": {}},
+                            "message": f"❌ Gmail categorization error: {gmail_result['message']}"
+                        }
+                
+                emails_data = gmail_result['data']['emails']
+                
+                if not emails_data:
+                    return {
+                        "success": True,
+                        "data": {
+                            "count": 0,
+                            "categories": "📭 No emails found for categorization."
+                        },
+                        "message": "No emails to categorize"
+                    }
+                
+                # Use AI-powered categorization
+                categorized_emails = await self._categorize_emails_with_ai(emails_data, categories)
+                
+                # Format categorization results
+                formatted_categories = f"📊 **Email Categories** ({len(emails_data)} emails analyzed)\n\n"
+                
+                for category in focus_categories:
+                    emails_in_category = categorized_emails.get(category, [])
+                    count_in_category = len(emails_in_category)
+                    
+                    if count_in_category > 0:
+                        category_icon = {
+                            "work": "💼",
+                            "personal": "👤", 
+                            "promotions": "🛍️",
+                            "social": "👥",
+                            "important": "⭐",
+                            "newsletters": "📰",
+                            "spam": "🚫"
+                        }.get(category, "📧")
+                        
+                        formatted_categories += f"{category_icon} **{category.title()}** ({count_in_category} emails)\n"
+                        
+                        # Show first few emails in each category
+                        for i, email in enumerate(emails_in_category[:3], 1):
+                            sender = email.get('from', 'Unknown')
+                            if '<' in sender and '>' in sender:
+                                sender_name = sender.split('<')[0].strip().strip('"')
+                            else:
+                                sender_name = sender
+                            
+                            subject = email.get('subject', 'No Subject')
+                            if len(subject) > 40:
+                                subject = subject[:37] + '...'
+                                
+                            formatted_categories += f"   {i}. {sender_name}: {subject}\n"
+                        
+                        if count_in_category > 3:
+                            formatted_categories += f"   ... and {count_in_category - 3} more emails\n"
+                        
+                        formatted_categories += "\n"
+                
+                return {
+                    "success": True,
+                    "data": {
+                        "count": len(emails_data),
+                        "categories": formatted_categories,
+                        "categorized_emails": categorized_emails,
+                        "category_counts": {cat: len(emails) for cat, emails in categorized_emails.items()}
+                    },
+                    "message": f"Successfully categorized {len(emails_data)} emails"
+                }
+            
+            return {"success": False, "data": {}, "message": "Enhanced Gmail automation not implemented"}
+            
+        except Exception as e:
+            logger.error(f"Enhanced Gmail automation error: {e}")
+            return {"success": False, "data": {}, "message": str(e)}
+
     async def _handle_linkedin_automation(self, intent: str, intent_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle LinkedIn-related automation"""
         try:
