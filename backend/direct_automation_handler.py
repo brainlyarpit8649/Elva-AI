@@ -117,6 +117,8 @@ class DirectAutomationHandler:
                 result = await self._handle_linkedin_automation(intent, intent_data)
             elif automation_type == "gmail_automation":
                 result = await self._handle_gmail_automation(intent, intent_data, session_id)
+            elif automation_type == "enhanced_gmail_automation":
+                result = await self._handle_enhanced_gmail_automation(intent, intent_data, session_id)
 
             elif automation_type == "data_extraction":
                 result = await self._handle_data_extraction(intent, intent_data)
