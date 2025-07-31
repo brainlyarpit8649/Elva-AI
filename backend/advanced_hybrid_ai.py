@@ -71,6 +71,7 @@ class AdvancedHybridAI:
     def is_direct_automation_intent(self, intent: str) -> bool:
         """Check if an intent should bypass AI response generation and go directly to automation"""
         direct_automation_intents = [
+            "web_search",  # Direct web search using Google Search API
             "check_linkedin_notifications",
             "check_gmail_inbox",
             "check_gmail_unread", 
