@@ -460,43 +460,44 @@ async def get_automation_status(intent: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/web-automation")
-async def execute_web_automation(request: WebAutomationRequest):
+async def execute_web_automation(request: MCPContextRequest):
     """
     Execute web automation tasks using Playwright
     """
     try:
-        logger.info(f"🌐 Web Automation Request: {request.automation_type}")
+        automation_type = request.data.get("automation_type", "")
+        logger.info(f"🌐 Web Automation Request: {automation_type}")
         
         result = None
         
-        if request.automation_type == "web_scraping" or request.automation_type == "data_extraction":
+        if automation_type == "web_scraping" or automation_type == "data_extraction":
             # Extract dynamic data from websites
-            url = request.parameters.get("url")
-            selectors = request.parameters.get("selectors", {})
-            wait_for_element = request.parameters.get("wait_for_element")
+            url = request.data.get("url")
+            selectors = request.data.get("selectors", {})
+            wait_for_element = request.data.get("wait_for_element")
             
             if not url or not selectors:
                 raise HTTPException(status_code=400, detail="URL and selectors are required for web scraping")
             
             result = await playwright_service.extract_dynamic_data(url, selectors, wait_for_element)
             
-        elif request.automation_type == "linkedin_insights":
+        elif automation_type == "linkedin_insights":
             # LinkedIn insights will be handled via Gmail API integration in the future
             raise HTTPException(status_code=501, detail="LinkedIn insights temporarily disabled - Gmail API integration coming soon")
             
-        elif request.automation_type == "email_automation":
+        elif automation_type == "email_automation":
             # Email automation will be handled via Gmail API
             raise HTTPException(status_code=501, detail="Email automation temporarily disabled - Gmail API integration coming soon")
             
         else:
-            raise HTTPException(status_code=400, detail=f"Unsupported automation type: {request.automation_type}")
+            raise HTTPException(status_code=400, detail=f"Unsupported automation type: {automation_type}")
         
         # Save automation result to database
         automation_record = {
             "id": str(uuid.uuid4()),
             "session_id": request.session_id,
-            "automation_type": request.automation_type,
-            "parameters": request.parameters,
+            "automation_type": automation_type,
+            "parameters": request.data,
             "result": result.data if result else {},
             "success": result.success if result else False,
             "message": result.message if result else "Unknown error",
