@@ -111,6 +111,7 @@ class AdvancedHybridAI:
                 "create_event": {"model": ModelChoice.BOTH_SEQUENTIAL, "confidence": 0.8},
                 "add_todo": {"model": ModelChoice.CLAUDE, "confidence": 0.7},
                 "set_reminder": {"model": ModelChoice.CLAUDE, "confidence": 0.7},
+                "web_search": {"model": ModelChoice.GROQ, "confidence": 0.95},
                 "complex_analysis": {"model": ModelChoice.GROQ, "confidence": 0.8},
                 "creative_writing": {"model": ModelChoice.BOTH_SEQUENTIAL, "confidence": 0.9},
                 "technical_explanation": {"model": ModelChoice.GROQ, "confidence": 0.8},
