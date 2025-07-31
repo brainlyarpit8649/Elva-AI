@@ -146,6 +146,52 @@ class DirectAutomationHandler:
                 "automation_intent": intent
             }
     
+    async def _handle_google_search(self, intent: str, intent_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle Google Search automation using Google Search API"""
+        try:
+            from google_search_service import google_search_service
+            
+            # Extract search query from intent data
+            search_query = intent_data.get("query", "")
+            
+            if not search_query:
+                return {
+                    "success": False,
+                    "data": {},
+                    "message": "No search query provided"
+                }
+            
+            logger.info(f"🔍 Performing Google Search for: {search_query}")
+            
+            # Use Google Search API service
+            search_result = await google_search_service.search_web(search_query, max_results=5)
+            
+            if search_result["success"]:
+                return {
+                    "success": True,
+                    "data": {
+                        "search_results": search_result["formatted_results"],
+                        "query": search_query,
+                        "count": search_result["count"],
+                        "raw_results": search_result["raw_results"]
+                    },
+                    "message": f"Found {search_result['count']} search results"
+                }
+            else:
+                return {
+                    "success": False,
+                    "data": {"search_results": search_result["formatted_results"]},
+                    "message": search_result.get("error", "Search failed")
+                }
+                
+        except Exception as e:
+            logger.error(f"Google Search automation error: {e}")
+            return {
+                "success": False,
+                "data": {},
+                "message": f"Search service error: {str(e)}"
+            }
+    
     async def _handle_gmail_automation(self, intent: str, intent_data: Dict[str, Any], session_id: str = None) -> Dict[str, Any]:
         """Handle Gmail automation using Gmail API"""
         # Import Gmail OAuth service from server.py global instance
