@@ -79,3 +79,12 @@ Bearer Token: kumararpit9468
   "expires_at": "2025-08-01T03:24:11.616780"
 }
 
+=== STEP 4: CONTEXT APPEND ===
+{
+  "success": true,
+  "message": "Context appended successfully",
+  "session_id": "comprehensive-test-001",
+  "append_id": "faf66262-50e3-4263-85a0-ceae644adfaa",
+  "source": "superagi"
+}
+
