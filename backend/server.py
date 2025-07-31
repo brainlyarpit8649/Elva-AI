@@ -1085,9 +1085,28 @@ async def health_check():
         # Get Gmail OAuth status (default session for health check)
         gmail_status = await gmail_oauth_service.get_auth_status('health_check')
         
+        # Check MCP service health
+        mcp_health = await mcp_service.health_check()
+        
         health_status = {
             "status": "healthy",
             "mongodb": "connected",
+            "mcp_integration": {
+                "status": "enabled" if mcp_health.get("success") else "error",
+                "service_url": mcp_service.mcp_base_url,
+                "authentication": "configured" if mcp_service.mcp_api_token else "missing",
+                "health_check": mcp_health,
+                "features": [
+                    "context_write", "context_read", "context_append",
+                    "redis_caching", "mongodb_persistence", 
+                    "session_management", "agent_result_storage"
+                ],
+                "endpoints": [
+                    "/api/mcp/write-context",
+                    "/api/mcp/read-context/{session_id}",
+                    "/api/mcp/append-context"
+                ]
+            },
             "gmail_api_integration": {
                 "status": "ready",
                 "oauth2_flow": "implemented", 
