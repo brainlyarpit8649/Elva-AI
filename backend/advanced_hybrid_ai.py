@@ -97,6 +97,10 @@ class AdvancedHybridAI:
             "check_gmail_inbox": "📧 Checking Gmail inbox...",
             "check_gmail_unread": "📧 Checking Gmail unread emails...",
             "email_inbox_check": "📧 Checking your inbox for unread emails...",
+            # Enhanced Gmail status messages
+            "summarize_gmail_emails": "📧 Summarizing your latest emails...",
+            "search_gmail_emails": "🔍 Searching through your Gmail...",
+            "categorize_gmail_emails": "📊 Categorizing your emails...",
             "scrape_price": "💰 Searching for current prices...",
             "scrape_product_listings": "🛒 Scraping product listings...",
             "linkedin_job_alerts": "💼 Checking LinkedIn job alerts...",
