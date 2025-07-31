@@ -1,0 +1,33 @@
+{
+  "session_id": "comprehensive-test-001",
+  "user_id": "elva-test-user",
+  "intent": "send_email",
+  "data": {
+    "emails": [
+      {
+        "from": "elva@example.com",
+        "to": "client@example.com", 
+        "subject": "MCP Service Integration Test",
+        "body": "This email confirms that the MCP service is working perfectly with Redis and MongoDB integration."
+      }
+    ],
+    "calendar_events": [
+      {
+        "title": "MCP Service Review",
+        "date": "2025-08-01",
+        "time": "10:00 AM",
+        "attendees": ["elva-team@example.com"]
+      }
+    ],
+    "chat_history": [
+      {
+        "role": "user",
+        "content": "Send an email to the client about our MCP service integration"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll help you send that email and store the context for future reference"
+      }
+    ]
+  }
+}
