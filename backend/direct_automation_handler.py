@@ -937,5 +937,190 @@ class DirectAutomationHandler:
             logger.error(f"Template formatting error: {e}")
             return f"✅ Automation completed successfully\n{data}"
 
+    async def _basic_email_summarization(self, emails_data: List[Dict], count: int, time_filter: str, include_unread_only: bool) -> Dict[str, Any]:
+        """Fallback basic email summarization when SuperAGI is unavailable"""
+        try:
+            summary_lines = []
+            summary_lines.append(f"📧 **Basic Email Summary** ({len(emails_data)} emails)")
+            summary_lines.append("")
+            
+            # Group emails by sender
+            sender_groups = {}
+            for email in emails_data:
+                sender = email.get('from', 'Unknown')
+                if '<' in sender and '>' in sender:
+                    sender_name = sender.split('<')[0].strip().strip('"')
+                else:
+                    sender_name = sender
+                
+                if sender_name not in sender_groups:
+                    sender_groups[sender_name] = []
+                sender_groups[sender_name].append(email)
+            
+            # Show summary by sender
+            for sender, sender_emails in list(sender_groups.items())[:5]:  # Top 5 senders
+                email_count = len(sender_emails)
+                if email_count == 1:
+                    subject = sender_emails[0].get('subject', 'No Subject')
+                    summary_lines.append(f"• **{sender}**: {subject}")
+                else:
+                    subjects = [e.get('subject', 'No Subject') for e in sender_emails[:2]]
+                    summary_lines.append(f"• **{sender}** ({email_count} emails): {', '.join(subjects)}")
+                    if email_count > 2:
+                        summary_lines.append(f"  ... and {email_count - 2} more")
+            
+            # Add basic insights
+            summary_lines.append("")
+            summary_lines.append("💡 **Quick Insights:**")
+            summary_lines.append(f"• Total emails: {len(emails_data)}")
+            summary_lines.append(f"• Unique senders: {len(sender_groups)}")
+            summary_lines.append(f"• Time period: {time_filter}")
+            
+            summary_text = "\n".join(summary_lines)
+            
+            return {
+                "success": True,
+                "data": {
+                    "count": len(emails_data),
+                    "summary": summary_text,
+                    "key_insights": [f"Received emails from {len(sender_groups)} different senders"],
+                    "suggested_actions": ["Review emails from frequent senders", "Check for urgent messages"],
+                    "time_filter": time_filter,
+                    "include_unread_only": include_unread_only
+                },
+                "message": f"Basic summarization completed for {len(emails_data)} emails"
+            }
+            
+        except Exception as e:
+            logger.error(f"Basic email summarization error: {e}")
+            return {
+                "success": False,
+                "data": {"count": 0, "summary": ""},
+                "message": f"Summarization failed: {str(e)}"
+            }
+
+    async def _categorize_emails_with_ai(self, emails_data: List[Dict], categories: List[str]) -> Dict[str, List[Dict]]:
+        """AI-powered email categorization using Groq for classification"""
+        try:
+            from langchain_openai import ChatOpenAI
+            from langchain.prompts import ChatPromptTemplate
+            import os
+            import json
+            
+            # Initialize Groq LLM for categorization
+            llm = ChatOpenAI(
+                temperature=0.1,
+                openai_api_key=os.getenv("GROQ_API_KEY"),
+                model="llama3-8b-8192",
+                base_url="https://api.groq.com/openai/v1"
+            )
+            
+            categorized_emails = {category: [] for category in categories}
+            
+            # Process emails in batches of 5 for efficiency
+            batch_size = 5
+            for i in range(0, len(emails_data), batch_size):
+                batch = emails_data[i:i + batch_size]
+                
+                # Create categorization prompt
+                prompt = ChatPromptTemplate.from_messages([
+                    ("system", f"""You are an email categorization expert. Categorize each email into one of these categories: {', '.join(categories)}.
+
+Consider:
+- Work emails: professional communications, business matters, work-related updates
+- Personal emails: friends, family, personal communications  
+- Promotions: marketing emails, offers, deals, sales
+- Social: social media notifications, community updates
+- Important: urgent matters, time-sensitive information
+- Newsletters: news, subscriptions, updates
+- Spam: unwanted or suspicious emails
+
+Return JSON with email index (0-based) as key and category as value.
+Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
+                    ("user", "Categorize these emails:\n{emails}")
+                ])
+                
+                # Format batch emails for analysis
+                batch_text = ""
+                for j, email in enumerate(batch):
+                    sender = email.get('from', 'Unknown')
+                    subject = email.get('subject', 'No Subject')
+                    snippet = email.get('snippet', '')[:100]  # First 100 chars
+                    
+                    batch_text += f"Email {j}:\n"
+                    batch_text += f"From: {sender}\n"
+                    batch_text += f"Subject: {subject}\n"
+                    batch_text += f"Content preview: {snippet}\n\n"
+                
+                try:
+                    # Get AI categorization
+                    chain = prompt | llm
+                    response = chain.invoke({"emails": batch_text})
+                    
+                    # Parse categorization results
+                    try:
+                        categorization = json.loads(response.content)
+                        for email_idx, category in categorization.items():
+                            batch_idx = int(email_idx)
+                            if 0 <= batch_idx < len(batch) and category in categories:
+                                categorized_emails[category].append(batch[batch_idx])
+                            else:
+                                # Default to 'personal' if category not recognized
+                                categorized_emails.get('personal', categorized_emails.get(categories[0], [])).append(batch[batch_idx])
+                    except (json.JSONDecodeError, ValueError):
+                        # Fallback: simple keyword-based categorization
+                        for email in batch:
+                            category = self._simple_categorize_email(email, categories)
+                            categorized_emails[category].append(email)
+                            
+                except Exception as batch_error:
+                    logger.error(f"Batch categorization error: {batch_error}")
+                    # Fallback for this batch
+                    for email in batch:
+                        category = self._simple_categorize_email(email, categories)
+                        categorized_emails[category].append(email)
+            
+            return categorized_emails
+            
+        except Exception as e:
+            logger.error(f"AI categorization error: {e}")
+            # Ultimate fallback: simple categorization
+            categorized_emails = {category: [] for category in categories}
+            for email in emails_data:
+                category = self._simple_categorize_email(email, categories)
+                categorized_emails[category].append(email)
+            return categorized_emails
+
+    def _simple_categorize_email(self, email: Dict[str, Any], categories: List[str]) -> str:
+        """Simple keyword-based email categorization as fallback"""
+        sender = email.get('from', '').lower()
+        subject = email.get('subject', '').lower()
+        snippet = email.get('snippet', '').lower()
+        
+        content = f"{sender} {subject} {snippet}"
+        
+        # Work-related keywords
+        if any(keyword in content for keyword in ['meeting', 'project', 'work', 'office', 'team', 'business', 'client', 'deadline', 'report']):
+            return 'work' if 'work' in categories else categories[0]
+        
+        # Promotion keywords
+        if any(keyword in content for keyword in ['sale', 'offer', 'discount', 'deal', 'promo', 'buy', 'shop', 'limited time', 'special']):
+            return 'promotions' if 'promotions' in categories else categories[0]
+        
+        # Social keywords  
+        if any(keyword in content for keyword in ['facebook', 'twitter', 'linkedin', 'instagram', 'social', 'notification', 'friend', 'like', 'comment']):
+            return 'social' if 'social' in categories else categories[0]
+        
+        # Newsletter keywords
+        if any(keyword in content for keyword in ['newsletter', 'unsubscribe', 'weekly', 'monthly', 'digest', 'news', 'update']):
+            return 'newsletters' if 'newsletters' in categories else categories[0]
+        
+        # Important keywords
+        if any(keyword in content for keyword in ['urgent', 'important', 'asap', 'emergency', 'critical', 'immediate']):
+            return 'important' if 'important' in categories else categories[0]
+        
+        # Default to personal
+        return 'personal' if 'personal' in categories else categories[0]
+
 # Global instance
 direct_automation_handler = DirectAutomationHandler()
