@@ -83,11 +83,6 @@ class ApprovalRequest(BaseModel):
     approved: bool
     edited_data: Optional[dict] = None
 
-class WebAutomationRequest(BaseModel):
-    session_id: str
-    automation_type: str  # "web_scraping", "linkedin_insights", "email_automation", "data_extraction"
-    parameters: dict
-
 class SuperAGITaskRequest(BaseModel):
     session_id: str
     goal: str
