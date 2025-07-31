@@ -236,9 +236,24 @@ async def chat(request: ChatRequest):
             )
         
         # Use advanced hybrid processing with sophisticated routing
+        # First, read existing context from MCP for better AI responses
+        previous_context = ""
+        try:
+            context_result = await mcp_service.read_context(request.session_id)
+            if context_result.get("success") and context_result.get("context"):
+                previous_context = await mcp_service.get_context_for_prompt(request.session_id)
+                logger.info(f"📖 Retrieved context from MCP for session: {request.session_id}")
+            else:
+                logger.info(f"📭 No previous context found in MCP for session: {request.session_id}")
+        except Exception as context_error:
+            logger.warning(f"⚠️ Error reading context from MCP: {context_error}")
+            previous_context = ""
+        
+        # Process message with context enhancement
         intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
             request.message, 
-            request.session_id
+            request.session_id,
+            context=previous_context  # Include context for better responses
         )
         
         logger.info(f"🧠 Advanced Routing: {routing_decision.primary_model.value} (confidence: {routing_decision.confidence:.2f})")
