@@ -462,7 +462,11 @@ class DirectAutomationHandler:
     def _format_success_result(self, intent: str, data: Dict[str, Any], template_info: Dict[str, str]) -> str:
         """Format successful automation result using template"""
         try:
-            if intent == "check_linkedin_notifications":
+            if intent == "web_search":
+                # Google Search service already provides formatted results
+                return data.get("search_results", "No search results found")
+            
+            elif intent == "check_linkedin_notifications":
                 notifications_text = "\n".join([
                     f"• **{notif['name']}** {notif['message']}" 
                     for notif in data.get("notifications", [])
