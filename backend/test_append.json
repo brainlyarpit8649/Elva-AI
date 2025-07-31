@@ -1,0 +1,12 @@
+{
+  "session_id": "test-session-001",
+  "output": {
+    "email_summary": "Email successfully processed and queued for sending",
+    "n8n_response": {
+      "status": "completed",
+      "message": "Email sent to john@example.com"
+    },
+    "processing_time": "2.3s"
+  },
+  "source": "n8n"
+}
