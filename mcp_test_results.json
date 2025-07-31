@@ -1,0 +1,71 @@
+{
+  "total_tests": 9,
+  "passed": 9,
+  "failed": 0,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "test": "Health Check - MCP Integration",
+      "success": true,
+      "details": "MCP service enabled at https://elva-mcp-service.onrender.com",
+      "timestamp": "2025-07-31T11:33:15.462258",
+      "response_data": null
+    },
+    {
+      "test": "MCP Write Context Direct",
+      "success": true,
+      "details": "Context written successfully to MCP service",
+      "timestamp": "2025-07-31T11:33:16.937953",
+      "response_data": null
+    },
+    {
+      "test": "MCP Read Context",
+      "success": true,
+      "details": "Context retrieved successfully from MCP service",
+      "timestamp": "2025-07-31T11:33:18.413604",
+      "response_data": null
+    },
+    {
+      "test": "MCP Append Context",
+      "success": true,
+      "details": "Context appended successfully to MCP service",
+      "timestamp": "2025-07-31T11:33:20.631445",
+      "response_data": null
+    },
+    {
+      "test": "Chat with MCP Integration",
+      "success": true,
+      "details": "Chat message successfully stored in MCP context",
+      "timestamp": "2025-07-31T11:33:28.328720",
+      "response_data": null
+    },
+    {
+      "test": "AI Response Quality",
+      "success": true,
+      "details": "AI responses working correctly: 3/3 successful, 0 errors",
+      "timestamp": "2025-07-31T11:33:51.482462",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Integration Status",
+      "success": true,
+      "details": "Gmail credentials configured correctly",
+      "timestamp": "2025-07-31T11:33:52.815552",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Auth URL Generation",
+      "success": true,
+      "details": "Valid Gmail OAuth URL generated",
+      "timestamp": "2025-07-31T11:33:53.833395",
+      "response_data": null
+    },
+    {
+      "test": "Intent Detection and Approval",
+      "success": true,
+      "details": "Email intent detected with pre-filled data: recipient=Sarah",
+      "timestamp": "2025-07-31T11:34:19.222711",
+      "response_data": null
+    }
+  ]
+}
