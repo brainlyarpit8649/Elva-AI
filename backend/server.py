@@ -102,6 +102,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize Langfuse for observability (optional)
+try:
+    langfuse = Langfuse(
+        public_key=os.environ.get('LANGFUSE_PUBLIC_KEY'),
+        secret_key=os.environ.get('LANGFUSE_SECRET_KEY'),
+        host=os.environ.get('LANGFUSE_HOST', 'https://us.cloud.langfuse.com')
+    )
+    logger.info("📊 Langfuse observability initialized")
+except Exception as e:
+    logger.warning(f"⚠️ Langfuse initialization failed: {e}")
+    langfuse = None
+
 # Models
 class ChatMessage(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
