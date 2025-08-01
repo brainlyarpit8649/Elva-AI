@@ -238,19 +238,19 @@ def format_admin_context_display(session_id: str, context_data: dict) -> str:
 async def enhanced_chat(request: ChatRequest):
     """Enhanced chat endpoint with comprehensive Langfuse observability"""
     
-    # Initialize Langfuse trace for the entire chat pipeline
-    trace = langfuse.trace(
-        name="elva_chat_pipeline",
-        input={
-            "user_message": request.message,
-            "session_id": request.session_id,
-            "user_id": request.user_id
-        },
-        metadata={
-            "endpoint": "/api/chat",
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    )
+    try:
+        # Initialize Langfuse trace for the entire chat pipeline
+        trace = langfuse.trace(
+            name="elva_chat_pipeline",
+            input={
+                "user_message": request.message,
+                "session_id": request.session_id,
+                "user_id": request.user_id
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Langfuse trace initialization failed: {e}")
+        trace = None
     
     try:
         logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
