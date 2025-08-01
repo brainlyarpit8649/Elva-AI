@@ -1,0 +1,106 @@
+{
+  "total_tests": 8,
+  "passed": 4,
+  "failed": 4,
+  "success_rate": 50.0,
+  "results": [
+    {
+      "test": "Gmail Authentication Flow - OAuth URL Generation",
+      "success": true,
+      "details": "OAuth URL generated correctly with new client_id",
+      "timestamp": "2025-08-01T13:16:47.678725",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Authentication Flow - Redirect URI",
+      "success": false,
+      "details": "Incorrect redirect URI in auth URL",
+      "timestamp": "2025-08-01T13:16:47.678768",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Status - Credentials Configuration",
+      "success": true,
+      "details": "Credentials properly configured",
+      "timestamp": "2025-08-01T13:16:50.474539",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Status - OAuth Scopes",
+      "success": true,
+      "details": "All 4 required scopes configured",
+      "timestamp": "2025-08-01T13:16:50.474582",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Status - Authentication Status",
+      "success": true,
+      "details": "Authentication status: False (expected for new session)",
+      "timestamp": "2025-08-01T13:16:50.474595",
+      "response_data": null
+    },
+    {
+      "test": "Chat Error Investigation",
+      "success": true,
+      "details": "\u2705 'Hello, how are you?': Clean response received\n    \u2705 'What can you help me with?': Clean response received\n    \u2705 'Tell me about yourself': Clean response received",
+      "timestamp": "2025-08-01T13:17:08.653340",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Intent Detection",
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='3abf5a61-6358-4939-8ff5-a5bb373f6612.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)",
+      "timestamp": "2025-08-01T13:17:32.785342",
+      "response_data": null
+    },
+    {
+      "test": "Gmail API Execution - Response Status",
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='3abf5a61-6358-4939-8ff5-a5bb373f6612.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
+      "timestamp": "2025-08-01T13:17:43.336444",
+      "response_data": null
+    },
+    {
+      "test": "Error Handling - Exception Handling",
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='3abf5a61-6358-4939-8ff5-a5bb373f6612.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
+      "timestamp": "2025-08-01T13:17:53.885804",
+      "response_data": null
+    },
+    {
+      "test": "Frontend Integration - Gmail Button Simulation",
+      "success": true,
+      "details": "Gmail button click simulation successful - OAuth URL generated",
+      "timestamp": "2025-08-01T13:17:54.627091",
+      "response_data": null
+    },
+    {
+      "test": "Frontend Integration - Session Management",
+      "success": true,
+      "details": "Session ID properly included in OAuth flow",
+      "timestamp": "2025-08-01T13:17:54.627130",
+      "response_data": null
+    },
+    {
+      "test": "Credentials Loading - Configuration Status",
+      "success": true,
+      "details": "Credentials.json loaded successfully",
+      "timestamp": "2025-08-01T13:17:56.395915",
+      "response_data": null
+    },
+    {
+      "test": "Credentials Loading - OAuth2 Flow",
+      "success": true,
+      "details": "OAuth2 flow properly implemented",
+      "timestamp": "2025-08-01T13:17:56.395950",
+      "response_data": null
+    },
+    {
+      "test": "Credentials Loading - OAuth Scopes",
+      "success": true,
+      "details": "All 4 OAuth scopes configured",
+      "timestamp": "2025-08-01T13:17:56.395960",
+      "response_data": null
+    }
+  ]
+}
