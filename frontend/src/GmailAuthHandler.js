@@ -136,20 +136,26 @@ const GmailAuthHandler = ({
 
   const handleGmailAuthSuccess = async () => {
     try {
-      // Update auth status first using the function from App.js
-      if (checkGmailStatus) {
-        await checkGmailStatus(); // This will update the main App state
-      } else {
-        await checkGmailAuthStatus(); // Fallback to local check
-      }
+      console.log('🎉 Processing Gmail authentication success...');
       
-      // Store authentication success in localStorage
-      localStorage.setItem('gmail-auth-status', 'true');
+      // IMMEDIATE STATUS REFRESH: Add small delay then force refresh
+      setTimeout(async () => {
+        // Update auth status first using the function from App.js
+        if (checkGmailStatus) {
+          await checkGmailStatus(); // This will update the main App state
+        } else {
+          await checkGmailAuthStatus(); // Fallback to local check
+        }
+        
+        // Store authentication success in localStorage
+        localStorage.setItem('gmail-auth-status', 'true');
+        
+        // 🔔 Show toast notification ONLY (no chat message)
+        showGmailSuccess();
+        
+        console.log('✅ Gmail authentication successful - status refreshed and toast shown!');
+      }, 500); // Small delay to ensure backend has processed the OAuth callback
       
-      // 🔔 Show toast notification ONLY (no chat message)
-      showGmailSuccess();
-      
-      console.log('✅ Gmail authentication successful - toast notification shown!');
     } catch (error) {
       console.error('Error handling Gmail auth success:', error);
       showGmailError('Error completing Gmail authentication setup');
