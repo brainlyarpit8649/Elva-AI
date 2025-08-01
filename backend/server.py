@@ -43,8 +43,11 @@ db = client[os.environ['DB_NAME']]
 # Initialize Gmail OAuth service with database connection
 gmail_oauth_service = GmailOAuthService(db=db)
 
-# Initialize enhanced Gmail service
+# Initialize enhanced Gmail service (legacy)
 enhanced_gmail_service = EnhancedGmailService(gmail_oauth_service)
+
+# Initialize new real-time Gmail service with DeBERTa
+realtime_gmail_service = RealTimeGmailService(gmail_oauth_service)
 
 # Initialize conversation memory system
 conversation_memory = initialize_conversation_memory(db)
