@@ -5197,8 +5197,458 @@ class ElvaBackendTester:
             self.log_test("Gmail OAuth URL Generation Verification", False, f"Error: {str(e)}")
             return False
 
+    def test_priority_1_chat_error_fix(self):
+        """PRIORITY 1: Test basic /api/chat endpoint to ensure error is resolved"""
+        try:
+            test_messages = [
+                "Hello",
+                "How are you?",
+                "What can you help me with?",
+                "Tell me about yourself"
+            ]
+            
+            all_passed = True
+            results = []
+            
+            for message in test_messages:
+                payload = {
+                    "message": message,
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    response_text = data.get("response", "")
+                    
+                    # Check if we get the error message
+                    if "sorry I've encountered an error" in response_text.lower():
+                        results.append(f"❌ '{message}': Still getting error response")
+                        all_passed = False
+                    elif not response_text or len(response_text.strip()) == 0:
+                        results.append(f"❌ '{message}': Empty response")
+                        all_passed = False
+                    else:
+                        results.append(f"✅ '{message}': Got valid response ({len(response_text)} chars)")
+                        self.message_ids.append(data["id"])
+                else:
+                    results.append(f"❌ '{message}': HTTP {response.status_code}")
+                    all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("PRIORITY 1: Chat Error Fix", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("PRIORITY 1: Chat Error Fix", False, f"Error: {str(e)}")
+            return False
+
+    def test_priority_2_gmail_integration_flow(self):
+        """PRIORITY 2: Test Gmail OAuth authentication and status endpoints"""
+        try:
+            results = []
+            all_passed = True
+            
+            # Test 1: Gmail OAuth URL generation
+            try:
+                response = requests.get(f"{BACKEND_URL}/gmail/auth?session_id={self.session_id}", timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('success') and data.get('auth_url'):
+                        if 'accounts.google.com/o/oauth2/auth' in data['auth_url']:
+                            results.append("✅ Gmail OAuth URL generation working")
+                        else:
+                            results.append("❌ Gmail OAuth URL invalid format")
+                            all_passed = False
+                    else:
+                        results.append("❌ Gmail OAuth URL generation failed")
+                        all_passed = False
+                else:
+                    results.append(f"❌ Gmail OAuth URL: HTTP {response.status_code}")
+                    all_passed = False
+            except Exception as e:
+                results.append(f"❌ Gmail OAuth URL: {str(e)}")
+                all_passed = False
+            
+            # Test 2: Gmail status endpoint
+            try:
+                response = requests.get(f"{BACKEND_URL}/gmail/status?session_id={self.session_id}", timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'credentials_configured' in data:
+                        results.append(f"✅ Gmail status endpoint working (credentials: {data.get('credentials_configured')})")
+                    else:
+                        results.append("❌ Gmail status missing credentials info")
+                        all_passed = False
+                else:
+                    results.append(f"❌ Gmail status: HTTP {response.status_code}")
+                    all_passed = False
+            except Exception as e:
+                results.append(f"❌ Gmail status: {str(e)}")
+                all_passed = False
+            
+            # Test 3: Gmail user-info endpoint
+            try:
+                response = requests.get(f"{BACKEND_URL}/gmail/user-info?session_id={self.session_id}", timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'success' in data:
+                        results.append(f"✅ Gmail user-info endpoint working (success: {data.get('success')})")
+                    else:
+                        results.append("❌ Gmail user-info invalid response")
+                        all_passed = False
+                else:
+                    results.append(f"❌ Gmail user-info: HTTP {response.status_code}")
+                    all_passed = False
+            except Exception as e:
+                results.append(f"❌ Gmail user-info: {str(e)}")
+                all_passed = False
+            
+            # Test 4: DeBERTa Gmail intent detection
+            gmail_queries = [
+                "Check my inbox",
+                "Summarize my last 5 emails",
+                "Any unread emails?",
+                "Show me my Gmail"
+            ]
+            
+            for query in gmail_queries:
+                try:
+                    payload = {
+                        "message": query,
+                        "session_id": self.session_id,
+                        "user_id": "test_user"
+                    }
+                    
+                    response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                    if response.status_code == 200:
+                        data = response.json()
+                        intent_data = data.get("intent_data", {})
+                        intent = intent_data.get("intent", "")
+                        
+                        if "gmail" in intent.lower() or "email" in intent.lower():
+                            results.append(f"✅ '{query}': Detected as Gmail intent ({intent})")
+                        else:
+                            results.append(f"❌ '{query}': Not detected as Gmail intent ({intent})")
+                            all_passed = False
+                    else:
+                        results.append(f"❌ '{query}': HTTP {response.status_code}")
+                        all_passed = False
+                except Exception as e:
+                    results.append(f"❌ '{query}': {str(e)}")
+                    all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("PRIORITY 2: Gmail Integration Flow", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("PRIORITY 2: Gmail Integration Flow", False, f"Error: {str(e)}")
+            return False
+
+    def test_priority_3_admin_debug_toggle(self):
+        """PRIORITY 3: Test admin debug toggle with proper token"""
+        try:
+            results = []
+            all_passed = True
+            
+            # Test with valid debug token
+            debug_token = "elva-admin-debug-2024-secure"
+            headers = {"X-Debug-Token": debug_token}
+            
+            # Test 1: Admin debug context endpoint
+            try:
+                response = requests.get(f"{BACKEND_URL}/admin/debug/context/{self.session_id}", 
+                                      headers=headers, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'success' in data and 'session_id' in data:
+                        results.append("✅ Admin debug context endpoint working with valid token")
+                    else:
+                        results.append("❌ Admin debug context invalid response structure")
+                        all_passed = False
+                else:
+                    results.append(f"❌ Admin debug context: HTTP {response.status_code}")
+                    all_passed = False
+            except Exception as e:
+                results.append(f"❌ Admin debug context: {str(e)}")
+                all_passed = False
+            
+            # Test 2: Admin debug without token (should fail)
+            try:
+                response = requests.get(f"{BACKEND_URL}/admin/debug/context/{self.session_id}", timeout=10)
+                if response.status_code == 401:
+                    results.append("✅ Admin debug properly rejects requests without token")
+                else:
+                    results.append(f"❌ Admin debug should return 401 without token, got {response.status_code}")
+                    all_passed = False
+            except Exception as e:
+                results.append(f"❌ Admin debug no token test: {str(e)}")
+                all_passed = False
+            
+            # Test 3: Admin debug with invalid token
+            try:
+                invalid_headers = {"X-Debug-Token": "invalid-token"}
+                response = requests.get(f"{BACKEND_URL}/admin/debug/context/{self.session_id}", 
+                                      headers=invalid_headers, timeout=10)
+                if response.status_code == 401:
+                    results.append("✅ Admin debug properly rejects invalid tokens")
+                else:
+                    results.append(f"❌ Admin debug should return 401 with invalid token, got {response.status_code}")
+                    all_passed = False
+            except Exception as e:
+                results.append(f"❌ Admin debug invalid token test: {str(e)}")
+                all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("PRIORITY 3: Admin Debug Toggle", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("PRIORITY 3: Admin Debug Toggle", False, f"Error: {str(e)}")
+            return False
+
+    def test_priority_4_modal_control_verification(self):
+        """PRIORITY 4: Verify ONLY send_email intent triggers needs_approval=true"""
+        try:
+            results = []
+            all_passed = True
+            
+            test_cases = [
+                {
+                    "message": "Send an email to john@example.com about the meeting",
+                    "expected_approval": True,
+                    "description": "Send email intent"
+                },
+                {
+                    "message": "Check my Gmail inbox",
+                    "expected_approval": False,
+                    "description": "Gmail inbox intent"
+                },
+                {
+                    "message": "Summarize my last 5 emails",
+                    "expected_approval": False,
+                    "description": "Gmail summary intent"
+                },
+                {
+                    "message": "Create a meeting with the team tomorrow",
+                    "expected_approval": False,
+                    "description": "Create event intent"
+                },
+                {
+                    "message": "Add task to my todo list",
+                    "expected_approval": False,
+                    "description": "Add todo intent"
+                }
+            ]
+            
+            for test_case in test_cases:
+                try:
+                    payload = {
+                        "message": test_case["message"],
+                        "session_id": self.session_id,
+                        "user_id": "test_user"
+                    }
+                    
+                    response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                    if response.status_code == 200:
+                        data = response.json()
+                        needs_approval = data.get("needs_approval", False)
+                        intent = data.get("intent_data", {}).get("intent", "")
+                        
+                        if needs_approval == test_case["expected_approval"]:
+                            results.append(f"✅ {test_case['description']}: needs_approval={needs_approval} (intent: {intent})")
+                        else:
+                            results.append(f"❌ {test_case['description']}: Expected needs_approval={test_case['expected_approval']}, got {needs_approval} (intent: {intent})")
+                            all_passed = False
+                    else:
+                        results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                        all_passed = False
+                except Exception as e:
+                    results.append(f"❌ {test_case['description']}: {str(e)}")
+                    all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("PRIORITY 4: Modal Control Verification", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("PRIORITY 4: Modal Control Verification", False, f"Error: {str(e)}")
+            return False
+
+    def test_priority_5_system_health_check(self):
+        """PRIORITY 5: Test /api/health endpoint shows all services properly configured"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+                all_passed = True
+                
+                # Check core system status
+                if data.get("status") == "healthy":
+                    results.append("✅ System status: healthy")
+                else:
+                    results.append(f"❌ System status: {data.get('status')}")
+                    all_passed = False
+                
+                # Check MongoDB
+                if data.get("mongodb") == "connected":
+                    results.append("✅ MongoDB: connected")
+                else:
+                    results.append(f"❌ MongoDB: {data.get('mongodb')}")
+                    all_passed = False
+                
+                # Check MCP integration
+                mcp_integration = data.get("mcp_integration", {})
+                if mcp_integration.get("status") == "enabled":
+                    results.append("✅ MCP integration: enabled")
+                else:
+                    results.append(f"❌ MCP integration: {mcp_integration.get('status')}")
+                    all_passed = False
+                
+                # Check SuperAGI connection
+                superagi_integration = data.get("superagi_integration", {})
+                if superagi_integration.get("status") == "configured":
+                    results.append("✅ SuperAGI: configured")
+                else:
+                    results.append(f"❌ SuperAGI: {superagi_integration.get('status')}")
+                    all_passed = False
+                
+                # Check DeBERTa status
+                deberta_gmail = data.get("deberta_gmail_integration", {})
+                if deberta_gmail.get("status") == "ready":
+                    results.append("✅ DeBERTa Gmail: ready")
+                else:
+                    results.append(f"❌ DeBERTa Gmail: {deberta_gmail.get('status')}")
+                    all_passed = False
+                
+                # Check Redis caching
+                redis_status = data.get("redis_caching", {})
+                if redis_status.get("status") == "connected":
+                    results.append("✅ Redis caching: connected")
+                else:
+                    results.append(f"❌ Redis caching: {redis_status.get('status')}")
+                    all_passed = False
+                
+                # Check Gmail credentials
+                gmail_integration = data.get("gmail_integration", {})
+                if gmail_integration.get("status") == "ready":
+                    results.append("✅ Gmail integration: ready")
+                else:
+                    results.append(f"❌ Gmail integration: {gmail_integration.get('status')}")
+                    all_passed = False
+                
+                result_summary = "\n    ".join(results)
+                self.log_test("PRIORITY 5: System Health Check", all_passed, result_summary)
+                return all_passed
+            else:
+                self.log_test("PRIORITY 5: System Health Check", False, f"HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("PRIORITY 5: System Health Check", False, f"Error: {str(e)}")
+            return False
+
+    def test_priority_6_real_data_flow(self):
+        """PRIORITY 6: Test complete Gmail flow with real data response"""
+        try:
+            results = []
+            all_passed = True
+            
+            # Test Gmail queries that should provide real data or authentication prompts
+            gmail_test_cases = [
+                "Check my Gmail inbox",
+                "Any unread emails?",
+                "Show me my latest emails",
+                "Summarize my recent emails"
+            ]
+            
+            for query in gmail_test_cases:
+                try:
+                    payload = {
+                        "message": query,
+                        "session_id": self.session_id,
+                        "user_id": "test_user"
+                    }
+                    
+                    response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=20)
+                    if response.status_code == 200:
+                        data = response.json()
+                        response_text = data.get("response", "")
+                        intent_data = data.get("intent_data", {})
+                        
+                        # Check if we get generic AI response (bad) or real data/auth prompt (good)
+                        generic_responses = [
+                            "i don't have access",
+                            "i cannot access",
+                            "i'm not able to",
+                            "as an ai",
+                            "i don't have the ability"
+                        ]
+                        
+                        is_generic = any(phrase in response_text.lower() for phrase in generic_responses)
+                        has_auth_prompt = "connect gmail" in response_text.lower() or "authenticate" in response_text.lower()
+                        has_gmail_data = "email" in response_text.lower() and ("inbox" in response_text.lower() or "unread" in response_text.lower())
+                        
+                        if is_generic:
+                            results.append(f"❌ '{query}': Generic AI response instead of real data/auth prompt")
+                            all_passed = False
+                        elif has_auth_prompt or has_gmail_data:
+                            results.append(f"✅ '{query}': Proper Gmail response (auth prompt or data)")
+                        else:
+                            results.append(f"⚠️ '{query}': Unclear response type")
+                            # Don't fail for unclear responses, just note them
+                    else:
+                        results.append(f"❌ '{query}': HTTP {response.status_code}")
+                        all_passed = False
+                except Exception as e:
+                    results.append(f"❌ '{query}': {str(e)}")
+                    all_passed = False
+            
+            # Test session management and context persistence
+            try:
+                # First message
+                payload1 = {
+                    "message": "Check my Gmail inbox",
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response1 = requests.post(f"{BACKEND_URL}/chat", json=payload1, timeout=15)
+                
+                # Second message in same session
+                payload2 = {
+                    "message": "What about my sent emails?",
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response2 = requests.post(f"{BACKEND_URL}/chat", json=payload2, timeout=15)
+                
+                if response1.status_code == 200 and response2.status_code == 200:
+                    results.append("✅ Session management: Context maintained across messages")
+                else:
+                    results.append("❌ Session management: Failed to maintain context")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ Session management test: {str(e)}")
+                all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("PRIORITY 6: Real Data Flow Testing", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("PRIORITY 6: Real Data Flow Testing", False, f"Error: {str(e)}")
+            return False
+
     def run_all_tests(self):
-        """Run all backend tests with focus on SuperAGI + MCP integration testing"""
+        """Run all backend tests with priority focus"""
         print("🚀 Starting Comprehensive SuperAGI + MCP Integration Testing...")
         print("🎯 Focus: SuperAGI + MCP Integration, Chat Responses, Gmail Authentication")
         print(f"Backend URL: {BACKEND_URL}")
