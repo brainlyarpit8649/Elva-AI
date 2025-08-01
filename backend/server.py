@@ -762,6 +762,8 @@ async def append_mcp_context(request: dict):
     except Exception as e:
         logger.error(f"❌ MCP context append error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/web-automation")
 async def execute_web_automation(request: MCPContextRequest):
     """
     Execute web automation tasks using Playwright
