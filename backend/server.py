@@ -1292,6 +1292,23 @@ async def health_check():
                     "/api/gmail/email/{id}"
                 ]
             },
+            "advanced_gmail_integration": {
+                "version": "2.0_deberta_enhanced",
+                "intent_detection": "DeBERTa-v3-base + HuggingFace Inference API",
+                "fallback_model": "facebook/bart-large-mnli",
+                "confidence_threshold": deberta_stats.get('confidence_threshold', 0.7),
+                "supported_intents": deberta_stats.get('supported_intents', []),
+                "real_data_fetching": "enabled",
+                "features": [
+                    "high_accuracy_intent_classification",
+                    "real_gmail_data_only",
+                    "no_placeholder_responses", 
+                    "instant_oauth_refresh",
+                    "formatted_chat_responses",
+                    "inbox_summary", "email_search", "unread_count", "email_summarization"
+                ],
+                "classification_stats": deberta_stats
+            },
             "advanced_hybrid_ai_system": {
                 "version": "2.0",
                 "groq_api_key": "configured" if os.getenv("GROQ_API_KEY") else "missing",
