@@ -709,13 +709,16 @@ async def enhanced_chat(request: ChatRequest):
                 
             else:
                 # SPAN 3B: Gmail API Processing  
-                gmail_api_span = trace.span(
-                    name="gmail_api_processing",
-                    input={
-                        "intent": gmail_result.get('intent'),
-                        "authenticated": True
-                    }
-                )
+                if trace:
+                    gmail_api_span = trace.span(
+                        name="gmail_api_processing",
+                        input={
+                            "intent": gmail_result.get('intent'),
+                            "authenticated": True
+                        }
+                    )
+                else:
+                    gmail_api_span = None
                 
                 # Gmail query with authentication - First fetch Gmail data, then route through SuperAGI
                 logger.info(f"📧 Gmail query detected: {gmail_result.get('intent')} - Fetching Gmail data first")
