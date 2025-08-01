@@ -229,33 +229,66 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(user_msg.dict())
         logger.info(f"💾 Saved user message: {user_msg.id}")
         
-        # STEP 2: Check for Gmail-specific queries first using NEW DeBERTa-based detection
+        # STEP 2: Check for Gmail-specific queries first using DeBERTa-based detection
         gmail_result = await realtime_gmail_service.process_gmail_query(
             request.message, 
             request.session_id
         )
         
-        if gmail_result.get('success') and gmail_result.get('requires_gmail_api'):
-            # This is a Gmail query - return real Gmail data
-            response_text = gmail_result.get('formatted_response', gmail_result.get('message', ''))
-            intent_data = {
-                'intent': gmail_result.get('intent', 'gmail_inbox'),
-                'gmail_data': gmail_result.get('data', {}),
-                'method': 'enhanced_gmail_service'
-            }
-            needs_approval = False
-            
-            logger.info(f"📧 Gmail query processed: {gmail_result.get('intent')}")
-            
-        elif gmail_result.get('requires_auth'):
-            # Gmail query but not authenticated
-            response_text = gmail_result.get('message', '🔐 Please connect Gmail to access your emails.')
-            intent_data = {
-                'intent': gmail_result.get('intent', 'gmail_auth_required'),
-                'requires_auth': True,
-                'auth_url': '/api/gmail/auth'
-            }
-            needs_approval = False
+        if gmail_result.get('success') and gmail_result.get('is_gmail_query'):
+            if gmail_result.get('requires_auth'):
+                # Gmail query but not authenticated
+                response_text = gmail_result.get('message', '🔐 Please connect Gmail to access your emails.')
+                intent_data = {
+                    'intent': gmail_result.get('intent', 'gmail_auth_required'),
+                    'requires_auth': True,
+                    'auth_url': '/api/gmail/auth'
+                }
+                needs_approval = False
+                logger.info(f"🔐 Gmail authentication required for: {gmail_result.get('intent')}")
+                
+            else:
+                # Gmail query with authentication - Route through MCP + SuperAGI flow
+                logger.info(f"📧 Gmail query detected: {gmail_result.get('intent')} - Routing through SuperAGI")
+                
+                # Write context to MCP
+                await mcp_service.write_context(
+                    session_id=request.session_id,
+                    intent=gmail_result.get('intent', 'gmail_summary'),
+                    data={
+                        'user_query': request.message,
+                        'gmail_intent': gmail_result.get('intent'),
+                        'confidence': gmail_result.get('confidence', 0.8),
+                        'user_email': 'brainlyarpit8649@gmail.com'  # Admin email for Gmail access
+                    },
+                    user_id='brainlyarpit8649@gmail.com'
+                )
+                
+                # Execute SuperAGI Gmail agent
+                superagi_result = await superagi_client.run_task(
+                    goal=request.message,
+                    agent_type="email_agent",  
+                    session_id=request.session_id
+                )
+                
+                if superagi_result.get('success'):
+                    response_text = superagi_result.get('message', 'Gmail task completed successfully!')
+                    intent_data = {
+                        'intent': gmail_result.get('intent'),
+                        'superagi_data': superagi_result.get('data', {}),
+                        'method': 'superagi_gmail_agent',
+                        'confidence': gmail_result.get('confidence')
+                    }
+                else:
+                    # Fallback to direct Gmail service if SuperAGI fails
+                    response_text = gmail_result.get('formatted_response', gmail_result.get('message', ''))
+                    intent_data = {
+                        'intent': gmail_result.get('intent'),
+                        'gmail_data': gmail_result.get('data', {}),
+                        'method': 'direct_gmail_fallback'
+                    }
+                
+                needs_approval = False
             
         else:
             # STEP 3: Not a Gmail query - use existing hybrid AI system
