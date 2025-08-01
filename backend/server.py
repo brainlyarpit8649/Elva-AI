@@ -48,6 +48,13 @@ langfuse = Langfuse(
     host=os.environ.get('LANGFUSE_HOST', 'https://us.cloud.langfuse.com')
 )
 
+# Initialize Langfuse for observability
+langfuse = Langfuse(
+    public_key=os.environ.get('LANGFUSE_PUBLIC_KEY'),
+    secret_key=os.environ.get('LANGFUSE_SECRET_KEY'),
+    host=os.environ.get('LANGFUSE_HOST', 'https://us.cloud.langfuse.com')
+)
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
