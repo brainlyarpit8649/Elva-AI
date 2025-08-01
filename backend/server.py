@@ -1255,6 +1255,9 @@ async def health_check():
         # Check MCP service health
         mcp_health = await mcp_service.health_check()
         
+        # Get DeBERTa Gmail classifier stats
+        deberta_stats = deberta_gmail_detector.get_classification_stats()
+        
         health_status = {
             "status": "healthy",
             "mongodb": "connected",
