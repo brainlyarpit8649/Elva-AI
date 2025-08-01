@@ -13,6 +13,17 @@ from datetime import datetime
 import json
 import httpx
 
+def safe_trace_operation(trace_obj, operation, *args, **kwargs):
+    """Safely perform trace operations with null checking"""
+    if trace_obj is not None:
+        try:
+            method = getattr(trace_obj, operation)
+            return method(*args, **kwargs)
+        except Exception as e:
+            logger.warning(f"Trace operation {operation} failed: {e}")
+            return None
+    return None
+
 # Import Langfuse for observability
 from langfuse import Langfuse
 
