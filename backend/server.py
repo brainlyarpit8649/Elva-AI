@@ -122,6 +122,59 @@ def convert_objectid_to_str(doc):
     else:
         return doc
 
+def format_admin_context_display(session_id: str, context_data: dict) -> str:
+    """Format MCP context data for admin debugging display"""
+    try:
+        formatted = f"🧠 **MCP Context for Session: {session_id}**\n\n"
+        
+        if not context_data:
+            return formatted + "No context data available."
+        
+        # Display basic session info
+        if 'session_id' in context_data:
+            formatted += f"**Session ID:** {context_data['session_id']}\n"
+        if 'user_id' in context_data:
+            formatted += f"**User ID:** {context_data['user_id']}\n"
+        if 'timestamp' in context_data:
+            formatted += f"**Last Updated:** {context_data['timestamp']}\n\n"
+        
+        # Display conversation history
+        if 'conversation_history' in context_data:
+            history = context_data['conversation_history']
+            formatted += f"**📝 Conversation History ({len(history)} messages):**\n"
+            for i, msg in enumerate(history[-5:], 1):  # Show last 5 messages
+                user_msg = msg.get('user_message', 'N/A')[:100]
+                ai_response = msg.get('ai_response', 'N/A')[:100]
+                formatted += f"{i}. User: {user_msg}...\n   AI: {ai_response}...\n"
+            formatted += "\n"
+        
+        # Display intents and routing info
+        if 'intents' in context_data:
+            intents = context_data['intents']
+            formatted += f"**🎯 Recent Intents ({len(intents)}):**\n"
+            for intent in intents[-3:]:  # Show last 3 intents
+                formatted += f"• {intent.get('intent', 'unknown')} (confidence: {intent.get('confidence', 'N/A')})\n"
+            formatted += "\n"
+        
+        # Display agent results
+        if 'agent_results' in context_data:
+            results = context_data['agent_results']
+            formatted += f"**🤖 Agent Results ({len(results)}):**\n"
+            for result in results[-2:]:  # Show last 2 results
+                source = result.get('source', 'unknown')
+                status = result.get('execution_status', 'unknown')
+                formatted += f"• {source}: {status}\n"
+            formatted += "\n"
+        
+        # Display raw data summary
+        formatted += f"**📊 Raw Data Keys:** {', '.join(context_data.keys())}\n"
+        formatted += f"**💾 Total Data Size:** ~{len(str(context_data))} characters"
+        
+        return formatted
+        
+    except Exception as e:
+        return f"🧠 **MCP Context for Session: {session_id}**\n\n❌ Error formatting context: {str(e)}"
+
 # Routes
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
