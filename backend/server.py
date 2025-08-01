@@ -368,10 +368,8 @@ async def enhanced_chat(request: ChatRequest):
                     except Exception as context_error:
                         logger.warning(f"⚠️ Error writing context to MCP: {context_error}")
                     
-                    # Determine if approval is needed
-                    needs_approval = intent_data.get("intent") not in [
-                        "general_chat", "gmail_inbox", "gmail_unread", "gmail_summary", "gmail_search"
-                    ] and intent_data.get("intent") != "generate_post_prompt_package"
+                    # Determine if approval is needed - ONLY for send_email intent
+                    needs_approval = intent_data.get("intent") == "send_email"
                     
                     # Handle generate_post_prompt_package intent
                     if intent_data.get("intent") == "generate_post_prompt_package":
