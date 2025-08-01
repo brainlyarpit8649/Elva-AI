@@ -1283,6 +1283,86 @@ async def gmail_send_email(request: dict):
         logger.error(f"Gmail send error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.post("/admin/debug/context")
+async def admin_debug_context(request: dict, token: str = Header(None, alias="x-debug-token")):
+    """
+    Admin Debug Toggle: View MCP-stored messages for debugging
+    Commands: 'show my context' or 'show context for session <session_id>'
+    """
+    try:
+        # Verify admin token
+        if token != os.getenv("DEBUG_ADMIN_TOKEN", "elva-admin-debug-2024-secure"):
+            raise HTTPException(status_code=403, detail="Invalid debug token")
+        
+        command = request.get('command', '').lower().strip()
+        session_id = request.get('session_id')
+        
+        if not command:
+            return {"error": "Missing command parameter"}
+        
+        # Parse command
+        if command == "show my context":
+            if not session_id:
+                return {"error": "Session ID required for 'show my context' command"}
+            target_session = session_id
+        elif command.startswith("show context for session "):
+            target_session = command.replace("show context for session ", "").strip()
+            if not target_session:
+                return {"error": "Invalid session ID in command"}
+        else:
+            return {"error": "Invalid command. Use 'show my context' or 'show context for session <session_id>'"}
+        
+        # Read context from MCP
+        mcp_context = await mcp_service.read_context(target_session)
+        
+        if not mcp_context.get('success'):
+            return {
+                "success": False,
+                "session_id": target_session,
+                "error": "Failed to read MCP context",
+                "details": mcp_context.get('error', 'Unknown error')
+            }
+        
+        # Format the response for clean display
+        context_data = mcp_context.get('data', {})
+        appends = mcp_context.get('appends', [])
+        
+        formatted_response = {
+            "success": True,
+            "session_id": target_session,
+            "context_summary": {
+                "initial_context": context_data.get('context', {}),
+                "total_appends": len(appends),
+                "last_updated": context_data.get('updated_at', 'Unknown')
+            },
+            "message_history": []
+        }
+        
+        # Add initial context if available
+        if context_data.get('context'):
+            formatted_response["message_history"].append({
+                "role": "initial_context",
+                "timestamp": context_data.get('created_at', 'Unknown'),
+                "agent": "elva_initial",
+                "data": context_data.get('context')
+            })
+        
+        # Add all appends with proper formatting
+        for append in appends:
+            formatted_response["message_history"].append({
+                "role": "agent_result",
+                "timestamp": append.get('timestamp', 'Unknown'),
+                "agent": append.get('source', 'unknown'),
+                "data": append.get('output', {}),
+                "summary": append.get('output', {}).get('message', 'No message available')
+            })
+        
+        return formatted_response
+        
+    except Exception as e:
+        logger.error(f"Admin debug context error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/gmail/classification-stats")
 async def get_gmail_classification_stats():
     """Get DeBERTa Gmail intent classification statistics and performance metrics"""
