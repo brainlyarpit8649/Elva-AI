@@ -486,20 +486,62 @@ async def approve_action(request: ApprovalRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/history/{session_id}")
-async def get_chat_history(session_id: str):
+async def get_enhanced_chat_history(session_id: str):
+    """Enhanced chat history endpoint that properly handles user/AI message distinction"""
     try:
-        logger.info(f"Getting chat history for session: {session_id}")
+        logger.info(f"Getting enhanced chat history for session: {session_id}")
         
+        # Get all messages for the session, sorted by timestamp
         messages = await db.chat_messages.find(
             {"session_id": session_id}
         ).sort("timestamp", 1).to_list(1000)
         
-        # Convert ObjectIds to strings for JSON serialization
-        serializable_messages = [convert_objectid_to_str(msg) for msg in messages]
+        # Convert ObjectIds to strings and ensure proper message structure
+        enhanced_messages = []
+        for msg in messages:
+            # Convert ObjectId to string
+            serialized_msg = convert_objectid_to_str(msg)
+            
+            # Determine if this is a user message or AI message
+            # Check for explicit is_user flag first, then fallback to heuristics
+            if 'is_user' in serialized_msg:
+                is_user = serialized_msg['is_user']
+            else:
+                # Legacy messages - determine by presence of message vs response
+                is_user = bool(serialized_msg.get('message', '').strip()) and not bool(serialized_msg.get('response', '').strip())
+            
+            # Create properly structured message for frontend
+            if is_user:
+                # User message
+                enhanced_msg = {
+                    'id': serialized_msg.get('id', ''),
+                    'message': serialized_msg.get('message', ''),
+                    'isUser': True,
+                    'timestamp': serialized_msg.get('timestamp', ''),
+                    'session_id': session_id
+                }
+            else:
+                # AI message
+                enhanced_msg = {
+                    'id': serialized_msg.get('id', ''),
+                    'response': serialized_msg.get('response', ''),
+                    'isUser': False,
+                    'intent_data': serialized_msg.get('intent_data', {}),
+                    'approved': serialized_msg.get('approved'),
+                    'is_system': serialized_msg.get('is_system', False),
+                    'is_welcome': serialized_msg.get('is_welcome', False),
+                    'is_edit': serialized_msg.get('is_edit', False),
+                    'timestamp': serialized_msg.get('timestamp', ''),
+                    'session_id': session_id
+                }
+            
+            enhanced_messages.append(enhanced_msg)
         
-        return {"messages": serializable_messages}
+        logger.info(f"✅ Retrieved {len(enhanced_messages)} messages for session {session_id}")
+        return {"messages": enhanced_messages, "total_count": len(enhanced_messages)}
+        
     except Exception as e:
-        logger.error(f"History error: {e}")
+        logger.error(f"Enhanced history error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.delete("/history/{session_id}")
