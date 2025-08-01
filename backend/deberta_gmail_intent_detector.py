@@ -209,10 +209,10 @@ class DeBERTaGmailIntentDetector:
         
         # Rule-based Gmail intent detection
         gmail_keywords = {
-            "gmail_inbox": ["check inbox", "show inbox", "my emails", "check my mail", "gmail inbox", "check gmail"],
-            "gmail_summary": ["summarize emails", "email summary", "summary of emails", "recent emails", "last emails"],
-            "gmail_search": ["find emails", "search emails", "emails from", "look for emails", "find messages"],
-            "gmail_unread": ["unread emails", "new emails", "unread messages", "how many unread", "new messages"]
+            "gmail_inbox": ["check inbox", "check my inbox", "show inbox", "show my inbox", "my emails", "check my mail", "gmail inbox", "check gmail", "inbox", "my inbox"],
+            "gmail_summary": ["summarize emails", "email summary", "summary of emails", "recent emails", "last emails", "summarize my emails"],
+            "gmail_search": ["find emails", "search emails", "emails from", "look for emails", "find messages", "search my emails"],
+            "gmail_unread": ["unread emails", "new emails", "unread messages", "how many unread", "new messages", "any unread", "any new emails"]
         }
         
         # Check for Gmail intent patterns
