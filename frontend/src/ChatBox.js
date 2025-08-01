@@ -648,7 +648,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       } else {
         const errorMessage = {
           id: generateStableId('admin_debug_error'),
-          response: `❌ **Admin Debug Error**\n\n${response.data.message || 'Failed to retrieve context'}`,
+          response: `❌ **Admin Debug Error**\n\n${response.data.error || 'Failed to retrieve context'}`,
           isUser: false,
           isSystem: true,
           timestamp: new Date()
