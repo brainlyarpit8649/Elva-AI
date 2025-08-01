@@ -612,7 +612,7 @@ async def enhanced_chat(request: ChatRequest):
         })
         
         # Complete the trace with final output
-        trace.update(
+        safe_trace_operation(trace, 'update', 
             output={
                 "response_preview": response_text[:200] + "..." if len(response_text) > 200 else response_text,
                 "intent": intent_data.get("intent") if intent_data else None,
