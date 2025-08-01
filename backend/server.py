@@ -707,11 +707,12 @@ async def enhanced_chat(request: ChatRequest):
                 needs_approval = False
                 logger.info(f"🔐 Gmail authentication required for: {gmail_result.get('intent')}")
                 
-                auth_span.end(output={
-                    "auth_required": True,
-                    "auth_url": "/api/gmail/auth",
-                    "message": response_text
-                })
+                if auth_span:
+                    auth_span.end(output={
+                        "auth_required": True,
+                        "auth_url": "/api/gmail/auth",
+                        "message": response_text
+                    })
                 
             else:
                 # SPAN 3B: Gmail API Processing  
