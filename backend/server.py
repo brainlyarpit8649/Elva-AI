@@ -605,19 +605,19 @@ async def enhanced_chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
     """Enhanced chat endpoint with improved Gmail integration and Langfuse observability"""
     
-    # Initialize Langfuse trace for the entire chat pipeline
-    trace = langfuse.trace(
-        name="elva_chat_pipeline",
-        input={
-            "user_message": request.message,
-            "session_id": request.session_id,
-            "user_id": request.user_id
-        },
-        metadata={
-            "endpoint": "/api/chat",
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    )
+    try:
+        # Initialize Langfuse trace for the entire chat pipeline
+        trace = langfuse.trace(
+            name="elva_chat_pipeline",
+            input={
+                "user_message": request.message,
+                "session_id": request.session_id,
+                "user_id": request.user_id
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Langfuse trace initialization failed: {e}")
+        trace = None
     
     try:
         logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
