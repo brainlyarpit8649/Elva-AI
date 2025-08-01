@@ -23,6 +23,11 @@ from conversation_memory import initialize_conversation_memory
 from superagi_client import superagi_client
 from mcp_integration import get_mcp_service, initialize_mcp_service
 
+# Import enhanced Gmail components
+from enhanced_gmail_intent_detector import enhanced_gmail_detector
+from enhanced_gmail_service import EnhancedGmailService
+from enhanced_chat_models import EnhancedChatMessage, UserMessage, AIMessage
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
