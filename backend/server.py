@@ -226,9 +226,30 @@ def format_admin_context_display(session_id: str, context_data: dict) -> str:
 # Routes
 @api_router.post("/chat", response_model=ChatResponse)
 async def enhanced_chat(request: ChatRequest):
-    """Enhanced chat endpoint with improved Gmail integration and conversation history"""
+    """Enhanced chat endpoint with improved Gmail integration and Langfuse observability"""
+    
+    # Initialize Langfuse trace for the entire chat pipeline
+    trace = langfuse.trace(
+        name="elva_chat_pipeline",
+        input={
+            "user_message": request.message,
+            "session_id": request.session_id,
+            "user_id": request.user_id
+        },
+        metadata={
+            "endpoint": "/api/chat",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
+    
     try:
         logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
+        
+        # SPAN 1: User Message Processing
+        user_message_span = trace.span(
+            name="user_message_processing",
+            input={"message": request.message, "session_id": request.session_id}
+        )
         
         # STEP 1: Save user message immediately for proper conversation history
         user_msg = UserMessage(
@@ -239,14 +260,35 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(user_msg.dict())
         logger.info(f"💾 Saved user message: {user_msg.id}")
         
+        user_message_span.end(output={"user_message_id": user_msg.id, "saved": True})
+        
+        # SPAN 2: DeBERTa Gmail Intent Detection
+        gmail_detection_span = trace.span(
+            name="deberta_gmail_intent_detection",
+            input={"query": request.message}
+        )
+        
         # STEP 2: Check for Gmail-specific queries first using DeBERTa-based detection
         gmail_result = await realtime_gmail_service.process_gmail_query(
             request.message, 
             request.session_id
         )
         
+        gmail_detection_span.end(output={
+            "is_gmail_query": gmail_result.get('is_gmail_query'),
+            "intent": gmail_result.get('intent'),
+            "confidence": gmail_result.get('confidence'),
+            "requires_auth": gmail_result.get('requires_auth')
+        })
+        
         if gmail_result.get('success') and gmail_result.get('is_gmail_query'):
             if gmail_result.get('requires_auth'):
+                # SPAN 3A: Gmail Authentication Required
+                auth_span = trace.span(
+                    name="gmail_auth_required",
+                    input={"intent": gmail_result.get('intent')}
+                )
+                
                 # Gmail query but not authenticated
                 response_text = gmail_result.get('message', '🔐 Please connect Gmail to access your emails.')
                 intent_data = {
@@ -257,7 +299,22 @@ async def enhanced_chat(request: ChatRequest):
                 needs_approval = False
                 logger.info(f"🔐 Gmail authentication required for: {gmail_result.get('intent')}")
                 
+                auth_span.end(output={
+                    "auth_required": True,
+                    "auth_url": "/api/gmail/auth",
+                    "message": response_text
+                })
+                
             else:
+                # SPAN 3B: Gmail API Processing  
+                gmail_api_span = trace.span(
+                    name="gmail_api_processing",
+                    input={
+                        "intent": gmail_result.get('intent'),
+                        "authenticated": True
+                    }
+                )
+                
                 # Gmail query with authentication - First fetch Gmail data, then route through SuperAGI
                 logger.info(f"📧 Gmail query detected: {gmail_result.get('intent')} - Fetching Gmail data first")
                 
@@ -273,6 +330,13 @@ async def enhanced_chat(request: ChatRequest):
                     gmail_data = gmail_data_result.get('data', {})
                     emails = gmail_data.get('emails', [])
                     email_count = gmail_data.get('count', 0)
+                    
+                    gmail_api_span.update(output={
+                        "gmail_data_fetched": True,
+                        "email_count": email_count,
+                        "emails_preview": [{"from": email.get("from"), "subject": email.get("subject")} 
+                                         for email in emails[:3]]  # Preview first 3
+                    })
                     
                     # Write Gmail data to MCP context for SuperAGI
                     await mcp_service.write_context(
@@ -329,6 +393,8 @@ async def enhanced_chat(request: ChatRequest):
                         'method': 'enhanced_gmail_with_fallback',
                         'confidence': gmail_result.get('confidence', 0.8)
                     }
+                    
+                    gmail_api_span.end()
                 else:
                     # Gmail data fetch failed - show authentication or error message
                     response_text = gmail_data_result.get('message', '❌ Failed to access Gmail data')
@@ -337,10 +403,21 @@ async def enhanced_chat(request: ChatRequest):
                         'error': gmail_data_result.get('error', 'Gmail data fetch failed'),
                         'method': 'gmail_data_fetch_failed'
                     }
+                    
+                    gmail_api_span.end(output={
+                        "gmail_data_fetched": False,
+                        "error": gmail_data_result.get('error', 'Gmail data fetch failed')
+                    })
                 
                 needs_approval = False
             
         else:
+            # SPAN 4: Hybrid AI Processing (Non-Gmail)
+            hybrid_ai_span = trace.span(
+                name="hybrid_ai_processing",
+                input={"message": request.message, "is_gmail": False}
+            )
+            
             # STEP 3: Not a Gmail query - use existing hybrid AI system
             # Check if this is a send confirmation for a pending post prompt package
             user_msg_lower = request.message.lower().strip()
@@ -362,12 +439,14 @@ async def enhanced_chat(request: ChatRequest):
                 # Handle pending post package confirmation
                 response_text, intent_data = await _handle_post_package_confirmation(request)
                 needs_approval = False
+                hybrid_ai_span.update(output={"post_package_sent": True})
                 
             elif is_send_command and request.session_id not in pending_post_packages:
                 # User said send but no pending post package
                 response_text = "🤔 I don't see any pending LinkedIn post prompt package to send. Please first ask me to help you prepare a LinkedIn post about your project or topic."
                 intent_data = {"intent": "no_pending_package"}
                 needs_approval = False
+                hybrid_ai_span.update(output={"no_pending_package": True})
                 
             else:
                 # Regular hybrid AI processing
@@ -393,6 +472,14 @@ async def enhanced_chat(request: ChatRequest):
                     
                     logger.info(f"🧠 Advanced Routing: {routing_decision.primary_model.value} (confidence: {routing_decision.confidence:.2f})")
                     logger.info(f"💡 Routing Logic: {routing_decision.reasoning}")
+                    
+                    hybrid_ai_span.update(output={
+                        "routing_model": routing_decision.primary_model.value,
+                        "routing_confidence": routing_decision.confidence,
+                        "routing_reasoning": routing_decision.reasoning,
+                        "intent": intent_data.get("intent"),
+                        "response_length": len(response_text)
+                    })
                     
                     # Write context to MCP for memory management
                     try:
@@ -440,6 +527,19 @@ async def enhanced_chat(request: ChatRequest):
                     response_text = "Sorry, I encountered an error processing your request. Please try again! 🤖"
                     intent_data = {"intent": "error", "error": str(e)}
                     needs_approval = False
+                    hybrid_ai_span.update(output={"error": str(e)})
+            
+            hybrid_ai_span.end()
+        
+        # SPAN 5: Response Generation and Storage
+        response_span = trace.span(
+            name="response_generation",
+            input={
+                "response_text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
+                "needs_approval": needs_approval,
+                "intent": intent_data.get("intent") if intent_data else None
+            }
+        )
         
         # STEP 4: Save AI response message for proper conversation history
         ai_msg = AIMessage(
@@ -452,7 +552,7 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(ai_msg.dict())
         logger.info(f"💾 Saved AI response message: {ai_msg.id}")
         
-        return ChatResponse(
+        final_response = ChatResponse(
             id=ai_msg.id,
             message=request.message,
             response=response_text,
@@ -461,8 +561,33 @@ async def enhanced_chat(request: ChatRequest):
             timestamp=ai_msg.timestamp
         )
         
+        response_span.end(output={
+            "ai_message_id": ai_msg.id,
+            "final_response_saved": True,
+            "response_length": len(response_text)
+        })
+        
+        # Complete the trace with final output
+        trace.update(
+            output={
+                "response": response_text[:200] + "..." if len(response_text) > 200 else response_text,
+                "intent": intent_data.get("intent") if intent_data else None,
+                "needs_approval": needs_approval,
+                "message_id": ai_msg.id
+            }
+        )
+        
+        return final_response
+        
     except Exception as e:
         logger.error(f"💥 Enhanced Chat Error: {e}")
+        
+        # Update trace with error
+        trace.update(
+            output={"error": str(e)},
+            metadata={"error_type": "chat_pipeline_error"}
+        )
+        
         raise HTTPException(status_code=500, detail=str(e))
 
 async def _handle_post_package_confirmation(request: ChatRequest) -> tuple:
