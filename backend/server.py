@@ -418,10 +418,11 @@ async def enhanced_chat(request: ChatRequest):
                         'confidence': gmail_result.get('confidence', 0.8)
                     }
                     
-                    gmail_api_span.end(output={
-                        "emails_processed": len(emails),
-                        "response_method": "superagi_with_fallback"
-                    })
+                    if gmail_api_span:
+                        gmail_api_span.end(output={
+                            "emails_processed": len(emails),
+                            "response_method": "superagi_with_fallback"
+                        })
                 else:
                     # Gmail data fetch failed - show authentication or error message
                     response_text = gmail_data_result.get('message', '❌ Failed to access Gmail data')
@@ -431,19 +432,23 @@ async def enhanced_chat(request: ChatRequest):
                         'method': 'gmail_data_fetch_failed'
                     }
                     
-                    gmail_api_span.end(output={
-                        "gmail_data_fetched": False,
-                        "error": gmail_data_result.get('error', 'Gmail data fetch failed')
-                    })
+                    if gmail_api_span:
+                        gmail_api_span.end(output={
+                            "gmail_data_fetched": False,
+                            "error": gmail_data_result.get('error', 'Gmail data fetch failed')
+                        })
                 
                 needs_approval = False
             
         else:
             # SPAN 4: Hybrid AI Processing (Non-Gmail)
-            hybrid_ai_span = trace.span(
-                name="hybrid_ai_processing",
-                input={"message": request.message, "is_gmail": False}
-            )
+            if trace:
+                hybrid_ai_span = trace.span(
+                    name="hybrid_ai_processing",
+                    input={"message": request.message, "is_gmail": False}
+                )
+            else:
+                hybrid_ai_span = None
             
             # STEP 3: Not a Gmail query - use existing hybrid AI system
             # Check if this is a send confirmation for a pending post prompt package
