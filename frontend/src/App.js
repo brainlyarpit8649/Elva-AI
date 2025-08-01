@@ -164,11 +164,14 @@ function App() {
       if (historyMessages.length === 0) {
         addWelcomeMessage();
       } else {
+        // ✅ FIXED: Preserve the correct isUser flag from backend
         setMessages(historyMessages.map(msg => ({
           ...msg,
-          isUser: false, // History messages are from AI
+          // Use the isUser flag from backend, don't override it
+          isUser: msg.isUser || false, // Default to false if not specified
           timestamp: new Date(msg.timestamp)
         })));
+        console.log(`📚 Loaded ${historyMessages.length} messages from chat history`);
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
