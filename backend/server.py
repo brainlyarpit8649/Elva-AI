@@ -248,44 +248,71 @@ async def enhanced_chat(request: ChatRequest):
                 logger.info(f"🔐 Gmail authentication required for: {gmail_result.get('intent')}")
                 
             else:
-                # Gmail query with authentication - Route through MCP + SuperAGI flow
-                logger.info(f"📧 Gmail query detected: {gmail_result.get('intent')} - Routing through SuperAGI")
+                # Gmail query with authentication - First fetch Gmail data, then route through SuperAGI
+                logger.info(f"📧 Gmail query detected: {gmail_result.get('intent')} - Fetching Gmail data first")
                 
-                # Write context to MCP
-                await mcp_service.write_context(
-                    session_id=request.session_id,
-                    intent=gmail_result.get('intent', 'gmail_summary'),
-                    data={
-                        'user_query': request.message,
-                        'gmail_intent': gmail_result.get('intent'),
-                        'confidence': gmail_result.get('confidence', 0.8),
-                        'user_email': 'brainlyarpit8649@gmail.com'  # Admin email for Gmail access
-                    },
-                    user_id='brainlyarpit8649@gmail.com'
+                # First get Gmail data directly
+                gmail_data_result = await realtime_gmail_service._fetch_gmail_data(
+                    gmail_result.get('intent', 'gmail_summary'), 
+                    request.message, 
+                    request.session_id
                 )
                 
-                # Execute SuperAGI Gmail agent
-                superagi_result = await superagi_client.run_task(
-                    goal=request.message,
-                    agent_type="email_agent",  
-                    session_id=request.session_id
-                )
-                
-                if superagi_result.get('success'):
-                    response_text = superagi_result.get('message', 'Gmail task completed successfully!')
-                    intent_data = {
-                        'intent': gmail_result.get('intent'),
-                        'superagi_data': superagi_result.get('data', {}),
-                        'method': 'superagi_gmail_agent',
-                        'confidence': gmail_result.get('confidence')
-                    }
+                if gmail_data_result.get('success') and gmail_data_result.get('data'):
+                    # Write Gmail data to MCP context for SuperAGI
+                    await mcp_service.write_context(
+                        session_id=request.session_id,
+                        intent=gmail_result.get('intent', 'gmail_summary'),
+                        data={
+                            'user_query': request.message,
+                            'gmail_intent': gmail_result.get('intent'),
+                            'confidence': gmail_result.get('confidence', 0.8),
+                            'user_email': 'brainlyarpit8649@gmail.com',
+                            'emails': gmail_data_result.get('data', {}).get('emails', []),
+                            'email_count': gmail_data_result.get('data', {}).get('count', 0)
+                        },
+                        user_id='brainlyarpit8649@gmail.com'
+                    )
+                    
+                    # Execute SuperAGI Gmail agent with actual Gmail data
+                    superagi_result = await superagi_client.run_task(
+                        goal=request.message,
+                        agent_type="email_agent",  
+                        session_id=request.session_id
+                    )
+                    
+                    if superagi_result.get('success'):
+                        response_text = superagi_result.get('email_summary', 'Gmail analysis completed!')
+                        # Add structured email data display
+                        if superagi_result.get('email_count', 0) > 0:
+                            response_text += f"\n\n📧 **Analyzed {superagi_result.get('email_count')} emails**"
+                            if superagi_result.get('key_insights'):
+                                response_text += f"\n\n🔍 **Key Insights:**\n" + '\n'.join([f"• {insight}" for insight in superagi_result.get('key_insights', [])])
+                            if superagi_result.get('suggested_actions'):
+                                response_text += f"\n\n✅ **Suggested Actions:**\n" + '\n'.join([f"• {action}" for action in superagi_result.get('suggested_actions', [])])
+                        
+                        intent_data = {
+                            'intent': gmail_result.get('intent'),
+                            'superagi_data': superagi_result,
+                            'gmail_data': gmail_data_result.get('data', {}),
+                            'method': 'superagi_gmail_agent',
+                            'confidence': gmail_result.get('confidence')
+                        }
+                    else:
+                        # Fallback to direct Gmail service if SuperAGI fails
+                        response_text = gmail_data_result.get('formatted_response', gmail_data_result.get('message', ''))
+                        intent_data = {
+                            'intent': gmail_result.get('intent'),
+                            'gmail_data': gmail_data_result.get('data', {}),
+                            'method': 'direct_gmail_fallback'
+                        }
                 else:
-                    # Fallback to direct Gmail service if SuperAGI fails
-                    response_text = gmail_result.get('formatted_response', gmail_result.get('message', ''))
+                    # Gmail data fetch failed - show authentication or error message
+                    response_text = gmail_data_result.get('message', '❌ Failed to access Gmail data')
                     intent_data = {
                         'intent': gmail_result.get('intent'),
-                        'gmail_data': gmail_result.get('data', {}),
-                        'method': 'direct_gmail_fallback'
+                        'error': gmail_data_result.get('error', 'Gmail data fetch failed'),
+                        'method': 'gmail_data_fetch_failed'
                     }
                 
                 needs_approval = False
