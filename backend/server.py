@@ -1225,6 +1225,22 @@ async def gmail_send_email(request: dict):
         logger.error(f"Gmail send error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/gmail/classification-stats")
+async def get_gmail_classification_stats():
+    """Get DeBERTa Gmail intent classification statistics and performance metrics"""
+    try:
+        stats = deberta_gmail_detector.get_classification_stats()
+        
+        return {
+            "success": True,
+            "message": "Gmail classification statistics retrieved successfully",
+            "stats": stats,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        logger.error(f"Gmail classification stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/gmail/email/{message_id}")
 async def gmail_get_email(message_id: str):
     """Get specific email content using Gmail API"""
