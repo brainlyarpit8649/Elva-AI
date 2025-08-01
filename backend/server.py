@@ -39,6 +39,9 @@ db = client[os.environ['DB_NAME']]
 # Initialize Gmail OAuth service with database connection
 gmail_oauth_service = GmailOAuthService(db=db)
 
+# Initialize enhanced Gmail service
+enhanced_gmail_service = EnhancedGmailService(gmail_oauth_service)
+
 # Initialize conversation memory system
 conversation_memory = initialize_conversation_memory(db)
 
