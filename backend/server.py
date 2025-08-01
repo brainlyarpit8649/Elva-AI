@@ -273,13 +273,17 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(user_msg.dict())
         logger.info(f"💾 Saved user message: {user_msg.id}")
         
-        user_message_span.end(output={"user_message_id": user_msg.id, "saved": True})
+        if user_message_span:
+            user_message_span.end(output={"user_message_id": user_msg.id, "saved": True})
         
         # SPAN 2: DeBERTa Gmail Intent Detection
-        gmail_detection_span = trace.span(
-            name="deberta_gmail_intent_detection",
-            input={"query": request.message}
-        )
+        if trace:
+            gmail_detection_span = trace.span(
+                name="deberta_gmail_intent_detection",
+                input={"query": request.message}
+            )
+        else:
+            gmail_detection_span = None
         
         # STEP 2: Check for Gmail-specific queries first using DeBERTa-based detection
         gmail_result = await realtime_gmail_service.process_gmail_query(
@@ -287,20 +291,24 @@ async def enhanced_chat(request: ChatRequest):
             request.session_id
         )
         
-        gmail_detection_span.end(output={
-            "is_gmail_query": gmail_result.get('is_gmail_query'),
-            "intent": gmail_result.get('intent'),
-            "confidence": gmail_result.get('confidence'),
-            "requires_auth": gmail_result.get('requires_auth')
-        })
+        if gmail_detection_span:
+            gmail_detection_span.end(output={
+                "is_gmail_query": gmail_result.get('is_gmail_query'),
+                "intent": gmail_result.get('intent'),
+                "confidence": gmail_result.get('confidence'),
+                "requires_auth": gmail_result.get('requires_auth')
+            })
         
         if gmail_result.get('success') and gmail_result.get('is_gmail_query'):
             if gmail_result.get('requires_auth'):
                 # SPAN 3A: Gmail Authentication Status
-                auth_span = trace.span(
-                    name="gmail_authentication_status",
-                    input={"intent": gmail_result.get('intent')}
-                )
+                if trace:
+                    auth_span = trace.span(
+                        name="gmail_authentication_status",
+                        input={"intent": gmail_result.get('intent')}
+                    )
+                else:
+                    auth_span = None
                 
                 # Gmail query but not authenticated
                 response_text = gmail_result.get('message', '🔐 Please connect Gmail to access your emails.')
