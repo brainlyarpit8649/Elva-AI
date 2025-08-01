@@ -259,6 +259,11 @@ async def enhanced_chat(request: ChatRequest):
                 )
                 
                 if gmail_data_result.get('success') and gmail_data_result.get('data'):
+                    # Get Gmail data for structured response
+                    gmail_data = gmail_data_result.get('data', {})
+                    emails = gmail_data.get('emails', [])
+                    email_count = gmail_data.get('count', 0)
+                    
                     # Write Gmail data to MCP context for SuperAGI
                     await mcp_service.write_context(
                         session_id=request.session_id,
@@ -268,44 +273,52 @@ async def enhanced_chat(request: ChatRequest):
                             'gmail_intent': gmail_result.get('intent'),
                             'confidence': gmail_result.get('confidence', 0.8),
                             'user_email': 'brainlyarpit8649@gmail.com',
-                            'emails': gmail_data_result.get('data', {}).get('emails', []),
-                            'email_count': gmail_data_result.get('data', {}).get('count', 0)
+                            'emails': emails,
+                            'email_count': email_count
                         },
                         user_id='brainlyarpit8649@gmail.com'
                     )
                     
-                    # Execute SuperAGI Gmail agent with actual Gmail data
-                    superagi_result = await superagi_client.run_task(
-                        goal=request.message,
-                        agent_type="email_agent",  
-                        session_id=request.session_id
-                    )
-                    
-                    if superagi_result.get('success'):
-                        response_text = superagi_result.get('email_summary', 'Gmail analysis completed!')
-                        # Add structured email data display
-                        if superagi_result.get('email_count', 0) > 0:
-                            response_text += f"\n\n📧 **Analyzed {superagi_result.get('email_count')} emails**"
-                            if superagi_result.get('key_insights'):
-                                response_text += f"\n\n🔍 **Key Insights:**\n" + '\n'.join([f"• {insight}" for insight in superagi_result.get('key_insights', [])])
-                            if superagi_result.get('suggested_actions'):
-                                response_text += f"\n\n✅ **Suggested Actions:**\n" + '\n'.join([f"• {action}" for action in superagi_result.get('suggested_actions', [])])
+                    # Try SuperAGI first, but always fallback to structured Gmail display
+                    try:
+                        superagi_result = await superagi_client.run_task(
+                            goal=request.message,
+                            agent_type="email_agent",  
+                            session_id=request.session_id
+                        )
                         
-                        intent_data = {
-                            'intent': gmail_result.get('intent'),
-                            'superagi_data': superagi_result,
-                            'gmail_data': gmail_data_result.get('data', {}),
-                            'method': 'superagi_gmail_agent',
-                            'confidence': gmail_result.get('confidence')
-                        }
-                    else:
-                        # Fallback to direct Gmail service if SuperAGI fails
-                        response_text = gmail_data_result.get('formatted_response', gmail_data_result.get('message', ''))
-                        intent_data = {
-                            'intent': gmail_result.get('intent'),
-                            'gmail_data': gmail_data_result.get('data', {}),
-                            'method': 'direct_gmail_fallback'
-                        }
+                        if superagi_result.get('success') and superagi_result.get('email_summary'):
+                            response_text = superagi_result.get('email_summary', '')
+                            # Add structured email data display
+                            if email_count > 0:
+                                response_text += f"\n\n📧 **Analyzed {email_count} emails**"
+                                if superagi_result.get('key_insights'):
+                                    response_text += f"\n\n🔍 **Key Insights:**\n" + '\n'.join([f"• {insight}" for insight in superagi_result.get('key_insights', [])])
+                                if superagi_result.get('suggested_actions'):
+                                    response_text += f"\n\n✅ **Suggested Actions:**\n" + '\n'.join([f"• {action}" for action in superagi_result.get('suggested_actions', [])])
+                        else:
+                            raise Exception("SuperAGI did not provide valid response")
+                            
+                    except Exception as superagi_error:
+                        logger.warning(f"SuperAGI failed: {superagi_error}, using Gmail data directly")
+                        # ALWAYS provide structured Gmail response as fallback
+                        response_text = f"📧 **Here are your emails ({email_count} found):**\n\n"
+                        
+                        # Add formatted email previews
+                        for i, email in enumerate(emails[:10], 1):  # Show max 10 emails
+                            from_name = email.get('from', 'Unknown')
+                            subject = email.get('subject', 'No Subject')
+                            snippet = email.get('snippet', 'No preview available')[:100]
+                            response_text += f"**{i}. {from_name}** – {subject}\n{snippet}...\n\n"
+                    
+                    # CRITICAL: Always include structured intent_data for frontend
+                    intent_data = {
+                        'intent': gmail_result.get('intent'),
+                        'emails': emails,  # Frontend needs this for card display
+                        'email_count': email_count,  # Frontend needs this for count display
+                        'method': 'enhanced_gmail_with_fallback',
+                        'confidence': gmail_result.get('confidence', 0.8)
+                    }
                 else:
                     # Gmail data fetch failed - show authentication or error message
                     response_text = gmail_data_result.get('message', '❌ Failed to access Gmail data')
