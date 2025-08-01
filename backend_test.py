@@ -1297,8 +1297,426 @@ class ElvaBackendTester:
             self.log_test("Direct Automation Response Format", False, f"Error: {str(e)}")
             return False
 
+    def test_deberta_gmail_health_check(self):
+        """Test 25: DeBERTa Gmail Integration Health Check - Verify v2.0 integration"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check for advanced_gmail_integration section
+                gmail_integration = data.get("advanced_gmail_integration", {})
+                if not gmail_integration:
+                    self.log_test("DeBERTa Gmail Health Check", False, "Missing advanced_gmail_integration section", data)
+                    return False
+                
+                # Check version is 2.0_deberta_enhanced
+                version = gmail_integration.get("version", "")
+                if "2.0_deberta" not in version:
+                    self.log_test("DeBERTa Gmail Health Check", False, f"Wrong version: {version}, expected 2.0_deberta_enhanced", data)
+                    return False
+                
+                # Check DeBERTa intent detection
+                intent_detection = gmail_integration.get("intent_detection", "")
+                if "DeBERTa" not in intent_detection:
+                    self.log_test("DeBERTa Gmail Health Check", False, f"DeBERTa not found in intent_detection: {intent_detection}", data)
+                    return False
+                
+                # Check confidence threshold
+                confidence_threshold = gmail_integration.get("confidence_threshold", 0)
+                if confidence_threshold != 0.7:
+                    self.log_test("DeBERTa Gmail Health Check", False, f"Wrong confidence threshold: {confidence_threshold}, expected 0.7", data)
+                    return False
+                
+                # Check supported intents
+                supported_intents = gmail_integration.get("supported_intents", [])
+                expected_intents = ["gmail_inbox", "gmail_summary", "gmail_search", "gmail_unread"]
+                missing_intents = [intent for intent in expected_intents if intent not in supported_intents]
+                
+                if missing_intents:
+                    self.log_test("DeBERTa Gmail Health Check", False, f"Missing Gmail intents: {missing_intents}", data)
+                    return False
+                
+                # Check features
+                features = gmail_integration.get("features", [])
+                expected_features = ["high_accuracy_intent_classification", "real_gmail_data_only", "no_placeholder_responses"]
+                missing_features = [feature for feature in expected_features if feature not in features]
+                
+                if missing_features:
+                    self.log_test("DeBERTa Gmail Health Check", False, f"Missing Gmail features: {missing_features}", data)
+                    return False
+                
+                self.log_test("DeBERTa Gmail Health Check", True, f"DeBERTa v2.0 Gmail integration verified with confidence threshold {confidence_threshold}")
+                return True
+            else:
+                self.log_test("DeBERTa Gmail Health Check", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("DeBERTa Gmail Health Check", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_credentials_verification(self):
+        """Test 26: Gmail Credentials Verification - Check credentials.json loading"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/gmail/status", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check credentials_configured
+                if not data.get("credentials_configured"):
+                    self.log_test("Gmail Credentials Verification", False, "credentials_configured is False", data)
+                    return False
+                
+                # Check client_id is present and valid
+                client_id = data.get("client_id", "")
+                if not client_id or "191070483179" not in client_id:
+                    self.log_test("Gmail Credentials Verification", False, f"Invalid client_id: {client_id}", data)
+                    return False
+                
+                # Check scopes
+                scopes = data.get("scopes", [])
+                expected_scopes = ["gmail.readonly", "gmail.send", "gmail.compose", "gmail.modify"]
+                missing_scopes = [scope for scope in expected_scopes if scope not in scopes]
+                
+                if missing_scopes:
+                    self.log_test("Gmail Credentials Verification", False, f"Missing scopes: {missing_scopes}", data)
+                    return False
+                
+                self.log_test("Gmail Credentials Verification", True, f"Gmail credentials properly loaded with client_id: {client_id[:20]}...")
+                return True
+            else:
+                self.log_test("Gmail Credentials Verification", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Credentials Verification", False, f"Error: {str(e)}")
+            return False
+
+    def test_deberta_gmail_intent_detection(self):
+        """Test 27: DeBERTa Gmail Intent Detection - Test all Gmail intents"""
+        test_cases = [
+            {
+                "message": "Check my Gmail inbox",
+                "expected_intent": "gmail_inbox",
+                "description": "Gmail inbox intent"
+            },
+            {
+                "message": "Summarize my last 5 emails",
+                "expected_intent": "gmail_summary", 
+                "description": "Gmail summary intent"
+            },
+            {
+                "message": "Find emails from Amazon",
+                "expected_intent": "gmail_search",
+                "description": "Gmail search intent"
+            },
+            {
+                "message": "Show unread emails",
+                "expected_intent": "gmail_unread",
+                "description": "Gmail unread intent"
+            },
+            {
+                "message": "What's the weather in Delhi?",
+                "expected_intent": "general_chat",
+                "description": "Non-Gmail intent (should route to Groq)"
+            }
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for test_case in test_cases:
+            try:
+                payload = {
+                    "message": test_case["message"],
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    intent_data = data.get("intent_data", {})
+                    detected_intent = intent_data.get("intent")
+                    
+                    if detected_intent == test_case["expected_intent"]:
+                        # For Gmail intents, check for authentication requirement
+                        if test_case["expected_intent"].startswith("gmail_"):
+                            requires_auth = intent_data.get("requires_auth", False)
+                            if requires_auth:
+                                results.append(f"✅ {test_case['description']}: {detected_intent} (requires auth)")
+                            else:
+                                results.append(f"✅ {test_case['description']}: {detected_intent} (authenticated)")
+                        else:
+                            results.append(f"✅ {test_case['description']}: {detected_intent}")
+                        self.message_ids.append(data["id"])
+                    else:
+                        results.append(f"❌ {test_case['description']}: Expected {test_case['expected_intent']}, got {detected_intent}")
+                        all_passed = False
+                else:
+                    results.append(f"❌ {test_case['description']}: HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ {test_case['description']}: Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("DeBERTa Gmail Intent Detection", all_passed, result_summary)
+        return all_passed
+
+    def test_gmail_oauth_auth_url_generation(self):
+        """Test 28: Gmail OAuth Auth URL Generation"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/gmail/auth?session_id={self.session_id}", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check success flag
+                if not data.get("success"):
+                    self.log_test("Gmail OAuth Auth URL Generation", False, "Success flag not set", data)
+                    return False
+                
+                # Check auth_url is present
+                auth_url = data.get("auth_url", "")
+                if not auth_url:
+                    self.log_test("Gmail OAuth Auth URL Generation", False, "No auth_url in response", data)
+                    return False
+                
+                # Check URL contains Google OAuth endpoint
+                if "accounts.google.com/o/oauth2/auth" not in auth_url:
+                    self.log_test("Gmail OAuth Auth URL Generation", False, f"Invalid OAuth URL: {auth_url}", data)
+                    return False
+                
+                # Check URL contains required parameters
+                required_params = ["client_id", "redirect_uri", "scope", "response_type"]
+                missing_params = [param for param in required_params if param not in auth_url]
+                
+                if missing_params:
+                    self.log_test("Gmail OAuth Auth URL Generation", False, f"Missing URL parameters: {missing_params}", data)
+                    return False
+                
+                # Check client_id in URL
+                if "191070483179" not in auth_url:
+                    self.log_test("Gmail OAuth Auth URL Generation", False, "Client ID not found in auth URL", data)
+                    return False
+                
+                self.log_test("Gmail OAuth Auth URL Generation", True, f"Valid OAuth URL generated: {auth_url[:100]}...")
+                return True
+            else:
+                self.log_test("Gmail OAuth Auth URL Generation", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail OAuth Auth URL Generation", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_classification_stats(self):
+        """Test 29: Gmail Classification Stats - DeBERTa statistics"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/gmail/classification-stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check success flag
+                if not data.get("success"):
+                    self.log_test("Gmail Classification Stats", False, "Success flag not set", data)
+                    return False
+                
+                # Check stats section
+                stats = data.get("stats", {})
+                if not stats:
+                    self.log_test("Gmail Classification Stats", False, "No stats section in response", data)
+                    return False
+                
+                # Check for DeBERTa-specific stats
+                expected_stats = ["model_name", "confidence_threshold", "total_classifications", "supported_intents"]
+                missing_stats = [stat for stat in expected_stats if stat not in stats]
+                
+                if missing_stats:
+                    self.log_test("Gmail Classification Stats", False, f"Missing stats: {missing_stats}", data)
+                    return False
+                
+                # Check model name contains DeBERTa
+                model_name = stats.get("model_name", "")
+                if "deberta" not in model_name.lower():
+                    self.log_test("Gmail Classification Stats", False, f"Model name doesn't contain DeBERTa: {model_name}", data)
+                    return False
+                
+                # Check confidence threshold
+                confidence_threshold = stats.get("confidence_threshold", 0)
+                if confidence_threshold != 0.7:
+                    self.log_test("Gmail Classification Stats", False, f"Wrong confidence threshold: {confidence_threshold}", data)
+                    return False
+                
+                self.log_test("Gmail Classification Stats", True, f"DeBERTa stats retrieved: model={model_name}, threshold={confidence_threshold}")
+                return True
+            else:
+                self.log_test("Gmail Classification Stats", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Classification Stats", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_authentication_required_responses(self):
+        """Test 30: Gmail Authentication Required Responses - No placeholder text"""
+        try:
+            # Test Gmail inbox query without authentication
+            payload = {
+                "message": "Check my Gmail inbox",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check intent is Gmail-related
+                intent_data = data.get("intent_data", {})
+                if not intent_data.get("intent", "").startswith("gmail_"):
+                    self.log_test("Gmail Authentication Required", False, f"Wrong intent: {intent_data.get('intent')}", data)
+                    return False
+                
+                # Check requires_auth flag
+                if not intent_data.get("requires_auth"):
+                    self.log_test("Gmail Authentication Required", False, "requires_auth flag not set", data)
+                    return False
+                
+                # Check response contains authentication message
+                response_text = data.get("response", "")
+                auth_keywords = ["Gmail Connection Required", "connect Gmail", "authenticate", "authorization"]
+                has_auth_message = any(keyword.lower() in response_text.lower() for keyword in auth_keywords)
+                
+                if not has_auth_message:
+                    self.log_test("Gmail Authentication Required", False, f"No authentication message in response: {response_text}", data)
+                    return False
+                
+                # Check NO placeholder responses
+                placeholder_keywords = ["I can check your Gmail", "placeholder", "sample", "dummy"]
+                has_placeholder = any(keyword.lower() in response_text.lower() for keyword in placeholder_keywords)
+                
+                if has_placeholder:
+                    self.log_test("Gmail Authentication Required", False, f"Contains placeholder text: {response_text}", data)
+                    return False
+                
+                self.log_test("Gmail Authentication Required", True, "Proper authentication required message without placeholders")
+                return True
+            else:
+                self.log_test("Gmail Authentication Required", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Authentication Required", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_mixed_queries(self):
+        """Test 31: Gmail Mixed Queries - Edge case testing"""
+        try:
+            # Test mixed query with Gmail and weather
+            payload = {
+                "message": "Check my inbox and tell me the weather in Delhi",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check intent detection
+                intent_data = data.get("intent_data", {})
+                detected_intent = intent_data.get("intent", "")
+                
+                # Should detect either Gmail intent or general_chat (both are valid)
+                valid_intents = ["gmail_inbox", "general_chat", "gmail_unread"]
+                if detected_intent not in valid_intents:
+                    self.log_test("Gmail Mixed Queries", False, f"Unexpected intent for mixed query: {detected_intent}", data)
+                    return False
+                
+                # Check response is meaningful
+                response_text = data.get("response", "")
+                if len(response_text.strip()) < 10:
+                    self.log_test("Gmail Mixed Queries", False, "Response too short for mixed query", data)
+                    return False
+                
+                self.log_test("Gmail Mixed Queries", True, f"Mixed query handled correctly with intent: {detected_intent}")
+                return True
+            else:
+                self.log_test("Gmail Mixed Queries", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gmail Mixed Queries", False, f"Error: {str(e)}")
+            return False
+
+    def test_chat_system_no_errors(self):
+        """Test 32: Chat System - Ensure no 'sorry I've encountered an error' responses"""
+        test_messages = [
+            "Hello, how are you?",
+            "What can you help me with?",
+            "Tell me about artificial intelligence",
+            "How's the weather today?",
+            "Can you help me with my tasks?"
+        ]
+        
+        all_passed = True
+        results = []
+        
+        for message in test_messages:
+            try:
+                payload = {
+                    "message": message,
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    response_text = data.get("response", "")
+                    
+                    # Check for error messages
+                    error_phrases = [
+                        "sorry I've encountered an error",
+                        "sorry, I encountered an error", 
+                        "I've encountered an error",
+                        "encountered an error",
+                        "something went wrong"
+                    ]
+                    
+                    has_error = any(phrase.lower() in response_text.lower() for phrase in error_phrases)
+                    
+                    if has_error:
+                        results.append(f"❌ '{message[:30]}...': Contains error message")
+                        all_passed = False
+                    else:
+                        results.append(f"✅ '{message[:30]}...': Clean response")
+                        
+                else:
+                    results.append(f"❌ '{message[:30]}...': HTTP {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                results.append(f"❌ '{message[:30]}...': Error {str(e)}")
+                all_passed = False
+        
+        result_summary = "\n    ".join(results)
+        self.log_test("Chat System No Errors", all_passed, result_summary)
+        return all_passed
+
     def test_enhanced_gmail_intent_detection(self):
-        """Test 25: Enhanced Gmail Intent Detection - Test new Gmail intents"""
+        """Test 33: Enhanced Gmail Intent Detection - Test new Gmail intents"""
         test_cases = [
             {
                 "message": "Summarize my last 5 emails",
