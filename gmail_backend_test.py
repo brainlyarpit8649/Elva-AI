@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://d10e365f-da53-4afb-9ff3-dab3e0d6bd7e.preview.emergentagent.com/api"
+BACKEND_URL = "https://78f232cd-ed64-4f22-a3a0-8dddf2200178.preview.emergentagent.com/api"
 
 class GmailBackendTester:
     def __init__(self):
@@ -130,7 +130,7 @@ class GmailBackendTester:
                     return False
                     
                 # Check redirect URI
-                expected_redirect = "https://d10e365f-da53-4afb-9ff3-dab3e0d6bd7e.preview.emergentagent.com/api/gmail/callback"
+                expected_redirect = "https://78f232cd-ed64-4f22-a3a0-8dddf2200178.preview.emergentagent.com/api/gmail/callback"
                 if expected_redirect not in auth_url:
                     self.log_test("Gmail Auth - Redirect URI", False, f"Correct redirect URI not found in auth URL")
                     return False
