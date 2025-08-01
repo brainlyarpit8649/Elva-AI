@@ -28,6 +28,10 @@ from enhanced_gmail_intent_detector import enhanced_gmail_detector
 from enhanced_gmail_service import EnhancedGmailService
 from enhanced_chat_models import EnhancedChatMessage, UserMessage, AIMessage
 
+# Import new DeBERTa-based Gmail system
+from deberta_gmail_intent_detector import deberta_gmail_detector
+from realtime_gmail_service import RealTimeGmailService
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
