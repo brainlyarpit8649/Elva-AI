@@ -533,6 +533,11 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
         setMessages(prev => [...prev, debugTestMessage]);
       }
 
+      // 🔒 Admin Debug Commands - Only available in admin mode
+      if (isAdminMode && (inputMessage.toLowerCase().includes('show my context') || inputMessage.toLowerCase().includes('show context for session'))) {
+        await handleAdminDebugCommand(inputMessage);
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage = {
