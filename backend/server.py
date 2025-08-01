@@ -1173,6 +1173,46 @@ async def gmail_auth_status(session_id: str = None):
         logger.error(f"Gmail status error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/gmail/user-info")
+async def gmail_user_info(session_id: str = None):
+    """Get Gmail user information for admin detection"""
+    try:
+        if not session_id:
+            # Try to extract from headers or use a default
+            session_id = "default_session"
+        
+        # Check if user is authenticated
+        status = await gmail_oauth_service.get_auth_status(session_id)
+        if not status.get('authenticated'):
+            return {
+                "success": False,
+                "error": "Not authenticated",
+                "requires_auth": True
+            }
+        
+        # Get user profile info from Gmail service
+        user_info = await gmail_oauth_service.get_user_profile(session_id)
+        
+        if user_info and user_info.get('success'):
+            return {
+                "success": True,
+                "email": user_info.get('email'),
+                "name": user_info.get('name'),
+                "session_id": session_id
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Failed to retrieve user info"
+            }
+            
+    except Exception as e:
+        logger.error(f"Gmail user info error: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.get("/gmail/inbox")
 async def gmail_check_inbox(session_id: str = None, max_results: int = 10, query: str = 'is:unread'):
     """Check Gmail inbox using OAuth2 for specific session"""
