@@ -70,3 +70,4 @@ aiohappyeyeballs>=2.6.0
 aiosignal>=1.4.0
 httpcore>=1.0.0
 tokenizers>=0.21.0
+jiter>=0.10.0
