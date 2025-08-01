@@ -208,7 +208,206 @@ def format_admin_context_display(session_id: str, context_data: dict) -> str:
 
 # Routes
 @api_router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def enhanced_chat(request: ChatRequest):
+    """Enhanced chat endpoint with improved Gmail integration and conversation history"""
+    try:
+        logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
+        
+        # STEP 1: Save user message immediately for proper conversation history
+        user_msg = UserMessage(
+            session_id=request.session_id,
+            user_id=request.user_id,
+            message=request.message
+        )
+        await db.chat_messages.insert_one(user_msg.dict())
+        logger.info(f"💾 Saved user message: {user_msg.id}")
+        
+        # STEP 2: Check for Gmail-specific queries first using enhanced detection
+        gmail_result = await enhanced_gmail_service.process_gmail_query(
+            request.message, 
+            request.session_id
+        )
+        
+        if gmail_result.get('success') and gmail_result.get('requires_gmail_api'):
+            # This is a Gmail query - return real Gmail data
+            response_text = gmail_result.get('formatted_response', gmail_result.get('message', ''))
+            intent_data = {
+                'intent': gmail_result.get('intent', 'gmail_inbox'),
+                'gmail_data': gmail_result.get('data', {}),
+                'method': 'enhanced_gmail_service'
+            }
+            needs_approval = False
+            
+            logger.info(f"📧 Gmail query processed: {gmail_result.get('intent')}")
+            
+        elif gmail_result.get('requires_auth'):
+            # Gmail query but not authenticated
+            response_text = gmail_result.get('message', '🔐 Please connect Gmail to access your emails.')
+            intent_data = {
+                'intent': gmail_result.get('intent', 'gmail_auth_required'),
+                'requires_auth': True,
+                'auth_url': '/api/gmail/auth'
+            }
+            needs_approval = False
+            
+        else:
+            # STEP 3: Not a Gmail query - use existing hybrid AI system
+            # Check if this is a send confirmation for a pending post prompt package
+            user_msg_lower = request.message.lower().strip()
+            send_commands = ["send", "yes, go ahead", "submit", "send it", "yes go ahead", "go ahead"]
+            
+            # Only consider it a send command if it's a short message (likely confirmation)
+            # and doesn't contain email-related keywords
+            email_keywords = ["email", "mail", "@", "message to", "write to"]
+            is_likely_email = any(keyword in user_msg_lower for keyword in email_keywords)
+            is_short_message = len(request.message.split()) <= 5  # Short confirmation messages
+            
+            is_send_command = (
+                any(cmd in user_msg_lower for cmd in send_commands) and 
+                is_short_message and 
+                not is_likely_email
+            )
+            
+            if is_send_command and request.session_id in pending_post_packages:
+                # Handle pending post package confirmation
+                response_text, intent_data = await _handle_post_package_confirmation(request)
+                needs_approval = False
+                
+            elif is_send_command and request.session_id not in pending_post_packages:
+                # User said send but no pending post package
+                response_text = "🤔 I don't see any pending LinkedIn post prompt package to send. Please first ask me to help you prepare a LinkedIn post about your project or topic."
+                intent_data = {"intent": "no_pending_package"}
+                needs_approval = False
+                
+            else:
+                # Regular hybrid AI processing
+                try:
+                    # Read existing context from MCP for better AI responses
+                    previous_context = ""
+                    try:
+                        context_result = await mcp_service.read_context(request.session_id)
+                        if context_result.get("success") and context_result.get("context"):
+                            previous_context = await mcp_service.get_context_for_prompt(request.session_id)
+                            logger.info(f"📖 Retrieved context from MCP for session: {request.session_id}")
+                        else:
+                            logger.info(f"📭 No previous context found in MCP for session: {request.session_id}")
+                    except Exception as context_error:
+                        logger.warning(f"⚠️ Error reading context from MCP: {context_error}")
+                        previous_context = ""
+                    
+                    # Process message with hybrid AI
+                    intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
+                        request.message, 
+                        request.session_id
+                    )
+                    
+                    logger.info(f"🧠 Advanced Routing: {routing_decision.primary_model.value} (confidence: {routing_decision.confidence:.2f})")
+                    logger.info(f"💡 Routing Logic: {routing_decision.reasoning}")
+                    
+                    # Write context to MCP for memory management
+                    try:
+                        context_data = mcp_service.prepare_context_data(
+                            user_message=request.message,
+                            ai_response=response_text,
+                            intent_data=intent_data,
+                            routing_info={
+                                "model": routing_decision.primary_model.value,
+                                "confidence": routing_decision.confidence,
+                                "reasoning": routing_decision.reasoning
+                            }
+                        )
+                        
+                        await mcp_service.write_context(
+                            session_id=request.session_id,
+                            user_id=request.user_id,
+                            intent=intent_data.get("intent", "general_chat"),
+                            data=context_data
+                        )
+                        
+                        logger.info(f"💾 Wrote enhanced context to MCP for session: {request.session_id}")
+                    except Exception as context_error:
+                        logger.warning(f"⚠️ Error writing context to MCP: {context_error}")
+                    
+                    # Determine if approval is needed
+                    needs_approval = intent_data.get("intent") not in [
+                        "general_chat", "gmail_inbox", "gmail_unread", "gmail_summary", "gmail_search"
+                    ] and intent_data.get("intent") != "generate_post_prompt_package"
+                    
+                    # Handle generate_post_prompt_package intent
+                    if intent_data.get("intent") == "generate_post_prompt_package":
+                        pending_post_packages[request.session_id] = {
+                            "post_description": intent_data.get("post_description", ""),
+                            "ai_instructions": intent_data.get("ai_instructions", ""),
+                            "topic": intent_data.get("topic", ""),
+                            "project_name": intent_data.get("project_name", ""),
+                            "project_type": intent_data.get("project_type", ""),
+                            "tech_stack": intent_data.get("tech_stack", ""),
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                        response_text += "\n\n💬 **Ready to send?** Just say **'send'**, **'yes, go ahead'**, or **'submit'** to send this package to your automation workflow!"
+                        logger.info(f"📝 Stored pending post package for session {request.session_id}")
+                        
+                except Exception as e:
+                    logger.error(f"❌ Hybrid AI processing error: {e}")
+                    response_text = "Sorry, I encountered an error processing your request. Please try again! 🤖"
+                    intent_data = {"intent": "error", "error": str(e)}
+                    needs_approval = False
+        
+        # STEP 4: Save AI response message for proper conversation history
+        ai_msg = AIMessage(
+            session_id=request.session_id,
+            user_id=request.user_id,
+            response=response_text,
+            intent_data=intent_data,
+            is_system=intent_data.get('intent') in ['gmail_auth_required', 'error', 'no_pending_package']
+        )
+        await db.chat_messages.insert_one(ai_msg.dict())
+        logger.info(f"💾 Saved AI response message: {ai_msg.id}")
+        
+        return ChatResponse(
+            id=ai_msg.id,
+            message=request.message,
+            response=response_text,
+            intent_data=intent_data,
+            needs_approval=needs_approval,
+            timestamp=ai_msg.timestamp
+        )
+        
+    except Exception as e:
+        logger.error(f"💥 Enhanced Chat Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def _handle_post_package_confirmation(request: ChatRequest) -> tuple:
+    """Handle confirmation of pending post prompt package"""
+    try:
+        pending_data = pending_post_packages[request.session_id]
+        
+        # Send to N8N webhook
+        webhook_result = await send_to_n8n({
+            "intent": "generate_post_prompt_package",
+            "session_id": request.session_id,
+            "post_description": pending_data.get("post_description", ""),
+            "ai_instructions": pending_data.get("ai_instructions", ""),
+            "topic": pending_data.get("topic", ""),
+            "project_name": pending_data.get("project_name", ""),
+            "project_type": pending_data.get("project_type", ""),
+            "tech_stack": pending_data.get("tech_stack", ""),
+            "status": "pending"
+        })
+        
+        # Clear the pending data
+        del pending_post_packages[request.session_id]
+        
+        response_text = "✅ **Post Prompt Package Sent Successfully!**\n\nYour LinkedIn post preparation package has been sent to the automation system. You can now use the Post Description and AI Instructions to generate your LinkedIn post with any AI tool of your choice."
+        intent_data = {"intent": "post_package_sent", "webhook_result": webhook_result}
+        
+        return response_text, intent_data
+        
+    except Exception as e:
+        logger.error(f"Error sending post package to webhook: {e}")
+        response_text = "❌ **Error sending post package.** Please try again or contact support if the issue persists."
+        intent_data = {"intent": "post_package_error", "error": str(e)}
+        return response_text, intent_data
     try:
         logger.info(f"🚀 Advanced Hybrid AI Chat: {request.message}")
         
