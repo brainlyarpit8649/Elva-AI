@@ -711,8 +711,19 @@ CRITICAL INSTRUCTIONS:
 - Return ONLY valid JSON
 - All JSON must be complete and properly formatted  
 - For all intents except general_chat, populate ALL fields with realistic content
+- PAY SPECIAL ATTENTION TO GMAIL INTENTS - many user phrases should map to Gmail intents
 
 Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, web_search, creative_writing, web_research, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, summarize_gmail_emails, search_gmail_emails, categorize_gmail_emails, gmail_smart_actions, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, general_chat
+
+GMAIL INTENT MAPPING (CRITICAL):
+"Check my Gmail inbox" → {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
+"Check my inbox" → {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
+"Show me my inbox" → {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
+"check gmail inbox" → {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
+"Show unread emails" → {"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"}
+"Any unread emails?" → {"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"}
+"Check my email" → {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
+"Show me my emails" → {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}
 
 Example JSON responses:
 
