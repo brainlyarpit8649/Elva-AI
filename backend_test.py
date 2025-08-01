@@ -38,6 +38,312 @@ class ElvaBackendTester:
             print(f"    Response: {response_data}")
         print()
 
+    def test_critical_fixes_verification(self):
+        """Test 1: Critical Fixes Verification - Test all fixes mentioned in review request"""
+        print("🔧 Testing Critical Fixes from Review Request...")
+        
+        # Test 1.1: Intent Detection Fix - JSON escaping issues
+        try:
+            payload = {
+                "message": "Send an email to john@example.com about the project",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                intent_data = data.get("intent_data", {})
+                
+                # Check if send_email intent is properly detected (not general_chat)
+                if intent_data.get("intent") == "send_email":
+                    self.log_test("Critical Fix - Intent Detection JSON Escaping", True, "send_email intent correctly detected, not classified as general_chat")
+                else:
+                    self.log_test("Critical Fix - Intent Detection JSON Escaping", False, f"Expected send_email, got {intent_data.get('intent')}")
+                    return False
+                    
+                # Check needs_approval is properly set to true
+                if data.get("needs_approval") == True:
+                    self.log_test("Critical Fix - Send Email Approval Modal", True, "needs_approval=true properly set for send_email intent")
+                else:
+                    self.log_test("Critical Fix - Send Email Approval Modal", False, f"needs_approval should be true, got {data.get('needs_approval')}")
+                    return False
+                    
+                # Check structured intent data is present
+                required_fields = ["recipient_name", "subject", "body"]
+                missing_fields = [field for field in required_fields if not intent_data.get(field)]
+                
+                if not missing_fields:
+                    self.log_test("Critical Fix - Gmail Response Structure", True, "Structured intent data with all required fields present")
+                else:
+                    self.log_test("Critical Fix - Gmail Response Structure", False, f"Missing structured data fields: {missing_fields}")
+                    return False
+                    
+                self.message_ids.append(data["id"])
+                return True
+            else:
+                self.log_test("Critical Fix - Intent Detection", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Critical Fix - Intent Detection", False, f"Error: {str(e)}")
+            return False
+
+    def test_error_message_resolution(self):
+        """Test 2: Error Message Resolution - Verify no 'sorry I've encountered an error' messages"""
+        try:
+            test_messages = [
+                "Hello, how are you?",
+                "What's the weather like?",
+                "Tell me a joke",
+                "How can you help me?"
+            ]
+            
+            all_passed = True
+            results = []
+            
+            for message in test_messages:
+                payload = {
+                    "message": message,
+                    "session_id": self.session_id,
+                    "user_id": "test_user"
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    response_text = data.get("response", "").lower()
+                    
+                    # Check for error messages
+                    error_phrases = [
+                        "sorry i've encountered an error",
+                        "sorry, i've encountered an error", 
+                        "encountered an error",
+                        "error processing your request"
+                    ]
+                    
+                    has_error = any(phrase in response_text for phrase in error_phrases)
+                    
+                    if has_error:
+                        results.append(f"❌ '{message}': Contains error message")
+                        all_passed = False
+                    else:
+                        results.append(f"✅ '{message}': No error message")
+                        
+                else:
+                    results.append(f"❌ '{message}': HTTP {response.status_code}")
+                    all_passed = False
+            
+            result_summary = "\n    ".join(results)
+            self.log_test("Critical Fix - Error Message Resolution", all_passed, result_summary)
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("Critical Fix - Error Message Resolution", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_credentials_verification(self):
+        """Test 3: Gmail Credentials Verification - Test new OAuth2 configuration"""
+        try:
+            # Test Gmail auth endpoint
+            response = requests.get(f"{BACKEND_URL}/gmail/auth", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if auth_url is generated
+                if data.get("success") and data.get("auth_url"):
+                    auth_url = data.get("auth_url")
+                    
+                    # Check if new client_id is in the URL
+                    expected_client_id = "191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com"
+                    if expected_client_id in auth_url:
+                        self.log_test("Critical Fix - Gmail Credentials Update", True, f"New OAuth2 credentials working, client_id found in auth URL")
+                    else:
+                        self.log_test("Critical Fix - Gmail Credentials Update", False, f"New client_id not found in auth URL: {auth_url}")
+                        return False
+                        
+                    # Check redirect URI
+                    expected_redirect = "https://45c01f6d-38f0-48e1-895f-afda66949498.preview.emergentagent.com/api/gmail/callback"
+                    if expected_redirect in auth_url:
+                        self.log_test("Critical Fix - Gmail OAuth Redirect", True, "Correct redirect URI configured")
+                    else:
+                        self.log_test("Critical Fix - Gmail OAuth Redirect", False, f"Incorrect redirect URI in auth URL")
+                        return False
+                        
+                    return True
+                else:
+                    self.log_test("Critical Fix - Gmail Credentials Update", False, "Failed to generate auth URL", data)
+                    return False
+            else:
+                self.log_test("Critical Fix - Gmail Credentials Update", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Critical Fix - Gmail Credentials Update", False, f"Error: {str(e)}")
+            return False
+
+    def test_gmail_integration_health(self):
+        """Test 4: Gmail Integration Health - Verify all components are working"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check Gmail integration status
+                gmail_integration = data.get("gmail_api_integration", {})
+                
+                if gmail_integration.get("status") == "ready":
+                    self.log_test("Critical Fix - Gmail Integration Health", True, "Gmail integration status: ready")
+                else:
+                    self.log_test("Critical Fix - Gmail Integration Health", False, f"Gmail integration status: {gmail_integration.get('status')}")
+                    return False
+                    
+                # Check OAuth2 flow
+                if gmail_integration.get("oauth2_flow") == "implemented":
+                    self.log_test("Critical Fix - Gmail OAuth2 Flow", True, "OAuth2 flow implemented")
+                else:
+                    self.log_test("Critical Fix - Gmail OAuth2 Flow", False, f"OAuth2 flow: {gmail_integration.get('oauth2_flow')}")
+                    return False
+                    
+                # Check credentials configuration
+                if gmail_integration.get("credentials_configured") == True:
+                    self.log_test("Critical Fix - Gmail Credentials Configuration", True, "Credentials properly configured")
+                else:
+                    self.log_test("Critical Fix - Gmail Credentials Configuration", False, "Credentials not configured")
+                    return False
+                    
+                # Check endpoints availability
+                endpoints = gmail_integration.get("endpoints", [])
+                expected_endpoints = [
+                    "/api/gmail/auth",
+                    "/api/gmail/callback", 
+                    "/api/gmail/status",
+                    "/api/gmail/inbox"
+                ]
+                
+                missing_endpoints = [ep for ep in expected_endpoints if ep not in endpoints]
+                if not missing_endpoints:
+                    self.log_test("Critical Fix - Gmail Endpoints", True, f"All {len(expected_endpoints)} Gmail endpoints available")
+                else:
+                    self.log_test("Critical Fix - Gmail Endpoints", False, f"Missing endpoints: {missing_endpoints}")
+                    return False
+                    
+                return True
+            else:
+                self.log_test("Critical Fix - Gmail Integration Health", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Critical Fix - Gmail Integration Health", False, f"Error: {str(e)}")
+            return False
+
+    def test_groq_api_functionality(self):
+        """Test 5: Groq API Functionality - Verify new API key is working"""
+        try:
+            # Test with a message that should trigger Groq processing
+            payload = {
+                "message": "Create a meeting with the team for tomorrow at 3pm about the project review",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if response is generated (not error)
+                response_text = data.get("response", "")
+                if not response_text or "sorry i've encountered an error" in response_text.lower():
+                    self.log_test("Critical Fix - Groq API Functionality", False, "Empty response or error message from Groq")
+                    return False
+                    
+                # Check intent detection worked
+                intent_data = data.get("intent_data", {})
+                if intent_data.get("intent") == "create_event":
+                    self.log_test("Critical Fix - Groq API Functionality", True, "Groq API working correctly, intent detected as create_event")
+                else:
+                    self.log_test("Critical Fix - Groq API Functionality", False, f"Intent detection failed, got: {intent_data.get('intent')}")
+                    return False
+                    
+                # Check structured data extraction
+                required_fields = ["event_title", "date", "time"]
+                missing_fields = [field for field in required_fields if not intent_data.get(field)]
+                
+                if not missing_fields:
+                    self.log_test("Critical Fix - Groq Structured Data Extraction", True, "Groq successfully extracted structured data from message")
+                else:
+                    self.log_test("Critical Fix - Groq Structured Data Extraction", False, f"Missing structured data: {missing_fields}")
+                    return False
+                    
+                self.message_ids.append(data["id"])
+                return True
+            else:
+                self.log_test("Critical Fix - Groq API Functionality", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Critical Fix - Groq API Functionality", False, f"Error: {str(e)}")
+            return False
+
+    def test_n8n_webhook_connectivity(self):
+        """Test 6: N8N Webhook Connectivity - Verify updated webhook URL"""
+        try:
+            # Create an email intent to test webhook
+            payload = {
+                "message": "Send an email to test@example.com about the webhook test",
+                "session_id": self.session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                message_id = data["id"]
+                
+                # Approve the action to trigger webhook
+                approval_payload = {
+                    "session_id": self.session_id,
+                    "message_id": message_id,
+                    "approved": True
+                }
+                
+                approval_response = requests.post(f"{BACKEND_URL}/approve", json=approval_payload, timeout=15)
+                
+                if approval_response.status_code == 200:
+                    approval_data = approval_response.json()
+                    
+                    # Check if webhook was called
+                    if "n8n_response" in approval_data:
+                        n8n_response = approval_data.get("n8n_response", {})
+                        
+                        # Check webhook response structure
+                        if isinstance(n8n_response, dict):
+                            self.log_test("Critical Fix - N8N Webhook Connectivity", True, f"N8N webhook called successfully, response received")
+                        else:
+                            self.log_test("Critical Fix - N8N Webhook Connectivity", False, f"Invalid webhook response format: {type(n8n_response)}")
+                            return False
+                    else:
+                        self.log_test("Critical Fix - N8N Webhook Connectivity", False, "No n8n_response in approval result")
+                        return False
+                        
+                    return True
+                else:
+                    self.log_test("Critical Fix - N8N Webhook Connectivity", False, f"Approval failed: HTTP {approval_response.status_code}")
+                    return False
+            else:
+                self.log_test("Critical Fix - N8N Webhook Connectivity", False, f"Chat failed: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Critical Fix - N8N Webhook Connectivity", False, f"Error: {str(e)}")
+            return False
+
     def test_server_connectivity(self):
         """Test 1: Basic server connectivity"""
         try:
