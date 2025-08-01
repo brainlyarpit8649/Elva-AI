@@ -628,7 +628,7 @@ async def enhanced_chat(request: ChatRequest):
         logger.error(f"💥 Enhanced Chat Error: {e}")
         
         # Update trace with error
-        trace.update(
+        safe_trace_operation(trace, 'update',
             output={"error": str(e), "pipeline_completed": False},
             metadata={"error_type": "chat_pipeline_error"}
         )
