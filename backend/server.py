@@ -763,6 +763,61 @@ async def append_mcp_context(request: dict):
         logger.error(f"❌ MCP context append error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Admin Debug Endpoint for MCP Context Viewing
+@api_router.get("/admin/debug/context/{session_id}")
+async def admin_debug_context(
+    session_id: str, 
+    x_debug_token: Optional[str] = Header(None, alias="X-Debug-Token")
+):
+    """
+    🔒 ADMIN ONLY: View MCP stored context for debugging
+    Requires DEBUG_ADMIN_TOKEN in X-Debug-Token header
+    """
+    try:
+        # Verify admin token
+        expected_token = os.getenv("DEBUG_ADMIN_TOKEN")
+        if not expected_token or x_debug_token != expected_token:
+            logger.warning(f"🚨 Unauthorized admin debug attempt from IP: {session_id}")
+            raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin token")
+        
+        logger.info(f"🔐 Admin debug context request for session: {session_id}")
+        
+        # Read context from MCP service
+        result = await mcp_service.read_context(session_id)
+        
+        if not result.get("success"):
+            return {
+                "success": False,
+                "message": f"Failed to read context: {result.get('error', 'Unknown error')}",
+                "session_id": session_id
+            }
+        
+        context_data = result.get("context")
+        if not context_data:
+            return {
+                "success": True,
+                "message": "No context found for this session",
+                "session_id": session_id,
+                "formatted_context": f"🧠 No stored context found for session: {session_id}"
+            }
+        
+        # Format the context for readable display
+        formatted_context = format_admin_context_display(session_id, context_data)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "formatted_context": formatted_context,
+            "raw_context": context_data,  # For detailed debugging if needed
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Admin debug context error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/web-automation")
 async def execute_web_automation(request: MCPContextRequest):
     """
