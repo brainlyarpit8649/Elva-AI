@@ -18,7 +18,7 @@ async def test_groq_api():
         
         # Simple test prompt
         prompt_template = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful assistant. Return only JSON: {\"test\": \"success\"}"),
+            ("system", "You are a helpful assistant. Return only JSON: {{\"test\": \"success\"}}"),
             ("user", "{input}")
         ])
         
