@@ -704,7 +704,33 @@ The content you generate will be used EXACTLY as written in the approval modal."
         return base_message
 
     async def _groq_intent_detection(self, user_input: str) -> dict:
-        """Groq-specific intent detection with enhanced prompting"""
+        """Groq-specific intent detection with enhanced prompting and pre-processing"""
+        
+        # Pre-process for common Gmail patterns
+        user_input_lower = user_input.lower().strip()
+        gmail_patterns = {
+            "check my gmail inbox": {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": False},
+            "check my inbox": {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": False},
+            "show me my inbox": {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": False},
+            "check gmail inbox": {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": False},
+            "check my email": {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": False},
+            "show me my emails": {"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": False},
+            "any unread emails?": {"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"},
+            "show unread emails": {"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"},
+            "check unread emails": {"intent": "check_gmail_unread", "user_email": "brainlyarpit8649@gmail.com"}
+        }
+        
+        # Check for exact matches first
+        if user_input_lower in gmail_patterns:
+            logger.info(f"🎯 Direct Gmail pattern match: {user_input_lower} → {gmail_patterns[user_input_lower]['intent']}")
+            return gmail_patterns[user_input_lower]
+        
+        # Check for partial matches
+        for pattern, intent_data in gmail_patterns.items():
+            if pattern in user_input_lower or user_input_lower in pattern:
+                logger.info(f"🎯 Partial Gmail pattern match: {user_input_lower} contains '{pattern}' → {intent_data['intent']}")
+                return intent_data
+        
         system_message = """You are an AI assistant specialized in intent detection. Extract structured JSON data.
 
 CRITICAL INSTRUCTIONS:
