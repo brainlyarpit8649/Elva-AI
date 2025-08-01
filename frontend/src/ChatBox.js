@@ -289,6 +289,66 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     );
   };
 
+  // 🔒 Admin Email Detection and Toggle Functions
+  const checkAdminEmail = useCallback(async () => {
+    if (!gmailAuthStatus.authenticated) {
+      setShowAdminToggle(false);
+      return;
+    }
+
+    try {
+      // Get user email from Gmail API or user info
+      const response = await axios.get(`${API}/gmail/user-info`, {
+        timeout: 5000
+      });
+      
+      if (response.data.success && response.data.email) {
+        const email = response.data.email.toLowerCase();
+        setUserEmail(email);
+        
+        // Check if email is in admin whitelist
+        const isAdmin = ADMIN_EMAILS.includes(email);
+        setShowAdminToggle(isAdmin);
+        
+        console.log('Admin check:', { email, isAdmin, showToggle: isAdmin });
+      }
+    } catch (error) {
+      console.log('Admin email check failed (normal for non-admins):', error.message);
+      setShowAdminToggle(false);
+    }
+  }, [gmailAuthStatus.authenticated, ADMIN_EMAILS]);
+
+  // Check for admin email when Gmail status changes
+  useEffect(() => {
+    if (gmailAuthStatus.authenticated) {
+      checkAdminEmail();
+    } else {
+      setShowAdminToggle(false);
+      setIsAdminMode(false);
+      setUserEmail(null);
+    }
+  }, [gmailAuthStatus.authenticated, checkAdminEmail]);
+
+  const toggleAdminMode = () => {
+    const newAdminMode = !isAdminMode;
+    setIsAdminMode(newAdminMode);
+    
+    if (newAdminMode) {
+      // Show success toast
+      const toastEvent = new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: '✅ Admin Mode Enabled'
+        } 
+      });
+      window.dispatchEvent(toastEvent);
+      
+      console.log('🔐 Admin mode enabled for:', userEmail);
+    } else {
+      console.log('🔐 Admin mode disabled');
+    }
+  };
+
   const renderEmailDisplay = useCallback((response) => {
     // Handle authentication prompts - plain text format
     if (response.includes('🔐 Please connect your Gmail account')) {
