@@ -32,8 +32,8 @@ async def test_groq_api():
 
 Intent types: send_email, general_chat
 
-For send email: {"intent": "send_email", "recipient": "email", "subject": "subject"}
-For general chat: {"intent": "general_chat", "message": "original message"}
+For send email: {{"intent": "send_email", "recipient": "email", "subject": "subject"}}
+For general chat: {{"intent": "general_chat", "message": "original message"}}
 
 Return ONLY the JSON object."""
         
