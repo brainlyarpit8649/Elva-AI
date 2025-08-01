@@ -1,0 +1,95 @@
+{
+  "summary": {
+    "total_tests": 6,
+    "passed_tests": 4,
+    "failed_tests": 2,
+    "success_rate": 66.66666666666666,
+    "timestamp": "2025-08-01T18:25:14.053276"
+  },
+  "detailed_results": [
+    {
+      "test": "Basic Chat Functionality",
+      "success": false,
+      "details": "\u2705 'Hello': Valid response (313 chars)\n    \u2705 'Hi there': Valid response (265 chars)\n    \u2705 'How are you?': Valid response (346 chars)\n    \u274c 'What can you help me with?': Error HTTPSConnectionPool(host='3f972ebc-340d-4044-8347-235179bd9a5e.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)",
+      "timestamp": "2025-08-01T18:24:44.330891",
+      "response_data": null
+    },
+    {
+      "test": "Gmail OAuth URL Generation",
+      "success": true,
+      "details": "Valid OAuth URL generated with all required parameters",
+      "timestamp": "2025-08-01T18:24:47.622977",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Status - Credentials",
+      "success": true,
+      "details": "Gmail credentials properly configured",
+      "timestamp": "2025-08-01T18:24:47.875835",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Status - Authentication",
+      "success": true,
+      "details": "Authentication status correctly shows false for new session",
+      "timestamp": "2025-08-01T18:24:47.875876",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Status - Scopes",
+      "success": true,
+      "details": "Gmail scopes configured: 4 scopes",
+      "timestamp": "2025-08-01T18:24:47.875887",
+      "response_data": null
+    },
+    {
+      "test": "Gmail Intent Detection",
+      "success": true,
+      "details": "\u2705 'Check my Gmail inbox': Gmail intent detected or auth prompt shown\n    \u2705 'Show me my unread emails': Gmail intent detected or auth prompt shown\n    \u2705 'Any new emails?': Gmail intent detected or auth prompt shown\n    \u2705 'Check my email': Gmail intent detected or auth prompt shown",
+      "timestamp": "2025-08-01T18:24:57.784463",
+      "response_data": null
+    },
+    {
+      "test": "Health Check - MongoDB",
+      "success": true,
+      "details": "MongoDB connected",
+      "timestamp": "2025-08-01T18:24:59.011919",
+      "response_data": null
+    },
+    {
+      "test": "Health Check - Groq API",
+      "success": true,
+      "details": "Groq API configured",
+      "timestamp": "2025-08-01T18:24:59.011962",
+      "response_data": null
+    },
+    {
+      "test": "Health Check - Gmail Integration",
+      "success": true,
+      "details": "Gmail integration ready",
+      "timestamp": "2025-08-01T18:24:59.011972",
+      "response_data": null
+    },
+    {
+      "test": "Health Check - N8N Webhook",
+      "success": true,
+      "details": "N8N webhook configured",
+      "timestamp": "2025-08-01T18:24:59.011981",
+      "response_data": null
+    },
+    {
+      "test": "Health Check - Overall",
+      "success": true,
+      "details": "All core backend services are healthy",
+      "timestamp": "2025-08-01T18:24:59.011988",
+      "response_data": null
+    },
+    {
+      "test": "Core Backend Services",
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='3f972ebc-340d-4044-8347-235179bd9a5e.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)",
+      "timestamp": "2025-08-01T18:25:14.053059",
+      "response_data": null
+    }
+  ]
+}
