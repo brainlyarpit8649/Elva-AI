@@ -1365,41 +1365,60 @@ async def admin_debug_context(request: dict, token: str = Header(None, alias="x-
                 "details": mcp_context.get('error', 'Unknown error')
             }
         
-        # Format the response for clean display
+        # Format the response for clean display in chat
         context_data = mcp_context.get('data', {})
         appends = mcp_context.get('appends', [])
         
-        formatted_response = {
-            "success": True,
-            "session_id": target_session,
-            "context_summary": {
-                "initial_context": context_data.get('context', {}),
-                "total_appends": len(appends),
-                "last_updated": context_data.get('updated_at', 'Unknown')
-            },
-            "message_history": []
-        }
+        # Create a formatted response for chat display
+        formatted_context = f"🔒 **Admin Debug: MCP Context for Session `{target_session}`**\n\n"
+        
+        # Add context summary
+        formatted_context += f"📊 **Context Summary:**\n"
+        formatted_context += f"• **Session ID:** {target_session}\n"
+        formatted_context += f"• **Total Message History:** {len(appends)} entries\n"
+        formatted_context += f"• **Last Updated:** {context_data.get('updated_at', 'Unknown')}\n\n"
         
         # Add initial context if available
         if context_data.get('context'):
-            formatted_response["message_history"].append({
-                "role": "initial_context",
-                "timestamp": context_data.get('created_at', 'Unknown'),
-                "agent": "elva_initial",
-                "data": context_data.get('context')
-            })
+            formatted_context += f"🎯 **Initial Context:**\n"
+            initial_ctx = context_data.get('context', {})
+            for key, value in initial_ctx.items():
+                formatted_context += f"• **{key}:** {str(value)[:100]}{'...' if len(str(value)) > 100 else ''}\n"
+            formatted_context += "\n"
         
-        # Add all appends with proper formatting
-        for append in appends:
-            formatted_response["message_history"].append({
-                "role": "agent_result",
-                "timestamp": append.get('timestamp', 'Unknown'),
-                "agent": append.get('source', 'unknown'),
-                "data": append.get('output', {}),
-                "summary": append.get('output', {}).get('message', 'No message available')
-            })
+        # Add recent message history (last 5 entries)
+        if appends:
+            formatted_context += f"📝 **Recent Message History (Last {min(5, len(appends))} entries):**\n\n"
+            for i, append in enumerate(appends[-5:], 1):
+                formatted_context += f"**{i}.** **Agent:** {append.get('source', 'unknown')}\n"
+                formatted_context += f"   **Time:** {append.get('timestamp', 'Unknown')}\n"
+                
+                output = append.get('output', {})
+                if output.get('message'):
+                    message = str(output.get('message', ''))[:200]
+                    formatted_context += f"   **Message:** {message}{'...' if len(str(output.get('message', ''))) > 200 else ''}\n"
+                
+                if output.get('email_summary'):
+                    formatted_context += f"   **Email Summary:** {str(output.get('email_summary', ''))[:100]}...\n"
+                
+                formatted_context += "\n"
         
-        return formatted_response
+        if not appends and not context_data.get('context'):
+            formatted_context += "📝 **No message history found for this session.**\n"
+        
+        return {
+            "success": True,
+            "session_id": target_session,
+            "formatted_context": formatted_context,
+            "raw_data": {
+                "context_summary": {
+                    "initial_context": context_data.get('context', {}),
+                    "total_appends": len(appends),
+                    "last_updated": context_data.get('updated_at', 'Unknown')
+                },
+                "message_history": appends
+            }
+        }
         
     except Exception as e:
         logger.error(f"Admin debug context error: {e}")
