@@ -229,8 +229,8 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(user_msg.dict())
         logger.info(f"💾 Saved user message: {user_msg.id}")
         
-        # STEP 2: Check for Gmail-specific queries first using enhanced detection
-        gmail_result = await enhanced_gmail_service.process_gmail_query(
+        # STEP 2: Check for Gmail-specific queries first using NEW DeBERTa-based detection
+        gmail_result = await realtime_gmail_service.process_gmail_query(
             request.message, 
             request.session_id
         )
