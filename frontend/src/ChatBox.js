@@ -626,7 +626,10 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       }
       
       // Call admin debug endpoint with token
-      const response = await axios.get(`${API}/admin/debug/context/${targetSession}`, {
+      const response = await axios.post(`${API}/admin/debug/context`, {
+        command: inputMessage.toLowerCase().includes('show my context') ? 'show my context' : `show context for session ${targetSession}`,
+        session_id: targetSession
+      }, {
         headers: {
           'X-Debug-Token': 'elva-admin-debug-2024-secure'
         }
