@@ -1044,9 +1044,13 @@ async def gmail_auth_callback(code: str = None, state: str = None, error: str = 
         
         if result.get("authenticated", False):
             logger.info(f"🎉 Gmail authentication successful for session {session_id} - redirecting to frontend")
+            
+            # IMMEDIATE STATUS REFRESH: Clear any cached auth status and force refresh
+            await gmail_oauth_service.get_auth_status(session_id)  # This updates the cached status
+            
             # Redirect to frontend with success parameter
             return RedirectResponse(
-                url=f'https://2c9e3233-f27a-4ffd-bb9e-425436227b20.preview.emergentagent.com/?auth=success&service=gmail&session_id={session_id}',
+                url=f'https://2c9e3233-f27a-4ffd-bb9e-425436227b20.preview.emergentagent.com/?auth=success&service=gmail&session_id={session_id}&timestamp={int(datetime.utcnow().timestamp())}',
                 status_code=302
             )
         else:
