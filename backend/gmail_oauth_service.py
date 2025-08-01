@@ -540,5 +540,40 @@ class GmailOAuthService:
                 'requires_auth': True,
                 'error': str(e)
             }
+    
+    async def get_user_profile(self, session_id: str = None) -> Dict[str, Any]:
+        """Get Gmail user profile information for admin detection"""
+        try:
+            if not session_id:
+                session_id = self.current_session_id or 'default_session'
+            
+            # Check authentication
+            if not await self._authenticate(session_id):
+                return {
+                    'success': False,
+                    'message': 'Gmail authentication required',
+                    'requires_auth': True
+                }
+            
+            # Get user profile
+            profile = self.service.users().getProfile(userId='me').execute()
+            
+            return {
+                'success': True,
+                'email': profile.get('emailAddress'),
+                'name': profile.get('emailAddress'),  # Gmail API doesn't provide display name in profile
+                'messages_total': profile.get('messagesTotal', 0),
+                'threads_total': profile.get('threadsTotal', 0),
+                'history_id': profile.get('historyId'),
+                'session_id': session_id
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting user profile: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to get user profile'
+            }
 
 # Gmail OAuth service will be instantiated in server.py with database connection
