@@ -1,82 +1,273 @@
 {
-  "total_tests": 5,
-  "passed": 1,
-  "failed": 4,
-  "success_rate": 20.0,
+  "total_tests": 6,
+  "passed": 3,
+  "failed": 3,
+  "success_rate": 50.0,
   "results": [
     {
-      "test": "Cookie Detection - Gmail User",
+      "test": "Gmail Credentials Verification",
+      "success": false,
+      "details": "No gmail_integration section in health check",
+      "timestamp": "2025-08-01T11:46:46.221379",
+      "response_data": {
+        "status": "healthy",
+        "mongodb": "connected",
+        "mcp_integration": {
+          "status": "enabled",
+          "service_url": "https://elva-mcp-service.onrender.com",
+          "authentication": "configured",
+          "health_check": {
+            "success": true,
+            "health": {
+              "status": "healthy",
+              "service": "MCP (Model Context Protocol)",
+              "version": "1.0.0",
+              "databases": {
+                "mongodb": "connected",
+                "redis": "connected"
+              },
+              "endpoints": [
+                "POST /context/write",
+                "GET /context/read/{session_id}",
+                "POST /context/append",
+                "DELETE /context/{session_id}",
+                "GET /contexts/list",
+                "GET /health"
+              ],
+              "authentication": "Bearer token required",
+              "timestamp": "2025-08-01T11:46:46.087551"
+            }
+          },
+          "features": [
+            "context_write",
+            "context_read",
+            "context_append",
+            "redis_caching",
+            "mongodb_persistence",
+            "session_management",
+            "agent_result_storage"
+          ],
+          "endpoints": [
+            "/api/mcp/write-context",
+            "/api/mcp/read-context/{session_id}",
+            "/api/mcp/append-context"
+          ]
+        },
+        "gmail_api_integration": {
+          "status": "ready",
+          "oauth2_flow": "implemented",
+          "credentials_configured": true,
+          "authenticated": false,
+          "scopes": [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.compose",
+            "https://www.googleapis.com/auth/gmail.modify"
+          ],
+          "endpoints": [
+            "/api/gmail/auth",
+            "/api/gmail/callback",
+            "/api/gmail/status",
+            "/api/gmail/inbox",
+            "/api/gmail/send",
+            "/api/gmail/email/{id}"
+          ]
+        },
+        "advanced_gmail_integration": {
+          "version": "2.0_deberta_enhanced",
+          "intent_detection": "DeBERTa-v3-base + HuggingFace Inference API",
+          "fallback_model": "facebook/bart-large-mnli",
+          "confidence_threshold": 0.7,
+          "supported_intents": [
+            "gmail_inbox",
+            "gmail_summary",
+            "gmail_search",
+            "gmail_unread",
+            "general_query"
+          ],
+          "real_data_fetching": "enabled",
+          "features": [
+            "high_accuracy_intent_classification",
+            "real_gmail_data_only",
+            "no_placeholder_responses",
+            "instant_oauth_refresh",
+            "formatted_chat_responses",
+            "inbox_summary",
+            "email_search",
+            "unread_count",
+            "email_summarization"
+          ],
+          "classification_stats": {
+            "model": "microsoft/deberta-v3-base (via HuggingFace)",
+            "fallback_model": "facebook/bart-large-mnli",
+            "confidence_threshold": 0.7,
+            "supported_intents": [
+              "gmail_inbox",
+              "gmail_summary",
+              "gmail_search",
+              "gmail_unread",
+              "general_query"
+            ],
+            "training_examples_count": {
+              "gmail_inbox": 6,
+              "gmail_summary": 6,
+              "gmail_search": 6,
+              "gmail_unread": 6,
+              "general_query": 6
+            },
+            "api_configuration": {
+              "has_hf_token": false,
+              "api_endpoint": "https://api-inference.huggingface.co/"
+            }
+          }
+        },
+        "advanced_hybrid_ai_system": {
+          "version": "2.0",
+          "groq_api_key": "configured",
+          "claude_api_key": "configured",
+          "groq_model": "llama3-8b-8192",
+          "claude_model": "claude-3-5-sonnet-20241022",
+          "sophisticated_features": {
+            "task_classification": [
+              "primary_intent",
+              "emotional_complexity",
+              "professional_tone",
+              "creative_requirement",
+              "technical_complexity",
+              "response_length",
+              "user_engagement_level",
+              "context_dependency",
+              "reasoning_type"
+            ],
+            "routing_strategies": [
+              "intent_based",
+              "emotional_routing",
+              "professional_routing",
+              "creative_routing",
+              "sequential_execution",
+              "context_enhancement"
+            ],
+            "advanced_capabilities": [
+              "conversation_history_tracking",
+              "context_aware_responses",
+              "fallback_mechanisms",
+              "confidence_scoring",
+              "routing_explanation"
+            ]
+          },
+          "routing_models": {
+            "claude_tasks": [
+              "high_emotional",
+              "creative_content",
+              "conversational",
+              "professional_warm"
+            ],
+            "groq_tasks": [
+              "logical_reasoning",
+              "structured_analysis",
+              "technical_complex",
+              "intent_detection"
+            ],
+            "sequential_tasks": [
+              "professional_emails",
+              "complex_creative"
+            ],
+            "web_automation_tasks": [
+              "web_scraping",
+              "data_extraction"
+            ]
+          }
+        },
+        "n8n_webhook": "configured",
+        "playwright_service": {
+          "status": "available",
+          "browser": "chromium",
+          "capabilities": [
+            "dynamic_data_extraction",
+            "web_scraping"
+          ]
+        },
+        "conversation_memory_system": {
+          "status": "available",
+          "langchain_integration": "enabled",
+          "memory_types": [
+            "ConversationBufferMemory",
+            "ConversationSummaryBufferMemory"
+          ],
+          "features": [
+            "context_retention",
+            "conversation_summarization",
+            "intent_context_storage",
+            "memory_cleanup",
+            "mongodb_integration",
+            "redis_caching",
+            "native_mongodb_history",
+            "enhanced_fallback_messaging",
+            "memory_stats_api",
+            "early_api_key_validation"
+          ],
+          "max_token_limit": 1000,
+          "buffer_window_size": 10,
+          "memory_cleanup_interval_hours": 24,
+          "redis_integration": {
+            "enabled": true,
+            "url": "rediss://default:ARTGAAIjcDFjNWNlOTRjZDY5ODM0YTBjOTI2MTc3NzhmNzg3YzBkNnAxMA@brave-deer-5318.upstash.io:6379",
+            "ttl_seconds": 21600
+          },
+          "api_keys": {
+            "groq_configured": true,
+            "claude_configured": true
+          }
+        }
+      }
+    },
+    {
+      "test": "Gmail Authentication Flow",
       "success": true,
-      "details": "Valid Gmail cookies found for brainlyarpit8649@gmail.com. Cookie count: 24",
-      "timestamp": "2025-07-22T05:18:49.202795",
+      "details": "Valid Google OAuth URL generated with all required parameters",
+      "timestamp": "2025-08-01T11:46:46.746567",
       "response_data": null
     },
     {
-      "test": "Gmail Automation - Check Inbox (brainlyarpit8649)",
+      "test": "Gmail Status Check",
       "success": false,
-      "details": "Cookie authentication failed: Login failed for gmail - please recapture cookies",
-      "timestamp": "2025-07-22T05:19:15.532999",
+      "details": "Invalid redirect_uri: None",
+      "timestamp": "2025-08-01T11:46:47.733932",
       "response_data": {
-        "success": false,
-        "data": {},
-        "message": "Login failed for gmail - please recapture cookies",
-        "execution_time": 25.29127788543701
+        "success": true,
+        "credentials_configured": true,
+        "authenticated": false,
+        "session_id": "b193fa8b-16ac-49a4-a31f-182001117705",
+        "requires_auth": true,
+        "scopes": [
+          "https://www.googleapis.com/auth/gmail.readonly",
+          "https://www.googleapis.com/auth/gmail.send",
+          "https://www.googleapis.com/auth/gmail.compose",
+          "https://www.googleapis.com/auth/gmail.modify"
+        ],
+        "service": "gmail"
       }
     },
     {
-      "test": "Gmail Automation - Check Unread (brainlyarpit8649)",
+      "test": "Gmail Intent Detection",
       "success": false,
-      "details": "Cookie authentication failed: Login failed for gmail - please recapture cookies",
-      "timestamp": "2025-07-22T05:19:41.933587",
-      "response_data": {
-        "success": false,
-        "data": {},
-        "message": "Login failed for gmail - please recapture cookies",
-        "execution_time": 25.34209418296814
-      }
+      "details": "\u2705 Gmail inbox check: Gmail intent detected with auth prompt\n    \u274c Gmail email summary: Expected Gmail intent, got general_chat\n    \u2705 Gmail unread emails: Gmail intent detected with auth prompt\n    \u2705 Gmail new emails check: Gmail intent detected with auth prompt",
+      "timestamp": "2025-08-01T11:46:54.973106",
+      "response_data": null
     },
     {
-      "test": "Gmail Chat Interface - Check Inbox",
-      "success": false,
-      "details": "Direct execution failed or took too long. Success: False, Time: 25.320513s",
-      "timestamp": "2025-07-22T05:20:10.731380",
-      "response_data": {
-        "id": "a787c3a8-6cb8-4a06-8c95-057c0379e2a0",
-        "message": "Check my Gmail inbox for brainlyarpit8649@gmail.com",
-        "response": "\u274c Unable to check Gmail inbox: Unable to access Gmail - cookies may need refresh. Error: Login failed for gmail - please recapture cookies",
-        "intent_data": {
-          "intent": "check_gmail_inbox",
-          "user_email": "brainlyarpit8649@gmail.com",
-          "include_unread_only": false,
-          "automation_result": {},
-          "automation_success": false,
-          "execution_time": 25.320513,
-          "direct_automation": true
-        },
-        "needs_approval": false,
-        "timestamp": "2025-07-22T05:20:10.725356"
-      }
+      "test": "Chat Error Investigation",
+      "success": true,
+      "details": "Basic chat working correctly - Response: Hello! I'm Elva AI, your friendly and advanced AI assistant. I'm here to help you with any questions...",
+      "timestamp": "2025-08-01T11:46:58.740322",
+      "response_data": null
     },
     {
-      "test": "Gmail Chat Interface - Check Unread",
-      "success": false,
-      "details": "Direct execution failed or took too long. Success: False, Time: 25.320638s",
-      "timestamp": "2025-07-22T05:20:39.077278",
-      "response_data": {
-        "id": "c360f55b-d482-4f23-9641-ec890ed7c487",
-        "message": "Check Gmail unread emails for brainlyarpit8649@gmail.com",
-        "response": "\u274c Unable to check Gmail unread emails: Unable to access Gmail - cookies may need refresh. Error: Login failed for gmail - please recapture cookies",
-        "intent_data": {
-          "intent": "check_gmail_unread",
-          "user_email": "brainlyarpit8649@gmail.com",
-          "automation_result": {},
-          "automation_success": false,
-          "execution_time": 25.320638,
-          "direct_automation": true
-        },
-        "needs_approval": false,
-        "timestamp": "2025-07-22T05:20:39.072543"
-      }
+      "test": "Complete Gmail Pipeline",
+      "success": true,
+      "details": "Complete Gmail pipeline working: Intent detection \u2192 Authentication check \u2192 Response formatting",
+      "timestamp": "2025-08-01T11:47:00.967237",
+      "response_data": null
     }
   ]
 }
