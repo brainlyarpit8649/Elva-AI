@@ -13,6 +13,9 @@ from datetime import datetime
 import json
 import httpx
 
+# Import Langfuse for observability
+from langfuse import Langfuse
+
 # Import our enhanced hybrid AI system
 from advanced_hybrid_ai import detect_intent, generate_friendly_draft, handle_general_chat, advanced_hybrid_ai
 from webhook_handler import send_approved_action, send_to_n8n
@@ -34,6 +37,13 @@ from realtime_gmail_service import RealTimeGmailService
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Initialize Langfuse for observability
+langfuse = Langfuse(
+    public_key=os.environ.get('LANGFUSE_PUBLIC_KEY'),
+    secret_key=os.environ.get('LANGFUSE_SECRET_KEY'),
+    host=os.environ.get('LANGFUSE_HOST', 'https://us.cloud.langfuse.com')
+)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
