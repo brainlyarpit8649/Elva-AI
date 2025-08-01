@@ -78,3 +78,4 @@ tokenizers>=0.21.0
 jiter>=0.10.0
 pyparsing
 uritemplate
+langfuse>=2.0.0
