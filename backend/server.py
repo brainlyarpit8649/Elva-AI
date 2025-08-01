@@ -626,10 +626,13 @@ async def enhanced_chat(request: ChatRequest):
         logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
         
         # SPAN 1: User Message Processing
-        user_message_span = trace.span(
-            name="user_message_processing",
-            input={"message": request.message, "session_id": request.session_id}
-        )
+        if trace:
+            user_message_span = trace.span(
+                name="user_message_processing",
+                input={"message": request.message, "session_id": request.session_id}
+            )
+        else:
+            user_message_span = None
         
         # STEP 1: Save user message immediately for proper conversation history
         user_msg = UserMessage(
