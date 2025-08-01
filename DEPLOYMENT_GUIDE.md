@@ -180,7 +180,7 @@ curl https://your-mcp-service.railway.app/context/read/test-123 \
 ### Test SuperAGI Integration
 ```bash
 # Test Elva → SuperAGI connection
-curl -X POST https://ed8496b4-5695-4758-b114-60d76b6cfc3b.preview.emergentagent.com/api/superagi/run-task \
+curl -X POST https://3f972ebc-340d-4044-8347-235179bd9a5e.preview.emergentagent.com/api/superagi/run-task \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "test-session",
