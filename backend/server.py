@@ -102,22 +102,10 @@ class MCPContextRequest(BaseModel):
 def convert_objectid_to_str(doc):
     """Convert MongoDB ObjectId to string for JSON serialization"""
     if isinstance(doc, dict):
-        new_doc = {}
-        for key, value in doc.items():
-            if key == '_id':
-                # Skip MongoDB's _id field
-                continue
-            elif hasattr(value, 'binary') or str(type(value)) == "<class 'bson.objectid.ObjectId'>":
-                # This is likely an ObjectId
-                new_doc[key] = str(value)
-            elif isinstance(value, dict):
-                new_doc[key] = convert_objectid_to_str(value)
-            elif isinstance(value, list):
-                new_doc[key] = [convert_objectid_to_str(item) if isinstance(item, dict) else str(item) if hasattr(item, 'binary') else item for item in value]
-            else:
-                new_doc[key] = value
-        return new_doc
-    elif hasattr(doc, 'binary') or str(type(doc)) == "<class 'bson.objectid.ObjectId'>":
+        return {key: convert_objectid_to_str(value) for key, value in doc.items()}
+    elif isinstance(doc, list):
+        return [convert_objectid_to_str(item) for item in doc]
+    elif hasattr(doc, '__dict__'):
         return str(doc)
     else:
         return doc
@@ -125,55 +113,90 @@ def convert_objectid_to_str(doc):
 def format_admin_context_display(session_id: str, context_data: dict) -> str:
     """Format MCP context data for admin debugging display"""
     try:
-        formatted = f"🧠 **MCP Context for Session: {session_id}**\n\n"
+        formatted = f"🧠 **Stored Context for Session: {session_id}**\n\n"
         
         if not context_data:
             return formatted + "No context data available."
         
-        # Display basic session info
-        if 'session_id' in context_data:
-            formatted += f"**Session ID:** {context_data['session_id']}\n"
-        if 'user_id' in context_data:
-            formatted += f"**User ID:** {context_data['user_id']}\n"
-        if 'timestamp' in context_data:
-            formatted += f"**Last Updated:** {context_data['timestamp']}\n\n"
+        # Extract main context and appends
+        main_context = context_data.get('context', {})
+        appends = context_data.get('appends', [])
         
-        # Display conversation history
-        if 'conversation_history' in context_data:
-            history = context_data['conversation_history']
-            formatted += f"**📝 Conversation History ({len(history)} messages):**\n"
-            for i, msg in enumerate(history[-5:], 1):  # Show last 5 messages
-                user_msg = msg.get('user_message', 'N/A')[:100]
-                ai_response = msg.get('ai_response', 'N/A')[:100]
-                formatted += f"{i}. User: {user_msg}...\n   AI: {ai_response}...\n"
+        # Display session info
+        formatted += f"**📋 Session Info:**\n"
+        formatted += f"• Session ID: {context_data.get('session_id', 'N/A')}\n"
+        formatted += f"• Last Updated: {context_data.get('last_updated', 'N/A')}\n"
+        formatted += f"• Total Appends: {context_data.get('total_appends', 0)}\n\n"
+        
+        # Display main conversation context
+        if main_context and 'data' in main_context:
+            context_info = main_context['data']
+            
+            # Show chat history
+            chat_history = context_info.get('chat_history', [])
+            if chat_history:
+                formatted += f"**💬 Chat Messages ({len(chat_history)}):**\n"
+                for i, msg in enumerate(chat_history[-5:], 1):  # Last 5 messages
+                    role = msg.get('role', 'unknown').title()
+                    content = msg.get('content', '')[:80] + ('...' if len(msg.get('content', '')) > 80 else '')
+                    timestamp = msg.get('timestamp', '')
+                    if timestamp:
+                        try:
+                            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                            time_str = dt.strftime('%I:%M %p')
+                        except:
+                            time_str = timestamp[:8]  # Fallback
+                    else:
+                        time_str = 'N/A'
+                    formatted += f"{i}️⃣ [{role}] \"{content}\" ({time_str})\n"
+                formatted += "\n"
+            
+            # Show intent information
+            if 'intent_data' in context_info:
+                intent_data = context_info['intent_data']
+                formatted += f"**🎯 Current Intent:**\n"
+                formatted += f"• Intent: {intent_data.get('intent', 'N/A')}\n"
+                formatted += f"• Confidence: {intent_data.get('confidence', 'N/A')}\n\n"
+        
+        # Display agent results (appends)
+        if appends:
+            formatted += f"**🤖 Agent Results ({len(appends)}):**\n"
+            for i, append in enumerate(appends[-3:], 1):  # Last 3 agent results
+                source = append.get('source', 'unknown').title()
+                output = append.get('output', {})
+                timestamp = append.get('timestamp', '')
+                
+                if timestamp:
+                    try:
+                        dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                        time_str = dt.strftime('%I:%M %p')
+                    except:
+                        time_str = timestamp[:8]
+                else:
+                    time_str = 'N/A'
+                
+                # Summarize output
+                output_summary = "No output"
+                if output:
+                    if isinstance(output, dict):
+                        keys = list(output.keys())[:3]
+                        output_summary = f"Data with keys: {', '.join(keys)}"
+                    else:
+                        output_summary = str(output)[:60] + ('...' if len(str(output)) > 60 else '')
+                
+                formatted += f"{i}️⃣ [Agent:{source}] \"{output_summary}\" ({time_str})\n"
             formatted += "\n"
         
-        # Display intents and routing info
-        if 'intents' in context_data:
-            intents = context_data['intents']
-            formatted += f"**🎯 Recent Intents ({len(intents)}):**\n"
-            for intent in intents[-3:]:  # Show last 3 intents
-                formatted += f"• {intent.get('intent', 'unknown')} (confidence: {intent.get('confidence', 'N/A')})\n"
-            formatted += "\n"
-        
-        # Display agent results
-        if 'agent_results' in context_data:
-            results = context_data['agent_results']
-            formatted += f"**🤖 Agent Results ({len(results)}):**\n"
-            for result in results[-2:]:  # Show last 2 results
-                source = result.get('source', 'unknown')
-                status = result.get('execution_status', 'unknown')
-                formatted += f"• {source}: {status}\n"
-            formatted += "\n"
-        
-        # Display raw data summary
-        formatted += f"**📊 Raw Data Keys:** {', '.join(context_data.keys())}\n"
-        formatted += f"**💾 Total Data Size:** ~{len(str(context_data))} characters"
+        # Display summary
+        formatted += f"**📊 Summary:**\n"
+        formatted += f"• Total Messages: {len(chat_history) if 'chat_history' in locals() else 'N/A'}\n"
+        formatted += f"• Agent Interactions: {len(appends)}\n"
+        formatted += f"• Context Size: ~{len(str(context_data))} characters"
         
         return formatted
         
     except Exception as e:
-        return f"🧠 **MCP Context for Session: {session_id}**\n\n❌ Error formatting context: {str(e)}"
+        return f"🧠 **Stored Context for Session: {session_id}**\n\n❌ Error formatting context: {str(e)}"
 
 # Routes
 @api_router.post("/chat", response_model=ChatResponse)
