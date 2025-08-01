@@ -27,9 +27,6 @@ def safe_trace_operation(trace_obj, operation, *args, **kwargs):
 # Import Langfuse for observability
 from langfuse import Langfuse
 
-# Import Langfuse for observability
-from langfuse import Langfuse
-
 # Import our enhanced hybrid AI system
 from advanced_hybrid_ai import detect_intent, generate_friendly_draft, handle_general_chat, advanced_hybrid_ai
 from webhook_handler import send_approved_action, send_to_n8n
