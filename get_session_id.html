@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get Your Elva AI Session ID</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: #fff; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .session-box { background: #2a2a2a; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .session-id { font-family: monospace; font-size: 18px; color: #00ff88; word-break: break-all; }
+        button { background: #00ff88; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #00cc6a; }
+        .instructions { background: #333; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Get Your Elva AI Session ID</h1>
+        
+        <div class="session-box">
+            <h2>Your Current Session ID:</h2>
+            <div class="session-id" id="sessionId">Loading...</div>
+            <button onclick="copySessionId()">📋 Copy Session ID</button>
+            <button onclick="checkMCPStorage()">🧠 Check MCP Storage</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>💡 How to Use This Session ID:</h3>
+            <p><strong>Method 1:</strong> Type in Elva AI chat: <code>show my context</code></p>
+            <p><strong>Method 2:</strong> Use API call with your session ID</p>
+            <p><strong>Method 3:</strong> Use our Python script: <code>python /app/check_mcp.py YOUR_SESSION_ID</code></p>
+        </div>
+        
+        <div id="mcpResult" style="display: none;">
+            <h3>🧠 MCP Storage Result:</h3>
+            <pre id="mcpData" style="background: #1a1a1a; padding: 15px; border-radius: 8px; overflow-x: auto;"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Get session ID from localStorage
+        function getSessionId() {
+            const sessionId = localStorage.getItem('elva-session-id');
+            if (sessionId) {
+                document.getElementById('sessionId').textContent = sessionId;
+                return sessionId;
+            } else {
+                document.getElementById('sessionId').textContent = 'No session ID found. Please visit Elva AI first.';
+                return null;
+            }
+        }
+        
+        // Copy session ID to clipboard
+        function copySessionId() {
+            const sessionId = document.getElementById('sessionId').textContent;
+            if (sessionId && sessionId !== 'No session ID found. Please visit Elva AI first.' && sessionId !== 'Loading...') {
+                navigator.clipboard.writeText(sessionId).then(() => {
+                    alert('✅ Session ID copied to clipboard!');
+                });
+            }
+        }
+        
+        // Check MCP storage
+        async function checkMCPStorage() {
+            const sessionId = getSessionId();
+            if (!sessionId) {
+                alert('❌ No session ID found. Please visit Elva AI first.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`https://b048af7a-e4e0-40c9-adb7-9aecb5206fca.preview.emergentagent.com/api/admin/debug/context?session_id=${sessionId}&command=show_context`, {
+                    method: 'GET',
+                    headers: {
+                        'x-debug-token': 'elva-admin-debug-2024-secure'
+                    }
+                });
+                
+                const data = await response.json();
+                document.getElementById('mcpResult').style.display = 'block';
+                document.getElementById('mcpData').textContent = JSON.stringify(data, null, 2);
+                
+                // Scroll to result
+                document.getElementById('mcpResult').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                alert('❌ Error checking MCP storage: ' + error.message);
+            }
+        }
+        
+        // Initialize on page load
+        window.onload = function() {
+            // If this page is loaded from the same origin, we can access localStorage
+            if (window.location.hostname === 'b048af7a-e4e0-40c9-adb7-9aecb5206fca.preview.emergentagent.com') {
+                getSessionId();
+            } else {
+                document.getElementById('sessionId').innerHTML = 
+                    'Please open this page from your Elva AI domain:<br>' +
+                    '<a href="https://b048af7a-e4e0-40c9-adb7-9aecb5206fca.preview.emergentagent.com" target="_blank">' +
+                    'https://b048af7a-e4e0-40c9-adb7-9aecb5206fca.preview.emergentagent.com</a>';
+            }
+        };
+    </script>
+</body>
+</html>
