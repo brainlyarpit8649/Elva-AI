@@ -325,8 +325,10 @@ async def enhanced_chat(request: ChatRequest):
                     summary = n8n_data.get("summary", "Email summary received from n8n workflow")
                     response_text = f"📧 **Gmail Summary (Last {limit} emails):**\n\n{summary}"
                     intent_data = {
-                        "intent": "gmail_summarize_to_chat",
-                        "limit": limit,
+                        "intent": "summarize_to_chat",
+                        "count": limit,
+                        "time_filter": "latest", 
+                        "include_unread_only": False,
                         "summary": summary,
                         "n8n_response": n8n_data
                     }
