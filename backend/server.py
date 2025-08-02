@@ -240,18 +240,24 @@ def format_admin_debug_context(context_data: dict, session_id: str) -> str:
 # Routes
 @api_router.post("/chat", response_model=ChatResponse)
 async def enhanced_chat(request: ChatRequest):
-    """Enhanced chat endpoint with MCP context awareness and Gmail summarization support"""
+    """Enhanced chat endpoint with comprehensive message memory and Gmail summarization support"""
     try:
         logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
         
-        # STEP 1: Save user message immediately for proper conversation history
+        # Import message memory functions
+        from message_memory import save_message, get_conversation_context_for_ai
+        
+        # STEP 1: Save user message IMMEDIATELY for comprehensive conversation history
+        await save_message(request.session_id, "user", request.message)
+        
+        # Also save to enhanced chat collection for compatibility 
         user_msg = UserMessage(
             session_id=request.session_id,
             user_id=request.user_id,
             message=request.message
         )
         await db.chat_messages.insert_one(user_msg.dict())
-        logger.info(f"💾 Saved user message: {user_msg.id}")
+        logger.info(f"💾 Saved user message to both systems: {user_msg.id}")
         
         # STEP 2: Check for Gmail summarization intents first
         user_msg_lower = request.message.lower().strip()
