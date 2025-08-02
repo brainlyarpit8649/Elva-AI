@@ -259,7 +259,9 @@ async def enhanced_chat(request: ChatRequest):
         # Gmail summarization intent detection
         if any(phrase in user_msg_lower for phrase in [
             "summarize my emails", "summarize my last", "summarize emails", 
-            "email summary", "summarize my gmail", "summarize my inbox"
+            "summarise my emails", "summarise my last", "summarise emails",
+            "email summary", "summarize my gmail", "summarize my inbox",
+            "summarise my gmail", "summarise my inbox"
         ]):
             # Extract number of emails to summarize (default to 4)
             import re
