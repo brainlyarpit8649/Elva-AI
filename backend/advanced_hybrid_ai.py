@@ -827,26 +827,36 @@ Return ONLY the JSON object."""
 
     async def process_message(self, user_input: str, session_id: str) -> Tuple[dict, str, RoutingDecision]:
         """
-        Enhanced message processing with MCP context management integration.
+        Enhanced message processing with comprehensive conversation memory integration.
         
         Args:
             user_input: User's input message
-            session_id: Session identifier for MCP context retrieval
+            session_id: Session identifier for context retrieval
             
         Returns:
             Tuple of (intent_data, response_text, routing_decision)
         """
-        logger.info(f"🚀 Processing message with MCP context: {user_input[:50]}...")
+        logger.info(f"🚀 Processing message with full conversation context: {user_input[:50]}...")
         
         try:
-            # Get MCP context for enhanced responses
+            # Get comprehensive conversation context from message_memory
+            try:
+                from message_memory import get_conversation_context_for_ai
+                full_conversation_context = await get_conversation_context_for_ai(session_id)
+                logger.info(f"📚 Retrieved FULL conversation context: {len(full_conversation_context)} chars")
+            except Exception as e:
+                logger.warning(f"Could not retrieve full conversation context: {e}")
+                full_conversation_context = ""
+            
+            # Also get MCP context for additional context
             try:
                 mcp_service = get_mcp_service()
-                conversation_context = await mcp_service.get_context_for_prompt(session_id)
-                logger.info(f"📚 Retrieved MCP context: {len(conversation_context)} chars")
+                mcp_context = await mcp_service.get_context_for_prompt(session_id)
+                if mcp_context:
+                    full_conversation_context += f"\n\n=== ADDITIONAL MCP CONTEXT ===\n{mcp_context}"
+                logger.info(f"📚 Added MCP context to full conversation context")
             except Exception as e:
                 logger.warning(f"Could not retrieve MCP context: {e}")
-                conversation_context = ""
             
             # Step 1: Advanced task classification with context
             classification = await self.analyze_task_classification(user_input, session_id)
@@ -860,15 +870,15 @@ Return ONLY the JSON object."""
             logger.info(f"🧠 Classification: {classification.primary_intent} | Routing: {routing_decision.primary_model.value} | Confidence: {routing_decision.confidence:.2f}")
             logger.info(f"💡 Reasoning: {routing_decision.reasoning}")
             
-            # Step 4: Execute routing decision with context
+            # Step 4: Execute routing decision with FULL conversation context
             try:
                 if routing_decision.primary_model == ModelChoice.BOTH_SEQUENTIAL:
-                    intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id)
+                    intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id, full_conversation_context)
                 elif routing_decision.primary_model == ModelChoice.CLAUDE:
-                    # Claude for warm, contextual responses
+                    # Claude for warm, contextual responses with FULL context
                     enhanced_prompt = user_input
-                    if routing_decision.use_context_enhancement and conversation_context:
-                        enhanced_prompt = f"Context: {conversation_context}\n\nCurrent request: {user_input}"
+                    if routing_decision.use_context_enhancement and full_conversation_context:
+                        enhanced_prompt = f"{full_conversation_context}\n\nCurrent request: {user_input}"
                     
                     system_message = self._generate_claude_system_message(classification, {"intent": classification.primary_intent})
                     response_text = await self._get_claude_response(enhanced_prompt, system_message)
@@ -876,10 +886,10 @@ Return ONLY the JSON object."""
                 else:  # Groq
                     intent_data = await self._groq_intent_detection(user_input)
                     if intent_data.get("intent") == "general_chat":
-                        # Fallback to Claude for general chat with context
+                        # Fallback to Claude for general chat with FULL context
                         enhanced_prompt = user_input
-                        if conversation_context:
-                            enhanced_prompt = f"Context: {conversation_context}\n\nCurrent request: {user_input}"
+                        if full_conversation_context:
+                            enhanced_prompt = f"{full_conversation_context}\n\nCurrent request: {user_input}"
                         response_text = await self._get_claude_response(enhanced_prompt)
                     else:
                         # Use Groq for structured response
