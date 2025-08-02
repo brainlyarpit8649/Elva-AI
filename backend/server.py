@@ -955,6 +955,64 @@ async def gmail_get_email(email_id: str):
         logger.error(f"Gmail get email error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Message Memory Management endpoints
+@api_router.get("/message-memory/stats/{session_id}")
+async def get_message_memory_stats(session_id: str):
+    """Get comprehensive message memory statistics for a session"""
+    try:
+        from message_memory import get_memory_stats, get_conversation_history
+        stats = await get_memory_stats(session_id)
+        
+        # Also get recent conversation preview
+        recent_messages = await get_conversation_history(session_id, limit=5)
+        stats["recent_messages_preview"] = recent_messages
+        
+        return stats
+    except Exception as e:
+        logger.error(f"Message memory stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/message-memory/full-context/{session_id}")
+async def get_full_conversation_context(session_id: str):
+    """Get full conversation context for debugging conversation memory"""
+    try:
+        from message_memory import get_conversation_context_for_ai, get_conversation_history
+        
+        full_context = await get_conversation_context_for_ai(session_id)
+        all_messages = await get_conversation_history(session_id)
+        
+        return {
+            "session_id": session_id,
+            "total_messages": len(all_messages),
+            "full_context": full_context,
+            "all_messages": all_messages
+        }
+    except Exception as e:
+        logger.error(f"Full context retrieval error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/message-memory/search/{session_id}")
+async def search_message_memory(session_id: str, request: dict):
+    """Search through message memory for specific content"""
+    try:
+        from message_memory import search_conversation_memory
+        
+        search_query = request.get("query", "")
+        if not search_query:
+            raise HTTPException(status_code=400, detail="Search query is required")
+        
+        results = await search_conversation_memory(session_id, search_query)
+        
+        return {
+            "session_id": session_id,
+            "search_query": search_query,
+            "results_found": len(results),
+            "matching_messages": results
+        }
+    except Exception as e:
+        logger.error(f"Message memory search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Memory management endpoints
 @api_router.post("/conversation-memory/cleanup")
 async def cleanup_old_conversation_memories():
