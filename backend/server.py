@@ -427,7 +427,10 @@ async def enhanced_chat(request: ChatRequest):
             # STEP 4: Regular chat processing with MCP context awareness
             response_text, intent_data, needs_approval = await process_regular_chat(request)
         
-        # STEP 5: Save AI response message for proper conversation history
+        # STEP 5: Save AI response message to BOTH memory systems for comprehensive conversation history
+        from message_memory import save_message
+        await save_message(request.session_id, "assistant", response_text)
+        
         ai_msg = AIMessage(
             session_id=request.session_id,
             user_id=request.user_id,
@@ -436,7 +439,7 @@ async def enhanced_chat(request: ChatRequest):
             is_system=intent_data.get('intent') in ['gmail_auth_required', 'error', 'no_pending_package']
         )
         await db.chat_messages.insert_one(ai_msg.dict())
-        logger.info(f"💾 Saved AI response message: {ai_msg.id}")
+        logger.info(f"💾 Saved AI response to both memory systems: {ai_msg.id}")
         
         final_response = ChatResponse(
             id=ai_msg.id,
