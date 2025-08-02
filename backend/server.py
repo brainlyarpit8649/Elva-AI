@@ -448,19 +448,28 @@ async def enhanced_chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def process_regular_chat(request: ChatRequest):
-    """Process regular chat with MCP context awareness"""
+    """Process regular chat with comprehensive message memory"""
     try:
-        # Read existing context from MCP for better AI responses
+        # Import message memory functions
+        from message_memory import get_conversation_context_for_ai, search_conversation_memory
+        
+        # Get FULL conversation context for better AI responses
         previous_context = ""
         try:
+            # Get complete conversation history for context
+            previous_context = await get_conversation_context_for_ai(request.session_id)
+            logger.info(f"📖 Retrieved full conversation context for session: {request.session_id}")
+            
+            # Also get MCP context for additional context
             context_result = await mcp_service.read_context(request.session_id)
             if context_result.get("success") and context_result.get("context"):
-                previous_context = await mcp_service.get_context_for_prompt(request.session_id)
-                logger.info(f"📖 Retrieved context from MCP for session: {request.session_id}")
-            else:
-                logger.info(f"📭 No previous context found in MCP for session: {request.session_id}")
+                mcp_context = await mcp_service.get_context_for_prompt(request.session_id)
+                if mcp_context:
+                    previous_context += f"\n\n=== ADDITIONAL CONTEXT ===\n{mcp_context}"
+                logger.info(f"📖 Added MCP context for session: {request.session_id}")
+                
         except Exception as context_error:
-            logger.warning(f"⚠️ Error reading context from MCP: {context_error}")
+            logger.warning(f"⚠️ Error reading conversation context: {context_error}")
             previous_context = ""
         
         # Check if this is a send confirmation for a pending post prompt package
