@@ -294,9 +294,11 @@ async def enhanced_chat(request: ChatRequest):
                     if n8n_result.get("success"):
                         response_text = f"✅ Gmail summary of your last {limit} emails has been sent to {to_email}!"
                         intent_data = {
-                            "intent": "gmail_summarize_and_send_email",
-                            "limit": limit,
-                            "toEmail": to_email,
+                            "intent": "summarize_and_send_email",
+                            "count": limit,
+                            "time_filter": "latest",
+                            "include_unread_only": False,
+                            "user_email": to_email,
                             "n8n_response": n8n_result.get("data")
                         }
                     else:
