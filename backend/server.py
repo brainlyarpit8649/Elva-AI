@@ -853,7 +853,13 @@ async def get_automation_status(automation_id: str):
 async def gmail_auth():
     """Initiate Gmail OAuth2 authentication"""
     try:
-        auth_url = await gmail_oauth_service.get_auth_url()
+        auth_result = gmail_oauth_service.get_auth_url()
+        if not auth_result.get('success'):
+            logger.error(f"Gmail auth failed: {auth_result.get('message')}")
+            raise HTTPException(status_code=500, detail=auth_result.get('message'))
+        
+        auth_url = auth_result.get('auth_url')
+        logger.info(f"✅ Gmail auth URL generated: {auth_url}")
         return RedirectResponse(url=auth_url)
     except Exception as e:
         logger.error(f"Gmail auth error: {e}")
