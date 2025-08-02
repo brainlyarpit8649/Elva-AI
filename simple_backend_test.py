@@ -7,7 +7,7 @@ import requests
 import json
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://19b8d7ed-69d2-4a9e-b891-59d19f96fbc4.preview.emergentagent.com/api"
+BACKEND_URL = "https://b048af7a-e4e0-40c9-adb7-9aecb5206fca.preview.emergentagent.com/api"
 
 def test_health_endpoint():
     """Test health endpoint"""
