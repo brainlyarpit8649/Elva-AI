@@ -453,16 +453,18 @@ Be precise and consider nuances in the request and any context from previous mes
             logger.error(f"Enhanced Groq API error: {e}")
             return "⚠️ I'm experiencing technical difficulties with my reasoning engine. Please try again."
 
-    async def _execute_sequential_routing(self, user_input: str, classification: TaskClassification, session_id: str) -> Tuple[dict, str]:
-        """Execute sequential routing: Groq → Claude with content synchronization"""
-        logger.info("🔄 Sequential Routing: Groq → Claude (Content Synchronized)")
+    async def _execute_sequential_routing(self, user_input: str, classification: TaskClassification, session_id: str, full_conversation_context: str = "") -> Tuple[dict, str]:
+        """Execute sequential routing: Groq → Claude with content synchronization and full context"""
+        logger.info("🔄 Sequential Routing: Groq → Claude (Content Synchronized with Full Context)")
         
         # Step 1: Groq for intent detection and basic structure
         intent_data = await self._groq_intent_detection(user_input)
         
-        # Step 2: Claude for content generation with explicit content extraction
+        # Step 2: Claude for content generation with full conversation context
         enhanced_prompt = user_input
-        if classification.context_dependency != "none":
+        if full_conversation_context:
+            enhanced_prompt = f"{full_conversation_context}\n\nCurrent request: {user_input}"
+        elif classification.context_dependency != "none":
             enhanced_prompt = await self._get_context_enhanced_prompt(user_input, session_id)
         
         # Generate Claude response with content extraction instructions
