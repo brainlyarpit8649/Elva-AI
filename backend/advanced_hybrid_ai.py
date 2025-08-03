@@ -981,7 +981,7 @@ Return ONLY the JSON object."""
             logger.info(f"🧠 Classification: {classification.primary_intent} | Routing: {routing_decision.primary_model.value} | Confidence: {routing_decision.confidence:.2f}")
             logger.info(f"💡 Reasoning: {routing_decision.reasoning}")
             
-            # Step 4: Execute routing decision with FULL conversation context
+            # Step 6: Execute routing decision with FULL conversation context
             try:
                 if routing_decision.primary_model == ModelChoice.BOTH_SEQUENTIAL:
                     intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id, full_conversation_context)
