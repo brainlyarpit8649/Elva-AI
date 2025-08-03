@@ -1122,19 +1122,47 @@ async def whatsapp_mcp_handler(
                 }
             )
         
+        # Extract message with flexible field names (like mcp_service.py)
         session_id = request.get('session_id')
-        message = request.get('message')
+        message = (
+            request.get('message') or 
+            request.get('text') or 
+            request.get('query') or 
+            request.get('content') or
+            ""
+        )
         user_id = request.get('user_id', 'whatsapp_user')
         
-        if not session_id or not message:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "missing_fields",
-                    "message": "Both session_id and message are required",
-                    "received": {"session_id": session_id, "message": message}
-                }
-            )
+        # Handle connection test cases - more flexible for Puch AI
+        if not session_id and not message:
+            logger.info("🔄 WhatsApp MCP - Empty payload connection test")
+            return {
+                "status": "ok", 
+                "message": "MCP connection successful - ready for messages",
+                "service": "WhatsApp MCP Integration",
+                "platform": "whatsapp",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Set defaults for missing fields (more lenient)
+        if not session_id:
+            session_id = f"test_session_{int(datetime.utcnow().timestamp())}"
+        
+        if not message:
+            message = "Hello! Connection test successful."
+        
+        # Handle simple connection test messages (expanded list)
+        test_messages = ["test", "hello", "ping", "connection test", "", "hi", "check"]
+        if message.lower() in test_messages:
+            logger.info(f"🔄 WhatsApp MCP - Simple connection test: {message}")
+            return {
+                "status": "ok",
+                "message": "MCP connection successful! WhatsApp integration is ready.",
+                "session_id": session_id,
+                "platform": "whatsapp",
+                "integrations": ["gmail", "weather", "general_chat"],
+                "timestamp": datetime.utcnow().isoformat()
+            }
         
         logger.info(f"📱 WhatsApp MCP Message - Session: {session_id}, Message: {message[:100]}...")
         
