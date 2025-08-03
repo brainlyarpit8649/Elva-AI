@@ -194,7 +194,7 @@ def _apply_current_weather_template(raw_data: dict, location: str, username: str
     
     return response
 
-async def get_weather_forecast(location: str, days: int = 3, username: str = None) -> Optional[str]:
+async def get_weather_forecast(location: str, days: int = 3, username: str = None, conversation_context: str = None) -> Optional[str]:
     """
     Fetches weather forecast for next N days (up to 7) using Tomorrow.io API
     and returns a friendly, readable summary with enhanced rain detection.
@@ -210,8 +210,8 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
     cached_result = cache.get(cache_key)
     if cached_result and is_cache_valid(cached_result):
         logger.info(f"🚀 Returning cached forecast for {location}")
-        # Re-apply friendly template with username for cached results
-        return _apply_forecast_template(cached_result.get('raw_data', {}), location, days, username)
+        # Re-apply friendly template with username and context for cached results
+        return _apply_forecast_template(cached_result.get('raw_data', {}), location, days, username, conversation_context)
 
     try:
         params = {
@@ -270,10 +270,15 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
             tomorrow_date = datetime.now() + timedelta(days=1)
             tomorrow_formatted = tomorrow_date.strftime("%A, %B %d, %Y")
             
+            # Check conversation context for previous weather questions
+            context_reference = ""
+            if conversation_context and any(phrase in conversation_context.lower() for phrase in ["weather", "forecast", "rain", "temperature"]):
+                context_reference = "\n💭 **Following up on your weather inquiry:** "
+            
             # Enhanced rain tomorrow template with comprehensive bullet points
             if will_rain:
                 response = (
-                    f"☔ **Rain Expected Tomorrow in {actual_location}**\n\n"
+                    f"☔ **Rain Expected Tomorrow in {actual_location}**{context_reference}\n\n"
                     f"Hey {username or 'friend'}! Yes, rain is likely tomorrow ({tomorrow_formatted}). Here are the detailed conditions:\n\n"
                     f"**🌧️ Rain Forecast Details:**\n"
                     f"• ☔ **Rain Probability:** {rain_chance}% chance of precipitation\n"
@@ -294,7 +299,7 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
                 )
             else:
                 response = (
-                    f"☀️ **No Rain Expected Tomorrow in {actual_location}**\n\n"
+                    f"☀️ **No Rain Expected Tomorrow in {actual_location}**{context_reference}\n\n"
                     f"Great news {username or 'friend'}! It should stay dry tomorrow ({tomorrow_formatted}). Here are the conditions:\n\n"
                     f"**🌤️ Clear Weather Details:**\n"
                     f"• ☀️ **Rain Probability:** Only {rain_chance}% chance of precipitation - Very unlikely!\n"
@@ -327,7 +332,7 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
             return response
 
         # Regular forecast display for multiple days
-        result = _apply_forecast_template(raw_forecast_data, actual_location, days, username)
+        result = _apply_forecast_template(raw_forecast_data, actual_location, days, username, conversation_context)
 
         # Cache the result
         cache[cache_key] = {
