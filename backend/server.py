@@ -1064,6 +1064,354 @@ async def clear_conversation_memory(session_id: str):
         logger.error(f"Clear conversation memory error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# WhatsApp MCP Integration Endpoint
+@api_router.post("/mcp")
+async def whatsapp_mcp_handler(
+    request: dict,
+    token: str = None,
+    authorization: str = Header(None)
+):
+    """
+    WhatsApp MCP Integration Handler
+    Processes WhatsApp messages through existing Elva AI chat pipeline
+    
+    Supports token authentication via:
+    - Query parameter: ?token=<TOKEN>
+    - Authorization header: Bearer <TOKEN>
+    
+    Expected payload: {"session_id": "...", "message": "..."}
+    """
+    try:
+        # Extract and validate authentication token
+        auth_token = None
+        
+        # Check query parameter first
+        if hasattr(request, 'query_params') and 'token' in request.query_params:
+            auth_token = request.query_params.get('token')
+        elif token:
+            auth_token = token
+        
+        # Check Authorization header
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]  # Remove 'Bearer ' prefix
+            else:
+                auth_token = authorization
+        
+        # Validate token
+        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
+        if not auth_token or auth_token != expected_token:
+            logger.warning(f"🚫 WhatsApp MCP - Invalid token: {auth_token}")
+            raise HTTPException(
+                status_code=401, 
+                detail={
+                    "error": "invalid_token",
+                    "message": "Invalid or missing MCP API token",
+                    "expected_format": "Bearer <token> in header or ?token=<token> in query"
+                }
+            )
+        
+        # Validate request payload
+        if not isinstance(request, dict):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "invalid_payload",
+                    "message": "Request must be a JSON object",
+                    "expected_format": '{"session_id": "...", "message": "..."}'
+                }
+            )
+        
+        session_id = request.get('session_id')
+        message = request.get('message')
+        user_id = request.get('user_id', 'whatsapp_user')
+        
+        if not session_id or not message:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "missing_fields",
+                    "message": "Both session_id and message are required",
+                    "received": {"session_id": session_id, "message": message}
+                }
+            )
+        
+        logger.info(f"📱 WhatsApp MCP Message - Session: {session_id}, Message: {message[:100]}...")
+        
+        # Create ChatRequest object for existing pipeline
+        chat_request = ChatRequest(
+            message=message,
+            session_id=f"whatsapp_{session_id}",  # Prefix to distinguish WhatsApp sessions
+            user_id=user_id
+        )
+        
+        # Process through existing enhanced chat pipeline
+        chat_response = await enhanced_chat(chat_request)
+        
+        # Log WhatsApp conversation in MongoDB
+        whatsapp_log = {
+            "id": str(uuid.uuid4()),
+            "platform": "whatsapp",
+            "session_id": session_id,
+            "whatsapp_session_id": f"whatsapp_{session_id}",
+            "user_id": user_id,
+            "user_message": message,
+            "ai_response": chat_response.response,
+            "intent_data": chat_response.intent_data,
+            "needs_approval": chat_response.needs_approval,
+            "timestamp": datetime.utcnow(),
+            "processing_time": None
+        }
+        
+        # Store WhatsApp conversation log
+        await db.whatsapp_conversations.insert_one(whatsapp_log)
+        logger.info(f"📝 Logged WhatsApp conversation: {whatsapp_log['id']}")
+        
+        # Write to MCP context for session memory
+        try:
+            mcp_context_data = mcp_service.prepare_context_data(
+                user_message=message,
+                ai_response=chat_response.response,
+                intent_data=chat_response.intent_data or {},
+                routing_info={
+                    "platform": "whatsapp",
+                    "session_id": session_id,
+                    "user_id": user_id
+                }
+            )
+            
+            await mcp_service.write_context(
+                session_id=f"whatsapp_{session_id}",
+                user_id=user_id,
+                intent=chat_response.intent_data.get("intent", "general_chat") if chat_response.intent_data else "general_chat",
+                data=mcp_context_data
+            )
+            
+            logger.info(f"💾 WhatsApp context written to MCP: whatsapp_{session_id}")
+        except Exception as mcp_error:
+            logger.warning(f"⚠️ MCP context write failed for WhatsApp: {mcp_error}")
+        
+        # Format response for WhatsApp/Puch AI
+        whatsapp_response = {
+            "success": True,
+            "session_id": session_id,
+            "message": chat_response.response,
+            "intent": chat_response.intent_data.get("intent", "general_chat") if chat_response.intent_data else "general_chat",
+            "needs_approval": chat_response.needs_approval,
+            "platform": "whatsapp",
+            "timestamp": chat_response.timestamp.isoformat(),
+            "conversation_id": whatsapp_log['id']
+        }
+        
+        # Add special handling for Gmail and Weather intents
+        if chat_response.intent_data and chat_response.intent_data.get("intent") in ["check_gmail_inbox", "gmail_summary", "get_weather_forecast"]:
+            whatsapp_response["intent_data"] = {
+                "type": chat_response.intent_data.get("intent"),
+                "confidence": chat_response.intent_data.get("confidence", 0.8),
+                "data": chat_response.intent_data
+            }
+        
+        # Add approval workflow info if needed
+        if chat_response.needs_approval:
+            whatsapp_response["approval_info"] = {
+                "required": True,
+                "intent": chat_response.intent_data.get("intent"),
+                "message_id": chat_response.id,
+                "approval_endpoint": "/api/approve"
+            }
+        
+        logger.info(f"✅ WhatsApp MCP Response - Session: {session_id}, Intent: {whatsapp_response['intent']}")
+        return whatsapp_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"💥 WhatsApp MCP Handler Error: {e}")
+        
+        # Log error for debugging
+        error_log = {
+            "id": str(uuid.uuid4()),
+            "platform": "whatsapp",
+            "session_id": request.get('session_id', 'unknown') if isinstance(request, dict) else 'unknown',
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "timestamp": datetime.utcnow()
+        }
+        
+        try:
+            await db.whatsapp_errors.insert_one(error_log)
+        except:
+            pass  # Don't fail if error logging fails
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "processing_failed",
+                "message": "Failed to process WhatsApp message",
+                "details": str(e),
+                "session_id": request.get('session_id') if isinstance(request, dict) else None
+            }
+        )
+
+@api_router.get("/mcp/health")
+async def whatsapp_mcp_health():
+    """WhatsApp MCP Health Check Endpoint"""
+    try:
+        # Check MCP service health
+        mcp_health = await mcp_service.health_check()
+        
+        # Check database connections
+        await client.admin.command('ping')
+        
+        return {
+            "status": "healthy",
+            "service": "WhatsApp MCP Integration",
+            "version": "1.0.0",
+            "platform": "whatsapp",
+            "mcp_service": mcp_health.get("success", False),
+            "database": "connected",
+            "integrations": {
+                "gmail": "ready",
+                "weather": "ready", 
+                "hybrid_ai": "ready"
+            },
+            "endpoints": [
+                "POST /api/mcp",
+                "GET /api/mcp/health",
+                "GET /api/mcp/sessions",
+                "POST /api/mcp/approve"
+            ],
+            "authentication": {
+                "methods": ["query_parameter", "authorization_header"],
+                "token_configured": bool(os.getenv("MCP_API_TOKEN")),
+                "example_usage": [
+                    "POST /api/mcp?token=<TOKEN>",
+                    "POST /api/mcp (with Authorization: Bearer <TOKEN>)"
+                ]
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ WhatsApp MCP Health Check Error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+
+@api_router.get("/mcp/sessions")
+async def get_whatsapp_sessions(
+    token: str = None,
+    authorization: str = Header(None),
+    limit: int = 20
+):
+    """Get WhatsApp conversation sessions"""
+    try:
+        # Validate token (same logic as main endpoint)
+        auth_token = token
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]
+            else:
+                auth_token = authorization
+        
+        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
+        if not auth_token or auth_token != expected_token:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Get recent WhatsApp sessions
+        sessions = []
+        cursor = db.whatsapp_conversations.find().sort([("timestamp", -1)]).limit(limit)
+        async for session in cursor:
+            sessions.append(convert_objectid_to_str(session))
+        
+        return {
+            "success": True,
+            "sessions": sessions,
+            "total": len(sessions),
+            "platform": "whatsapp"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ WhatsApp sessions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/mcp/approve")
+async def whatsapp_approve_action(
+    request: dict,
+    token: str = None,
+    authorization: str = Header(None)
+):
+    """Handle approval actions from WhatsApp"""
+    try:
+        # Validate token
+        auth_token = token
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]
+            else:
+                auth_token = authorization
+        
+        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
+        if not auth_token or auth_token != expected_token:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Extract approval data
+        session_id = request.get('session_id')
+        message_id = request.get('message_id')
+        approved = request.get('approved', False)
+        edited_data = request.get('edited_data')
+        
+        if not session_id or not message_id:
+            raise HTTPException(
+                status_code=400,
+                detail="session_id and message_id are required"
+            )
+        
+        # Convert to internal session format
+        internal_session_id = f"whatsapp_{session_id}"
+        
+        # Create approval request for existing pipeline
+        approval_request = ApprovalRequest(
+            session_id=internal_session_id,
+            message_id=message_id,
+            approved=approved,
+            edited_data=edited_data
+        )
+        
+        # Process through existing approval pipeline
+        result = await approve_action(approval_request)
+        
+        # Log WhatsApp approval
+        approval_log = {
+            "id": str(uuid.uuid4()),
+            "platform": "whatsapp",
+            "session_id": session_id,
+            "message_id": message_id,
+            "approved": approved,
+            "edited_data": edited_data,
+            "result": result,
+            "timestamp": datetime.utcnow()
+        }
+        
+        await db.whatsapp_approvals.insert_one(approval_log)
+        
+        return {
+            "success": result.get("success", False),
+            "message": result.get("message", "Action processed"),
+            "session_id": session_id,
+            "platform": "whatsapp",
+            "approval_id": approval_log['id']
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ WhatsApp approval error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Weather API endpoints using Tomorrow.io
 @api_router.get("/weather/current")
 async def get_current_weather_endpoint(location: str, username: str = None):
