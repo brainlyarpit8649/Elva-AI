@@ -379,7 +379,7 @@ Be precise and consider nuances in the request and any context from previous mes
             confidence=base_confidence,
             reasoning=reasoning,
             fallback_model=fallback_model,
-            use_context_enhancement=classification.context_dependency != "none"
+            use_context_enhancement=True  # Always enable context enhancement for better responses
         )
 
     def _update_conversation_history(self, session_id: str, user_input: str, classification: TaskClassification):
