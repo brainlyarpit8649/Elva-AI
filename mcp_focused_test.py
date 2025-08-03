@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://cc799cab-c063-4eaa-9ecb-266407734835.preview.emergentagent.com/api"
+BACKEND_URL = "https://603a1fa3-b3e5-4d58-b2f2-589bb867edd6.preview.emergentagent.com/api"
 
 class MCPFocusedTester:
     def __init__(self):
