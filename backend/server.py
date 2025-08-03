@@ -1066,11 +1066,11 @@ async def clear_conversation_memory(session_id: str):
 
 # Weather API endpoints using Tomorrow.io
 @api_router.get("/weather/current")
-async def get_current_weather_endpoint(location: str):
+async def get_current_weather_endpoint(location: str, username: str = None):
     """Get current weather for a location using Tomorrow.io API"""
     try:
         logger.info(f"🌦️ Current weather request for: {location}")
-        result = await get_current_weather(location)
+        result = await get_current_weather(location, username)
         return {"status": "success", "data": result, "location": location}
     except Exception as e:
         logger.error(f"Current weather error: {e}")
