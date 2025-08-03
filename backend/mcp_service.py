@@ -646,6 +646,69 @@ async def whatsapp_mcp_handler(
             "timestamp": datetime.utcnow().isoformat()
         }
 
+@app.get("/api/mcp")
+async def whatsapp_mcp_connection_test(
+    token: str = None,
+    authorization: str = Header(None)
+):
+    """
+    WhatsApp MCP Connection Test (GET)
+    Handles GET requests from Puch AI for connection verification
+    """
+    try:
+        # Extract and validate authentication token
+        auth_token = token
+        
+        # Check Authorization header
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]
+            else:
+                auth_token = authorization
+        
+        # Validate token
+        if not auth_token or auth_token != MCP_API_TOKEN:
+            logger.warning(f"🚫 WhatsApp MCP GET - Invalid token attempt")
+            raise HTTPException(
+                status_code=401, 
+                detail={
+                    "error": "invalid_token",
+                    "message": "Invalid or missing MCP API token"
+                }
+            )
+        
+        logger.info("🔄 WhatsApp MCP - GET connection test successful")
+        
+        return {
+            "status": "ok",
+            "message": "MCP connection successful - WhatsApp integration ready",
+            "service": "WhatsApp MCP Integration",
+            "platform": "whatsapp",
+            "deployment": "elva-mcp-service.onrender.com",
+            "methods": ["GET", "POST"],
+            "integrations": {
+                "gmail": "ready",
+                "weather": "ready",
+                "general_chat": "ready"
+            },
+            "supported_formats": [
+                '{"session_id": "...", "message": "..."}',
+                '{"session_id": "...", "text": "..."}',
+                '{"session_id": "...", "query": "..."}'
+            ],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ WhatsApp MCP GET Error: {e}")
+        return {
+            "status": "error",
+            "message": "Connection test failed",
+            "error": str(e)
+        }
+
 @app.get("/api/mcp/health")
 async def whatsapp_mcp_health():
     """WhatsApp MCP Health Check for Production"""
