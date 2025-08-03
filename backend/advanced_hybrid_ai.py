@@ -85,7 +85,13 @@ class AdvancedHybridAI:
             "linkedin_job_alerts",
             "check_website_updates",
             "monitor_competitors", 
-            "scrape_news_articles"
+            "scrape_news_articles",
+            # Weather intents - instant responses, no approval needed
+            "get_current_weather",
+            "get_weather_forecast", 
+            "get_air_quality_index",
+            "get_weather_alerts",
+            "get_sun_times"
         ]
         return intent in direct_automation_intents
 
