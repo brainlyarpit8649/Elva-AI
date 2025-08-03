@@ -791,33 +791,8 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   };
 
   const renderIntentData = (intentData) => {
-    if (!intentData || intentData.intent === 'general_chat') return null;
-    
-    const gmailReadOnlyIntents = ['check_gmail_inbox', 'check_gmail_unread', 'gmail_inbox_check'];
-    if (gmailReadOnlyIntents.includes(intentData.intent)) {
-      return null;
-    }
-
-    // Hide intent data for generate_post_prompt_package as it's shown in card format
-    if (intentData.intent === 'generate_post_prompt_package') {
-      return null;
-    }
-
-    // Hide intent data for email intents as the draft is already shown nicely
-    if (intentData.intent === 'send_email') {
-      return null;
-    }
-
-    return (
-      <div className="mt-3 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
-        <div className="text-xs text-blue-300 mb-2 font-medium">
-          🎯 Detected Intent: {intentData.intent.replace('_', ' ').toUpperCase()}
-        </div>
-        <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
-          {JSON.stringify(intentData, null, 2)}
-        </pre>
-      </div>
-    );
+    // Hide intent data completely for cleaner chat experience
+    return null;
   };
 
   const renderEditForm = () => {
