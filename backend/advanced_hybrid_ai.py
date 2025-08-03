@@ -741,7 +741,7 @@ CRITICAL INSTRUCTIONS:
 - For all intents except general_chat, populate ALL fields with realistic content
 - PAY SPECIAL ATTENTION TO GMAIL INTENTS - many user phrases should map to Gmail intents
 
-Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, web_search, creative_writing, web_research, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, summarize_gmail_emails, search_gmail_emails, categorize_gmail_emails, gmail_smart_actions, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, general_chat
+Intent types: send_email, create_event, add_todo, set_reminder, generate_post_prompt_package, web_search, creative_writing, web_research, linkedin_insights, email_automation, data_extraction, check_linkedin_notifications, check_gmail_inbox, check_gmail_unread, email_inbox_check, summarize_gmail_emails, search_gmail_emails, categorize_gmail_emails, gmail_smart_actions, scrape_price, scrape_product_listings, linkedin_job_alerts, check_website_updates, monitor_competitors, scrape_news_articles, get_current_weather, get_weather_forecast, get_air_quality_index, get_weather_alerts, get_sun_times, general_chat
 
 GMAIL INTENT MAPPING (CRITICAL):
 "Check my Gmail inbox" → {{"intent": "check_gmail_inbox", "user_email": "brainlyarpit8649@gmail.com", "include_unread_only": false}}
