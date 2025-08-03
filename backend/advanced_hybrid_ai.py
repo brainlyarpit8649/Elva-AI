@@ -159,7 +159,13 @@ class AdvancedHybridAI:
                 "linkedin_job_alerts": {"model": ModelChoice.GROQ, "confidence": 0.9, "direct_automation": True},
                 "check_website_updates": {"model": ModelChoice.GROQ, "confidence": 0.8, "direct_automation": True},
                 "monitor_competitors": {"model": ModelChoice.GROQ, "confidence": 0.8, "direct_automation": True},
-                "scrape_news_articles": {"model": ModelChoice.GROQ, "confidence": 0.8, "direct_automation": True}
+                "scrape_news_articles": {"model": ModelChoice.GROQ, "confidence": 0.8, "direct_automation": True},
+                # Weather intents (direct automation - instant responses)
+                "get_current_weather": {"model": ModelChoice.GROQ, "confidence": 0.95, "direct_automation": True},
+                "get_weather_forecast": {"model": ModelChoice.GROQ, "confidence": 0.95, "direct_automation": True},
+                "get_air_quality_index": {"model": ModelChoice.GROQ, "confidence": 0.9, "direct_automation": True},
+                "get_weather_alerts": {"model": ModelChoice.GROQ, "confidence": 0.9, "direct_automation": True},
+                "get_sun_times": {"model": ModelChoice.GROQ, "confidence": 0.9, "direct_automation": True}
             },
             
             # Emotional complexity routing
