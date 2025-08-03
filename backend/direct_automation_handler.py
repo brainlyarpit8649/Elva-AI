@@ -156,7 +156,7 @@ class DirectAutomationHandler:
             elif automation_type == "enhanced_gmail_automation":
                 result = await self._handle_enhanced_gmail_automation(intent, intent_data, session_id)
             elif automation_type == "weather_api":
-                result = await self._handle_weather_automation(intent, intent_data)
+                result = await self._handle_weather_automation(intent, intent_data, username)
             elif automation_type == "data_extraction":
                 result = await self._handle_data_extraction(intent, intent_data)
             elif automation_type == "web_scraping":
