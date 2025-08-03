@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://8b2d618a-88a1-418d-9ad4-3d20234e698e.preview.emergentagent.com/api"
+BACKEND_URL = "https://969852c2-df19-4799-8b24-72ad4de8f1d2.preview.emergentagent.com/api"
 
 def test_conversation_memory_detailed():
     """Detailed test of conversation memory system"""

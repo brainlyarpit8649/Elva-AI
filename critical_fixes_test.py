@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://8b2d618a-88a1-418d-9ad4-3d20234e698e.preview.emergentagent.com/api"
+BACKEND_URL = "https://969852c2-df19-4799-8b24-72ad4de8f1d2.preview.emergentagent.com/api"
 
 class CriticalFixesTester:
     def __init__(self):
@@ -149,7 +149,7 @@ class CriticalFixesTester:
                     expected_client_id = "191070483179-5ldsbkb4fl76at31kbldgj24org21hpl.apps.googleusercontent.com"
                     if expected_client_id in auth_url:
                         # Check redirect URI
-                        expected_redirect = "https://8b2d618a-88a1-418d-9ad4-3d20234e698e.preview.emergentagent.com/api/gmail/callback"
+                        expected_redirect = "https://969852c2-df19-4799-8b24-72ad4de8f1d2.preview.emergentagent.com/api/gmail/callback"
                         if expected_redirect in auth_url:
                             self.log_test("Gmail Credentials Update", True, "New OAuth2 credentials working with correct client_id and redirect URI")
                             return True
