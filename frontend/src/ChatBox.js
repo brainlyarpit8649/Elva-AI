@@ -933,9 +933,9 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
 
             {message.isUser && (
               <div>
-                <div className="whitespace-pre-wrap">
+                <ReactMarkdown className="chat-message">
                   {message.message}
-                </div>
+                </ReactMarkdown>
                 <div className="text-xs opacity-70 mt-2">
                   {formatTimestamp(message.timestamp)}
                 </div>
