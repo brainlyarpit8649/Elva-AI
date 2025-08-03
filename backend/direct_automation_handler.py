@@ -91,28 +91,28 @@ class DirectAutomationHandler:
             },
             # Weather intents using Tomorrow.io API
             "get_current_weather": {
-                "success_template": "{weather_data}",
-                "error_template": "❌ Unable to get weather data: {error}",
+                "success_template": "🌤️ **Current Weather Update**\n\nHere's what it's like right now:\n{weather_data}",
+                "error_template": "❌ Oops! I couldn't get the weather data right now: {error}",
                 "automation_type": "weather_api"
             },
             "get_weather_forecast": {
-                "success_template": "{weather_data}",
-                "error_template": "❌ Unable to get weather forecast: {error}",
+                "success_template": "🌦️ **Weather Forecast**\n\nHere's what to expect:\n{weather_data}",
+                "error_template": "❌ Sorry, I couldn't fetch the weather forecast: {error}",
                 "automation_type": "weather_api"
             },
             "get_air_quality_index": {
-                "success_template": "{weather_data}",
-                "error_template": "❌ Unable to get air quality data: {error}",
+                "success_template": "💨 **Air Quality Report**\n\nHere's the current air quality info:\n{weather_data}",
+                "error_template": "❌ I couldn't get air quality data right now: {error}",
                 "automation_type": "weather_api"
             },
             "get_weather_alerts": {
-                "success_template": "{weather_data}",
-                "error_template": "❌ Unable to get weather alerts: {error}",
+                "success_template": "🚨 **Weather Alerts**\n\nHere are any active weather warnings:\n{weather_data}",
+                "error_template": "❌ I couldn't check for weather alerts: {error}",
                 "automation_type": "weather_api"
             },
             "get_sun_times": {
-                "success_template": "{weather_data}",
-                "error_template": "❌ Unable to get sun times: {error}",
+                "success_template": "🌅 **Sunrise & Sunset Times**\n\nHere's today's sun schedule:\n{weather_data}",
+                "error_template": "❌ I couldn't get sunrise/sunset times: {error}",
                 "automation_type": "weather_api"
             }
         }
