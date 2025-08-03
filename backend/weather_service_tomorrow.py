@@ -96,8 +96,8 @@ async def get_current_weather(location: str, username: str = None, conversation_
         logger.error(f"❌ Error fetching current weather: {e}")
         return f"⚠️ Unable to fetch weather information for '{location}' right now. Error: {str(e)}"
 
-def _apply_current_weather_template(raw_data: dict, location: str, username: str = None) -> str:
-    """Apply friendly current weather template with detailed bullet points"""
+def _apply_current_weather_template(raw_data: dict, location: str, username: str = None, conversation_context: str = None) -> str:
+    """Apply friendly current weather template with detailed bullet points and conversation context"""
     temperature = raw_data.get("temperature", "N/A")
     feels_like = raw_data.get("feels_like", "N/A") 
     humidity = raw_data.get("humidity", "N/A")
@@ -131,6 +131,11 @@ def _apply_current_weather_template(raw_data: dict, location: str, username: str
         8000: "⛈️ Thunderstorm"
     }
     condition = condition_map.get(condition_code, "🌥️ Moderate conditions")
+    
+    # Check conversation context for previous weather questions
+    context_reference = ""
+    if conversation_context and any(phrase in conversation_context.lower() for phrase in ["weather", "current", "now", "today"]):
+        context_reference = f"\n💭 **Following up on your current weather question:** "
     
     # Get comfort level based on temperature
     comfort_level = ""
@@ -175,7 +180,7 @@ def _apply_current_weather_template(raw_data: dict, location: str, username: str
     
     # Enhanced current weather template with detailed bullet points
     response = (
-        f"🌤️ **Current Weather Report for {location}**\n\n"
+        f"🌤️ **Current Weather Report for {location}**{context_reference}\n\n"
         f"Hey {username or 'there'}! Here's your detailed current weather conditions:\n\n"
         f"**📊 Temperature Details:**\n"
         f"• 🌡️ **Current Temperature:** {temperature}°C\n"
