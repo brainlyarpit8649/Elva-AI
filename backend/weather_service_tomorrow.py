@@ -34,9 +34,9 @@ def get_cache_key(operation: str, location: str) -> str:
     """Generate cache key for location and operation"""
     return f"{operation}_{location.lower().strip().replace(' ', '_')}"
 
-async def get_current_weather(location: str) -> Optional[str]:
+async def get_current_weather(location: str, username: str = None) -> Optional[str]:
     """
-    Fetches current weather using Tomorrow.io API with 5-minute caching
+    Fetches current weather using Tomorrow.io API with friendly response template
     """
     if not TOMORROW_API_KEY:
         return "⚠️ Tomorrow.io API key not set."
@@ -46,7 +46,8 @@ async def get_current_weather(location: str) -> Optional[str]:
     cached_result = cache.get(cache_key)
     if cached_result and is_cache_valid(cached_result):
         logger.info(f"🚀 Returning cached current weather for {location}")
-        return cached_result['data']
+        # Re-apply friendly template with username for cached results
+        return _apply_current_weather_template(cached_result.get('raw_data', {}), location, username)
 
     try:
         params = {
@@ -69,59 +70,22 @@ async def get_current_weather(location: str) -> Optional[str]:
         location_data = data["data"].get("location", {})
         actual_location = location_data.get("name", location.title())
         
-        temp = weather.get("temperature", "N/A")
-        feels_like = weather.get("temperatureApparent", "N/A")
-        humidity = weather.get("humidity", "N/A")
-        wind_speed = weather.get("windSpeed", "N/A")
-        visibility = weather.get("visibility", "N/A")
-        uv_index = weather.get("uvIndex", "N/A")
-        pressure = weather.get("pressureSeaLevel", "N/A")
-        condition = weather.get("weatherCode", "Unknown")
-
-        condition_map = {
-            0: "❓ Unknown",
-            1000: "☀️ Clear",
-            1100: "🌤️ Mostly Clear", 
-            1101: "⛅ Partly Cloudy",
-            1102: "☁️ Cloudy",
-            1001: "☁️ Cloudy",
-            2000: "🌫️ Fog",
-            2100: "🌫️ Light Fog",
-            4000: "🌧️ Drizzle",
-            4001: "🌦️ Rain",
-            4200: "🌧️ Light Rain",
-            4201: "🌧️ Heavy Rain",
-            5000: "❄️ Snow",
-            5001: "❄️ Flurries",
-            5100: "🌨️ Light Snow",
-            5101: "❄️ Heavy Snow",
-            6000: "🌧️ Freezing Drizzle",
-            6001: "🧊 Freezing Rain",
-            6200: "🧊 Light Freezing Rain",
-            6201: "🧊 Heavy Freezing Rain",
-            7000: "🧊 Ice Pellets",
-            7101: "🧊 Heavy Ice Pellets",
-            7102: "🧊 Light Ice Pellets",
-            8000: "⛈️ Thunderstorm"
+        raw_weather_data = {
+            "temperature": weather.get("temperature", "N/A"),
+            "feels_like": weather.get("temperatureApparent", "N/A"),
+            "humidity": weather.get("humidity", "N/A"),
+            "wind_speed": weather.get("windSpeed", "N/A"),
+            "condition_code": weather.get("weatherCode", "Unknown"),
+            "actual_location": actual_location
         }
-        condition_text = condition_map.get(condition, "🌥️ Moderate conditions")
 
-        result = f"🌦️ **Weather in {actual_location}:**\n"
-        result += f"- 🌡️ **Temperature:** {temp}°C (Feels like {feels_like}°C)\n"
-        result += f"- **Condition:** {condition_text}\n"
-        result += f"- 💧 **Humidity:** {humidity}%\n" 
-        result += f"- 🌬️ **Wind:** {wind_speed} km/h\n"
-        
-        if visibility != "N/A":
-            result += f"- 👁️ **Visibility:** {visibility} km\n"
-        if uv_index != "N/A":
-            result += f"- ☀️ **UV Index:** {uv_index}\n"
-        if pressure != "N/A":
-            result += f"- 🌡️ **Pressure:** {pressure:.1f} hPa\n"
+        # Apply friendly template
+        result = _apply_current_weather_template(raw_weather_data, actual_location, username)
 
-        # Cache the result
+        # Cache both raw data and the friendly result
         cache[cache_key] = {
             'data': result,
+            'raw_data': raw_weather_data,
             'timestamp': datetime.utcnow().isoformat()
         }
         
@@ -131,6 +95,54 @@ async def get_current_weather(location: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"❌ Error fetching current weather: {e}")
         return f"⚠️ Unable to fetch weather information for '{location}' right now. Error: {str(e)}"
+
+def _apply_current_weather_template(raw_data: dict, location: str, username: str = None) -> str:
+    """Apply friendly current weather template"""
+    temperature = raw_data.get("temperature", "N/A")
+    feels_like = raw_data.get("feels_like", "N/A") 
+    humidity = raw_data.get("humidity", "N/A")
+    wind_speed = raw_data.get("wind_speed", "N/A")
+    condition_code = raw_data.get("condition_code", "Unknown")
+    
+    condition_map = {
+        0: "❓ Unknown",
+        1000: "☀️ Clear",
+        1100: "🌤️ Mostly Clear", 
+        1101: "⛅ Partly Cloudy",
+        1102: "☁️ Cloudy",
+        1001: "☁️ Cloudy",
+        2000: "🌫️ Fog",
+        2100: "🌫️ Light Fog",
+        4000: "🌧️ Drizzle",
+        4001: "🌦️ Rain",
+        4200: "🌧️ Light Rain",
+        4201: "🌧️ Heavy Rain",
+        5000: "❄️ Snow",
+        5001: "❄️ Flurries",
+        5100: "🌨️ Light Snow",
+        5101: "❄️ Heavy Snow",
+        6000: "🌧️ Freezing Drizzle",
+        6001: "🧊 Freezing Rain",
+        6200: "🧊 Light Freezing Rain",
+        6201: "🧊 Heavy Freezing Rain",
+        7000: "🧊 Ice Pellets",
+        7101: "🧊 Heavy Ice Pellets",
+        7102: "🧊 Light Ice Pellets",
+        8000: "⛈️ Thunderstorm"
+    }
+    condition = condition_map.get(condition_code, "🌥️ Moderate conditions")
+    
+    # Friendly current weather template
+    response = (
+        f"🌤️ Hey {username or 'there'}! Here's the current weather in {location}:\n"
+        f"- 🌡️ Temperature: {temperature}°C (Feels like {feels_like}°C)\n"
+        f"- ☁️ Condition: {condition}\n"
+        f"- 💧 Humidity: {humidity}%\n"
+        f"- 🌬️ Wind: {wind_speed} km/h\n"
+        f"Would you like me to share tomorrow's forecast too? 😊"
+    )
+    
+    return response
 
 async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
     """
