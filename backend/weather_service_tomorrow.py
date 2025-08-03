@@ -165,14 +165,14 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
                 
                 data = await resp.json()
 
-        if "data" not in data or "timelines" not in data["data"]:
+        if "timelines" not in data:
             return f"❌ Couldn't fetch forecast for '{location}'."
 
-        forecasts = data["data"]["timelines"]["daily"]
+        forecasts = data["timelines"]["daily"]
         if not forecasts:
             return f"⚠️ No forecast data available for '{location}'."
 
-        location_data = data["data"].get("location", {})
+        location_data = data.get("location", {})
         actual_location = location_data.get("name", location.title())
 
         # Special handling for tomorrow-specific rain queries (days=1)
@@ -181,13 +181,15 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
             values = tomorrow_data["values"]
             
             rain_chance = values.get("precipitationProbabilityAvg", 0)
-            precip_type = values.get("precipitationType", 0)
+            rain_intensity = values.get("rainIntensityAvg", 0)
+            rain_accumulation = values.get("rainAccumulationAvg", 0)
             condition_code = values.get("weatherCodeMax", 1001)
             temp_avg = values.get("temperatureAvg", "N/A")
             
-            # Check if it will rain tomorrow
-            will_rain = (precip_type in [4000, 4200, 8000] or 
-                        rain_chance > 50 or 
+            # Check if it will rain tomorrow - using rain intensity, accumulation, and probability
+            will_rain = (rain_intensity > 0.1 or 
+                        rain_accumulation > 0.1 or
+                        rain_chance > 30 or 
                         condition_code in [4000, 4001, 4200, 4201, 8000])
             
             if will_rain:
