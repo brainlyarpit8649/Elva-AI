@@ -134,111 +134,73 @@ async def get_current_weather(location: str) -> Optional[str]:
 
 async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
     """
-    Fetches weather forecast for next N days (up to 7) using Tomorrow.io API with 5-minute caching
+    Fetches weather forecast for next N days (up to 7) using Tomorrow.io API
+    and returns a friendly, readable summary with enhanced rain detection.
     """
     if not TOMORROW_API_KEY:
         return "⚠️ Tomorrow.io API key not set."
 
-    # Limit days to maximum 7
-    days = min(days, 7)
-    
-    # Check cache first
-    cache_key = get_cache_key(f"forecast_{days}d", location)
-    cached_result = cache.get(cache_key)
-    if cached_result and is_cache_valid(cached_result):
-        logger.info(f"🚀 Returning cached forecast for {location}")
-        return cached_result['data']
-
     try:
         params = {
             "location": location,
-            "apikey": TOMORROW_API_KEY,
             "timesteps": "1d",
-            "units": UNITS
+            "units": UNITS,
+            "apikey": TOMORROW_API_KEY
         }
-        
         async with aiohttp.ClientSession() as session:
             async with session.get(BASE_URL_FORECAST, params=params) as resp:
-                if resp.status != 200:
-                    return f"❌ Couldn't fetch forecast for '{location}'. Status: {resp.status}"
-                
                 data = await resp.json()
 
-        if "timelines" not in data.get("data", {}):
+        if resp.status != 200 or "data" not in data or "timelines" not in data["data"]:
             return f"❌ Couldn't fetch forecast for '{location}'."
 
-        location_data = data["data"].get("location", {})
-        actual_location = location_data.get("name", location.title())
         forecasts = data["data"]["timelines"]["daily"]
-        
-        result = f"📅 **{days}-Day Weather Forecast for {actual_location}:**\n\n"
+        if not forecasts:
+            return f"⚠️ No forecast data available for '{location}'."
+
+        message = f"📅 Weather Forecast for {location.title()} (next {days} days):\n"
+        rain_tomorrow = False
 
         for i, day_data in enumerate(forecasts[:days]):
-            date_str = day_data["time"].split("T")[0]
-            date_obj = datetime.fromisoformat(date_str)
-            day_name = date_obj.strftime("%A")
-            formatted_date = date_obj.strftime("%B %d")
-            
+            date = day_data["time"].split("T")[0]
             values = day_data["values"]
-            temp_max = values.get("temperatureMax", "N/A")
-            temp_min = values.get("temperatureMin", "N/A")
-            temp_avg = values.get("temperatureAvg", "N/A")
-            humidity_avg = values.get("humidityAvg", "N/A")
-            wind_speed_max = values.get("windSpeedMax", "N/A")
+
+            temp = values.get("temperatureAvg", "N/A")
+            rain_chance = values.get("precipitationProbabilityAvg", 0)
+            precip = values.get("precipitationType", 0)
             condition_code = values.get("weatherCodeMax", 1001)
-            
-            condition_text = {
-                0: "❓ Unknown",
+
+            condition_map = {
                 1000: "☀️ Clear",
                 1100: "🌤️ Mostly Clear",
-                1101: "⛅ Partly Cloudy", 
+                1101: "⛅ Partly Cloudy",
                 1102: "☁️ Cloudy",
-                1001: "☁️ Cloudy",
-                2000: "🌫️ Fog",
                 4000: "🌧️ Light Rain",
-                4001: "🌦️ Rain",
-                4200: "🌧️ Light Rain",
-                4201: "🌧️ Heavy Rain",
-                5000: "❄️ Snow",
-                5001: "❄️ Flurries",
-                5100: "🌨️ Light Snow",
-                5101: "❄️ Heavy Snow",
-                6000: "🌧️ Freezing Drizzle",
+                4200: "🌧️ Rain",
+                5001: "❄️ Snow",
                 8000: "⛈️ Thunderstorm"
-            }.get(condition_code, "🌥️ Moderate conditions")
+            }
+            condition = condition_map.get(condition_code, "🌥️ Moderate conditions")
 
-            if i == 0:
-                day_label = "**Today**"
-            elif i == 1:
-                day_label = "**Tomorrow**"
-            else:
-                day_label = f"**{day_name}**"
+            message += f"\n📌 {date}: {condition}, Avg Temp: {temp}°C, 🌧️ Rain chance: {rain_chance}%"
 
-            result += f"📌 {day_label} ({formatted_date}):\n"
-            result += f"   {condition_text}\n"
-            if temp_max != "N/A" and temp_min != "N/A":
-                result += f"   🌡️ {temp_min}°C - {temp_max}°C"
-                if temp_avg != "N/A":
-                    result += f" (avg: {temp_avg}°C)"
-                result += "\n"
-            if humidity_avg != "N/A":
-                result += f"   💧 Humidity: {humidity_avg}%\n"
-            if wind_speed_max != "N/A":
-                result += f"   🌬️ Max Wind: {wind_speed_max} km/h\n"
-            result += "\n"
+            # Detect if tomorrow (index 1) has rain
+            if i == 1 and (precip in [4000, 4200, 8000] or rain_chance > 50):
+                rain_tomorrow = True
 
-        # Cache the result
-        cache[cache_key] = {
-            'data': result,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        
-        logger.info(f"✅ Successfully fetched and cached forecast for {location}")
-        return result
+        # If query is specifically "will it rain tomorrow"
+        if days == 1 or "tomorrow" in location.lower():
+            return (
+                f"🌧️ Yes, rain is likely tomorrow in {location.title()}."
+                if rain_tomorrow else
+                f"☀️ No, rain is unlikely tomorrow in {location.title()}."
+            )
+
+        return message
 
     except Exception as e:
         logger.error(f"❌ Error fetching forecast: {e}")
-        return f"⚠️ Unable to fetch forecast information for '{location}' right now. Error: {str(e)}"
+        return "⚠️ Unable to fetch forecast information right now."
 
 async def get_air_quality_index(location: str) -> Optional[str]:
     """
