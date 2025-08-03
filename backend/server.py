@@ -33,6 +33,17 @@ from enhanced_chat_models import EnhancedChatMessage, UserMessage, AIMessage
 from deberta_gmail_intent_detector import deberta_gmail_detector
 from realtime_gmail_service import RealTimeGmailService
 
+# Import Tomorrow.io Weather Service
+from weather_service_tomorrow import (
+    get_current_weather, 
+    get_weather_forecast, 
+    get_air_quality_index, 
+    get_weather_alerts, 
+    get_sun_times,
+    get_cache_stats,
+    clear_weather_cache
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
