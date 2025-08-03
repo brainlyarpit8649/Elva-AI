@@ -908,8 +908,69 @@ Return ONLY the JSON object."""
             # Step 1: Advanced task classification with context
             classification = await self.analyze_task_classification(user_input, session_id)
             
-            # Step 2: Calculate routing decision
-            routing_decision = self._calculate_routing_decision(classification, session_id)
+            # Step 2: Check for direct automation intents first
+            # Get intent quickly to check if it needs direct automation
+            try:
+                quick_intent_data = await self._groq_intent_detection(user_input)
+                quick_intent = quick_intent_data.get("intent", "general_chat")
+                
+                # Handle direct automation intents immediately
+                if self.is_direct_automation_intent(quick_intent):
+                    logger.info(f"🤖 Direct automation intent detected: {quick_intent}")
+                    
+                    # Import and use direct automation handler
+                    try:
+                        from direct_automation_handler import direct_automation_handler
+                        automation_result = await direct_automation_handler.process_direct_automation(quick_intent_data, session_id)
+                        
+                        if automation_result["success"]:
+                            response_text = automation_result["message"]
+                            intent_data = quick_intent_data
+                            intent_data.update({
+                                "automation_success": True,
+                                "execution_time": automation_result["execution_time"],
+                                "automation_data": automation_result["data"]
+                            })
+                            
+                            # Create simple routing decision for direct automation
+                            routing_decision = RoutingDecision(
+                                primary_model=ModelChoice.GROQ,
+                                confidence=0.95,
+                                reasoning=f"Direct automation for {quick_intent} - no AI generation needed"
+                            )
+                            
+                            logger.info(f"✅ Direct automation completed: {quick_intent} in {automation_result['execution_time']:.2f}s")
+                            return intent_data, response_text, routing_decision
+                        else:
+                            # Automation failed, provide error response
+                            response_text = automation_result["message"]
+                            intent_data = quick_intent_data
+                            intent_data.update({
+                                "automation_success": False,
+                                "automation_error": automation_result["message"]
+                            })
+                            
+                            routing_decision = RoutingDecision(
+                                primary_model=ModelChoice.GROQ,
+                                confidence=0.8,
+                                reasoning=f"Direct automation failed for {quick_intent} - returning error message"
+                            )
+                            
+                            logger.warning(f"❌ Direct automation failed: {quick_intent} - {automation_result['message']}")
+                            return intent_data, response_text, routing_decision
+                            
+                    except Exception as automation_error:
+                        logger.error(f"Direct automation handler error: {automation_error}")
+                        # Continue with normal AI processing as fallback
+                        
+            except Exception as quick_intent_error:
+                logger.warning(f"Quick intent detection failed: {quick_intent_error}")
+                # Continue with normal processing
+            
+            # Step 3: Advanced task classification with context (for non-direct automation intents)
+            classification = await self.analyze_task_classification(user_input, session_id)
+            
+            # Step 4: Calculate routing decision
             
             # Step 3: Update conversation history
             self._update_conversation_history(session_id, user_input, classification)
