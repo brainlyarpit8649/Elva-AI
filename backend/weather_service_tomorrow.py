@@ -80,7 +80,7 @@ async def get_current_weather(location: str, username: str = None, conversation_
         }
 
         # Apply friendly template
-        result = _apply_current_weather_template(raw_weather_data, actual_location, username)
+        result = _apply_current_weather_template(raw_weather_data, actual_location, username, conversation_context)
 
         # Cache both raw data and the friendly result
         cache[cache_key] = {
