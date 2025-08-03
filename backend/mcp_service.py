@@ -15,6 +15,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import redis.asyncio as redis
 from dotenv import load_dotenv
 import uuid
+import httpx
 
 # Load environment variables
 load_dotenv()
