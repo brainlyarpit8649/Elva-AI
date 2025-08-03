@@ -1200,6 +1200,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_db_indexes():
+    # Create TTL and text search indexes for message memory
+    await ensure_indexes()
+    logger.info("🚀 Application startup completed with database indexes")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
