@@ -2,9 +2,14 @@
 import asyncio
 import sys
 import os
+from dotenv import load_dotenv
 
 # Add the backend directory to the path
 sys.path.insert(0, '/app/backend')
+
+# Load environment variables
+load_dotenv('/app/backend/.env')
+print(f"API Key loaded: {os.environ.get('TOMORROW_API_KEY', 'NOT FOUND')}")
 
 # Import the weather function
 from weather_service_tomorrow import get_weather_forecast
