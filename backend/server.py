@@ -1067,8 +1067,8 @@ async def clear_conversation_memory(session_id: str):
 # WhatsApp MCP Integration Endpoint
 @api_router.post("/mcp")
 async def whatsapp_mcp_handler(
-    request: Any,
-    token: str = None,
+    raw_request: Request,
+    token: str = Query(None),
     authorization: str = Header(None)
 ):
     """
@@ -1082,12 +1082,18 @@ async def whatsapp_mcp_handler(
     Expected payload: {"session_id": "...", "message": "..."}
     """
     try:
+        # Extract JSON body from raw request
+        try:
+            request = await raw_request.json()
+        except Exception:
+            request = {}
+        
         # Extract and validate authentication token
         auth_token = None
         
         # Check query parameter first
-        if hasattr(request, 'query_params') and 'token' in request.query_params:
-            auth_token = request.query_params.get('token')
+        if hasattr(raw_request, 'query_params') and 'token' in raw_request.query_params:
+            auth_token = raw_request.query_params.get('token')
         elif token:
             auth_token = token
         
