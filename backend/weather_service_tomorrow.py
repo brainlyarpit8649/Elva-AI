@@ -34,7 +34,7 @@ def get_cache_key(operation: str, location: str) -> str:
     """Generate cache key for location and operation"""
     return f"{operation}_{location.lower().strip().replace(' ', '_')}"
 
-async def get_current_weather(location: str, username: str = None) -> Optional[str]:
+async def get_current_weather(location: str, username: str = None, conversation_context: str = None) -> Optional[str]:
     """
     Fetches current weather using Tomorrow.io API with friendly response template
     """
