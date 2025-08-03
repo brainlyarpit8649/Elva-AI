@@ -187,9 +187,9 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
             temp_avg = values.get("temperatureAvg", "N/A")
             
             # Check if it will rain tomorrow - using rain intensity, accumulation, and probability
-            will_rain = (rain_intensity > 0.1 or 
-                        rain_accumulation > 0.1 or
-                        rain_chance > 30 or 
+            will_rain = (rain_intensity > 0.5 or 
+                        rain_accumulation > 0.5 or
+                        rain_chance > 50 or 
                         condition_code in [4000, 4001, 4200, 4201, 8000])
             
             if will_rain:
