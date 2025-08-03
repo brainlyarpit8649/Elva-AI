@@ -456,7 +456,7 @@ async def whatsapp_mcp_handler(
         )
         user_id = request.get('user_id', 'whatsapp_user')
         
-        # Handle connection test cases
+        # Handle connection test cases - more flexible
         if not session_id and not message:
             logger.info("🔄 WhatsApp MCP - Empty payload connection test")
             return {
@@ -466,15 +466,16 @@ async def whatsapp_mcp_handler(
                 "platform": "whatsapp"
             }
         
-        # Set defaults for missing fields
+        # Set defaults for missing fields (more lenient)
         if not session_id:
             session_id = f"test_session_{int(datetime.utcnow().timestamp())}"
         
         if not message:
             message = "Hello! Connection test successful."
         
-        # Handle simple connection test messages
-        if message.lower() in ["test", "hello", "ping", "connection test", ""]:
+        # Handle simple connection test messages (expanded list)
+        test_messages = ["test", "hello", "ping", "connection test", "", "hi", "check"]
+        if message.lower() in test_messages:
             logger.info(f"🔄 WhatsApp MCP - Simple connection test: {message}")
             return {
                 "status": "ok",
