@@ -91,12 +91,12 @@ class DirectAutomationHandler:
             },
             # Weather intents using Tomorrow.io API
             "get_current_weather": {
-                "success_template": "🌤️ **Current Weather Update**\n\nHere's what it's like right now:\n{weather_data}",
-                "error_template": "❌ Oops! I couldn't get the weather data right now: {error}",
+                "success_template": "{weather_data}",  # Use friendly template directly
+                "error_template": "❌ Sorry, I couldn't get the current weather: {error}",
                 "automation_type": "weather_api"
             },
             "get_weather_forecast": {
-                "success_template": "🌦️ **Weather Forecast**\n\nHere's what to expect:\n{weather_data}",
+                "success_template": "{weather_data}",  # Use friendly template directly
                 "error_template": "❌ Sorry, I couldn't fetch the weather forecast: {error}",
                 "automation_type": "weather_api"
             },
