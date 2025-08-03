@@ -601,7 +601,7 @@ async def whatsapp_mcp_health():
         await redis_client.ping()
         
         # Test backend connectivity
-        backend_url = os.getenv("ELVA_BACKEND_URL", "https://603a1fa3-b3e5-4d58-b2f2-589bb867edd6.preview.emergentagent.com")
+        backend_url = ELVA_BACKEND_URL
         backend_healthy = False
         
         try:
