@@ -7,7 +7,7 @@ import json
 
 def check_demo_session():
     """Check the demo session we just created"""
-    url = "https://9f01be86-c062-4f1e-86a0-d600a19e746c.preview.emergentagent.com/api/admin/debug/context"
+    url = "https://a4ed5dbc-714c-4144-beb6-635470d8f0fb.preview.emergentagent.com/api/admin/debug/context"
     params = {
         'session_id': 'session_demo_12345',
         'command': 'show_context'

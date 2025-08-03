@@ -14,7 +14,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://9f01be86-c062-4f1e-86a0-d600a19e746c.preview.emergentagent.com/api"
+BACKEND_URL = "https://a4ed5dbc-714c-4144-beb6-635470d8f0fb.preview.emergentagent.com/api"
 
 def test_chat_error_messages():
     """Test if chat is returning 'sorry I've encountered an error' messages"""
