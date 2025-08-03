@@ -298,66 +298,146 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
         return f"⚠️ Unable to fetch forecast information for '{location}' right now. Error: {str(e)}"
 
 def _apply_forecast_template(raw_data: dict, location: str, days: int, username: str = None) -> str:
-    """Apply friendly forecast template"""
+    """Apply detailed forecast template with comprehensive bullet points"""
     forecasts = raw_data.get("forecasts", [])
     
     if not forecasts:
         return f"⚠️ No forecast data available for '{location}'."
     
-    # Build forecast list
-    forecast_list = ""
+    # Build detailed forecast with bullet points
+    forecast_details = ""
     
     for i, day_data in enumerate(forecasts):
         date_str = day_data["time"].split("T")[0]
         date_obj = datetime.fromisoformat(date_str)
         day_name = date_obj.strftime("%A")
+        day_date = date_obj.strftime("%B %d, %Y")
         
         values = day_data["values"]
         temp_max = values.get("temperatureMax", "N/A")
         temp_min = values.get("temperatureMin", "N/A")
+        temp_avg = values.get("temperatureAvg", "N/A")
         rain_chance = values.get("precipitationProbabilityAvg", 0)
+        humidity = values.get("humidityAvg", "N/A")
+        wind_speed = values.get("windSpeedAvg", "N/A")
         condition_code = values.get("weatherCodeMax", 1001)
 
         condition_map = {
             0: "❓ Unknown",
-            1000: "☀️ Clear",
+            1000: "☀️ Clear Skies",
             1100: "🌤️ Mostly Clear",
             1101: "⛅ Partly Cloudy", 
             1102: "☁️ Cloudy",
             1001: "☁️ Cloudy",
-            2000: "🌫️ Fog",
+            2000: "🌫️ Foggy",
             4000: "🌧️ Light Rain",
-            4001: "🌦️ Rain",
+            4001: "🌦️ Rainy",
             4200: "🌧️ Light Rain",
             4201: "🌧️ Heavy Rain",
-            5000: "❄️ Snow",
-            5001: "❄️ Flurries",
+            5000: "❄️ Snowy",
+            5001: "❄️ Light Snow",
             5100: "🌨️ Light Snow",
             5101: "❄️ Heavy Snow",
             6000: "🌧️ Freezing Drizzle",
-            8000: "⛈️ Thunderstorm"
+            8000: "⛈️ Thunderstorms"
         }
         condition_emoji = condition_map.get(condition_code, "🌥️")
 
         if i == 0:
             day_label = "Today"
+            time_reference = "throughout the day"
         elif i == 1:
             day_label = "Tomorrow"
+            time_reference = "during the day"
         else:
             day_label = day_name
+            time_reference = "during the day"
 
+        # Temperature analysis
+        temp_analysis = ""
         if temp_max != "N/A" and temp_min != "N/A":
-            temp_display = f"{int(temp_max)}°C"
+            temp_range = int(temp_max) - int(temp_min)
+            if temp_range > 15:
+                temp_analysis = "🌡️ **Large temperature swing** - Dress in layers"
+            elif temp_range > 10:
+                temp_analysis = "🌡️ **Moderate temperature change** - Consider layered clothing"
+            else:
+                temp_analysis = "🌡️ **Stable temperatures** - Consistent conditions all day"
+
+        # Rain analysis
+        rain_analysis = ""
+        if rain_chance >= 80:
+            rain_analysis = "☔ **High rain probability** - Definitely bring an umbrella!"
+        elif rain_chance >= 50:
+            rain_analysis = "🌦️ **Moderate rain chance** - Keep an umbrella handy"
+        elif rain_chance >= 20:
+            rain_analysis = "⛅ **Low rain possibility** - Light rain possible, but unlikely"
         else:
-            temp_display = "N/A"
+            rain_analysis = "☀️ **Dry conditions expected** - No rain concerns"
 
-        forecast_list += f"• {day_label}: {condition_emoji} {temp_display}, Rain chance {int(rain_chance)}%\n"
+        # Activity recommendations
+        activity_rec = ""
+        if condition_code == 1000 and rain_chance < 20:
+            activity_rec = "🏃‍♂️ **Perfect for outdoor activities** - Great day for sports, picnics, or walks"
+        elif rain_chance > 70:
+            activity_rec = "🏠 **Indoor day recommended** - Good time for indoor activities"
+        elif condition_code in [4000, 4001, 4200, 4201]:
+            activity_rec = "☔ **Rainy day activities** - Museums, shopping, or cozy indoor time"
+        else:
+            activity_rec = "🚶‍♂️ **Mixed outdoor conditions** - Check weather before heading out"
 
-    # Friendly forecast template
+        forecast_details += (
+            f"**📅 {day_label} ({day_date}):**\n"
+            f"• 🌤️ **Weather Condition:** {condition_emoji} {condition_map.get(condition_code, 'Mixed conditions')} {time_reference}\n"
+            f"• 🌡️ **Temperature Range:** High {int(temp_max) if temp_max != 'N/A' else 'N/A'}°C / Low {int(temp_min) if temp_min != 'N/A' else 'N/A'}°C"
+        )
+        
+        if temp_avg != "N/A":
+            forecast_details += f" (Average: {int(temp_avg)}°C)\n"
+        else:
+            forecast_details += "\n"
+            
+        forecast_details += (
+            f"• ☔ **Rain Probability:** {int(rain_chance)}% chance of precipitation\n"
+        )
+        
+        if humidity != "N/A":
+            forecast_details += f"• 💧 **Humidity Level:** {int(humidity)}% - "
+            humidity_val = float(humidity)
+            if humidity_val < 40:
+                forecast_details += "Dry conditions\n"
+            elif humidity_val < 70:
+                forecast_details += "Comfortable moisture levels\n"
+            else:
+                forecast_details += "High humidity, may feel muggy\n"
+        
+        if wind_speed != "N/A":
+            forecast_details += f"• 🌬️ **Wind Speed:** {wind_speed} km/h - "
+            wind_val = float(wind_speed)
+            if wind_val < 10:
+                forecast_details += "Light breeze\n"
+            elif wind_val < 20:
+                forecast_details += "Moderate winds\n"
+            else:
+                forecast_details += "Breezy conditions\n"
+        
+        forecast_details += (
+            f"• 🧠 **Analysis:** {temp_analysis}\n"
+            f"• 🌧️ **Rain Outlook:** {rain_analysis}\n"
+            f"• 🎯 **Activity Suggestion:** {activity_rec}\n\n"
+        )
+
+    # Enhanced forecast template with comprehensive details
     response = (
-        f"📅 Hi {username or 'buddy'}! Here's the {days}-day weather forecast for {location}:\n"
-        f"{forecast_list}\n"
-        f"🌟 Tip: I can set a reminder for rainy days if you'd like! ☔"
+        f"📅 **{days}-Day Weather Forecast for {location}**\n\n"
+        f"Hi {username or 'there'}! Here's your comprehensive weather forecast with all the details you need:\n\n"
+        f"{forecast_details}"
+        f"**🌟 Additional Weather Tips:**\n"
+        f"• 📱 **Stay Updated:** Weather conditions can change, so check back for updates\n"
+        f"• 🧥 **Clothing Guide:** Plan your outfits based on temperature ranges and rain chances\n"
+        f"• 🚗 **Travel Planning:** Consider weather conditions for your daily commute and activities\n"
+        f"• ⏰ **Best Times:** Plan outdoor activities during clear weather windows\n\n"
+        f"💬 Need more specific weather details like air quality, sunrise times, or weather alerts? Just ask! 😊"
     )
     
     return response
