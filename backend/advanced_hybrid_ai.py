@@ -1006,7 +1006,7 @@ Return ONLY the JSON object."""
                         # Use Groq for structured response
                         response_text = f"I've analyzed your request: {intent_data.get('intent')}. Here are the details I extracted: {json.dumps(intent_data, indent=2)}"
                 
-                # Step 5: Store conversation context in MCP
+                # Step 7: Store conversation context in MCP
                 try:
                     mcp_service = get_mcp_service()
                     context_data = mcp_service.prepare_context_data(
