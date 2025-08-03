@@ -117,13 +117,14 @@ class DirectAutomationHandler:
             }
         }
     
-    async def process_direct_automation(self, intent_data: Dict[str, Any], session_id: str = None) -> Dict[str, Any]:
+    async def process_direct_automation(self, intent_data: Dict[str, Any], session_id: str = None, username: str = None) -> Dict[str, Any]:
         """
         Process direct automation intent and return formatted result
         
         Args:
             intent_data: Intent data from AI detection
             session_id: Session ID for authentication
+            username: Optional username for friendly responses
             
         Returns:
             Dict containing automation result and formatting info
