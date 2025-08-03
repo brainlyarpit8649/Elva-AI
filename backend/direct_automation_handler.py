@@ -1168,5 +1168,77 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
         # Default to personal
         return 'personal' if 'personal' in categories else categories[0]
 
+    async def _handle_weather_automation(self, intent: str, intent_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle weather automation using Tomorrow.io API"""
+        try:
+            location = intent_data.get("location", "")
+            
+            if not location:
+                return {
+                    "success": False,
+                    "data": {},
+                    "message": "❌ No location specified for weather request"
+                }
+            
+            logger.info(f"🌦️ Processing weather intent '{intent}' for location: {location}")
+            
+            if intent == "get_current_weather":
+                weather_data = await get_current_weather(location)
+                return {
+                    "success": True,
+                    "data": {"weather_data": weather_data, "location": location},
+                    "message": f"Successfully retrieved current weather for {location}"
+                }
+            
+            elif intent == "get_weather_forecast":
+                days = intent_data.get("days", 3)
+                # Ensure days is within valid range
+                days = max(1, min(days, 7))
+                weather_data = await get_weather_forecast(location, days)
+                return {
+                    "success": True,
+                    "data": {"weather_data": weather_data, "location": location, "days": days},
+                    "message": f"Successfully retrieved {days}-day forecast for {location}"
+                }
+            
+            elif intent == "get_air_quality_index":
+                weather_data = await get_air_quality_index(location)
+                return {
+                    "success": True,
+                    "data": {"weather_data": weather_data, "location": location},
+                    "message": f"Successfully retrieved air quality data for {location}"
+                }
+            
+            elif intent == "get_weather_alerts":
+                weather_data = await get_weather_alerts(location)
+                return {
+                    "success": True,
+                    "data": {"weather_data": weather_data, "location": location},
+                    "message": f"Successfully retrieved weather alerts for {location}"
+                }
+            
+            elif intent == "get_sun_times":
+                weather_data = await get_sun_times(location)
+                return {
+                    "success": True,
+                    "data": {"weather_data": weather_data, "location": location},
+                    "message": f"Successfully retrieved sun times for {location}"
+                }
+            
+            else:
+                return {
+                    "success": False,
+                    "data": {},
+                    "message": f"❌ Unknown weather intent: {intent}"
+                }
+            
+        except Exception as e:
+            logger.error(f"Weather automation error for {intent}: {e}")
+            return {
+                "success": False,
+                "data": {},
+                "message": f"❌ Weather service error: {str(e)}"
+            }
+
 # Global instance
 direct_automation_handler = DirectAutomationHandler()
