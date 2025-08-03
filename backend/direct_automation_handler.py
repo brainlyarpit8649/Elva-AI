@@ -79,6 +79,32 @@ class DirectAutomationHandler:
                 "success_template": "📰 **Latest News** ({count} articles)\n{articles}",
                 "error_template": "❌ Unable to scrape news articles: {error}",
                 "automation_type": "web_scraping"
+            },
+            # Weather intents using Tomorrow.io API
+            "get_current_weather": {
+                "success_template": "{weather_data}",
+                "error_template": "❌ Unable to get weather data: {error}",
+                "automation_type": "weather_api"
+            },
+            "get_weather_forecast": {
+                "success_template": "{weather_data}",
+                "error_template": "❌ Unable to get weather forecast: {error}",
+                "automation_type": "weather_api"
+            },
+            "get_air_quality_index": {
+                "success_template": "{weather_data}",
+                "error_template": "❌ Unable to get air quality data: {error}",
+                "automation_type": "weather_api"
+            },
+            "get_weather_alerts": {
+                "success_template": "{weather_data}",
+                "error_template": "❌ Unable to get weather alerts: {error}",
+                "automation_type": "weather_api"
+            },
+            "get_sun_times": {
+                "success_template": "{weather_data}",
+                "error_template": "❌ Unable to get sun times: {error}",
+                "automation_type": "weather_api"
             }
         }
     
