@@ -214,7 +214,8 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
             humidity_avg = values.get("humidityAvg", "N/A")
             wind_speed_max = values.get("windSpeedMax", "N/A")
             rain_chance = values.get("precipitationProbabilityAvg", 0)
-            precip_type = values.get("precipitationType", 0)
+            rain_intensity = values.get("rainIntensityAvg", 0)
+            rain_accumulation = values.get("rainAccumulationAvg", 0)
             condition_code = values.get("weatherCodeMax", 1001)
 
             condition_map = {
@@ -238,8 +239,8 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
             }
             condition_text = condition_map.get(condition_code, "🌥️ Moderate conditions")
 
-            # Check if tomorrow will have rain
-            if i == 1 and (precip_type in [4000, 4200, 8000] or rain_chance > 50):
+            # Check if tomorrow will have rain using actual rain data
+            if i == 1 and (rain_intensity > 0.1 or rain_accumulation > 0.1 or rain_chance > 30):
                 rain_tomorrow = True
 
             if i == 0:
