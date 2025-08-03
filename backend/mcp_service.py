@@ -376,7 +376,10 @@ async def whatsapp_mcp_handler(
     - Query parameter: ?token=<TOKEN>
     - Authorization header: Bearer <TOKEN>
     
-    Expected payload: {"session_id": "...", "message": "...", "user_id": "..."}
+    Flexible payload formats:
+    - {"session_id": "...", "message": "..."}
+    - {"session_id": "...", "text": "..."}
+    - {"session_id": "...", "query": "..."}
     """
     try:
         # Extract and validate authentication token
@@ -407,30 +410,80 @@ async def whatsapp_mcp_handler(
                 }
             )
         
-        # Validate request payload
-        if not isinstance(request, dict):
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "invalid_payload",
-                    "message": "Request must be a JSON object",
-                    "expected_format": '{"session_id": "...", "message": "...", "user_id": "..."}'
-                }
-            )
+        # Handle empty or test connection requests
+        if not request or request == {}:
+            logger.info("🔄 WhatsApp MCP - Connection test request")
+            return {
+                "status": "ok",
+                "message": "MCP connection successful",
+                "service": "WhatsApp MCP Integration",
+                "platform": "whatsapp",
+                "endpoints": ["POST /api/mcp", "GET /api/mcp/health"],
+                "timestamp": datetime.utcnow().isoformat()
+            }
         
+        # Flexible payload validation - accept different formats
+        if not isinstance(request, dict):
+            # Try to handle string payloads (some clients send plain text)
+            if isinstance(request, str):
+                request = {
+                    "session_id": "connection_test",
+                    "message": request,
+                    "user_id": "test_user"
+                }
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "invalid_payload",
+                        "message": "Request must be JSON object or string",
+                        "expected_formats": [
+                            '{"session_id": "...", "message": "..."}',
+                            '{"session_id": "...", "text": "..."}',
+                            '{"session_id": "...", "query": "..."}'
+                        ]
+                    }
+                )
+        
+        # Extract message with flexible field names
         session_id = request.get('session_id')
-        message = request.get('message')
+        message = (
+            request.get('message') or 
+            request.get('text') or 
+            request.get('query') or 
+            request.get('content') or
+            ""
+        )
         user_id = request.get('user_id', 'whatsapp_user')
         
-        if not session_id or not message:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "missing_fields",
-                    "message": "Both session_id and message are required",
-                    "received": {"session_id": session_id, "message": message}
-                }
-            )
+        # Handle connection test cases
+        if not session_id and not message:
+            logger.info("🔄 WhatsApp MCP - Empty payload connection test")
+            return {
+                "status": "ok", 
+                "message": "MCP connection successful - ready for messages",
+                "service": "WhatsApp MCP Integration",
+                "platform": "whatsapp"
+            }
+        
+        # Set defaults for missing fields
+        if not session_id:
+            session_id = f"test_session_{int(datetime.utcnow().timestamp())}"
+        
+        if not message:
+            message = "Hello! Connection test successful."
+        
+        # Handle simple connection test messages
+        if message.lower() in ["test", "hello", "ping", "connection test", ""]:
+            logger.info(f"🔄 WhatsApp MCP - Simple connection test: {message}")
+            return {
+                "status": "ok",
+                "message": "MCP connection successful! WhatsApp integration is ready.",
+                "session_id": session_id,
+                "platform": "whatsapp",
+                "integrations": ["gmail", "weather", "general_chat"],
+                "timestamp": datetime.utcnow().isoformat()
+            }
         
         logger.info(f"📱 WhatsApp MCP Message - Session: {session_id}, Message: {message[:100]}...")
         
@@ -502,6 +555,7 @@ async def whatsapp_mcp_handler(
                     # Format response for WhatsApp/Puch AI
                     whatsapp_response = {
                         "success": True,
+                        "status": "ok",
                         "session_id": session_id,
                         "message": chat_response.get("response", ""),
                         "intent": chat_response.get("intent_data", {}).get("intent", "general_chat"),
@@ -582,15 +636,15 @@ async def whatsapp_mcp_handler(
         except:
             pass  # Don't fail if error logging fails
         
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error": "processing_failed",
-                "message": "Failed to process WhatsApp message",
-                "details": str(e),
-                "session_id": request.get('session_id') if isinstance(request, dict) else None
-            }
-        )
+        # Return a more user-friendly error for connection issues
+        return {
+            "status": "error",
+            "error": "processing_failed",
+            "message": "Failed to process WhatsApp message, but MCP connection is working",
+            "details": str(e),
+            "session_id": request.get('session_id') if isinstance(request, dict) else None,
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 @app.get("/api/mcp/health")
 async def whatsapp_mcp_health():
