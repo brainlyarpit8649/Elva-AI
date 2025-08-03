@@ -1174,8 +1174,8 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
         # Default to personal
         return 'personal' if 'personal' in categories else categories[0]
 
-    async def _handle_weather_automation(self, intent: str, intent_data: Dict[str, Any], username: str = None) -> Dict[str, Any]:
-        """Handle weather automation using Tomorrow.io API with friendly responses"""
+    async def _handle_weather_automation(self, intent: str, intent_data: Dict[str, Any], username: str = None, conversation_context: str = None) -> Dict[str, Any]:
+        """Handle weather automation using Tomorrow.io API with friendly responses and conversation context"""
         try:
             location = intent_data.get("location", "")
             
@@ -1189,7 +1189,7 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
             logger.info(f"🌦️ Processing weather intent '{intent}' for location: {location}")
             
             if intent == "get_current_weather":
-                weather_data = await get_current_weather(location, username)
+                weather_data = await get_current_weather(location, username, conversation_context)
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location},
@@ -1200,7 +1200,7 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
                 days = intent_data.get("days", 3)
                 # Ensure days is within valid range
                 days = max(1, min(days, 7))
-                weather_data = await get_weather_forecast(location, days, username)
+                weather_data = await get_weather_forecast(location, days, username, conversation_context)
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location, "days": days},
