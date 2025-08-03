@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://969852c2-df19-4799-8b24-72ad4de8f1d2.preview.emergentagent.com/api"
+BACKEND_URL = "https://84626dc5-5ece-4e7b-a44b-90230e6a6f03.preview.emergentagent.com/api"
 
 class ReviewFocusedTester:
     def __init__(self):

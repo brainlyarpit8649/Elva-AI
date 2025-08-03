@@ -43,7 +43,7 @@ class GmailOAuthService:
         self.credentials_file_path = Path(__file__).parent / 'credentials.json'
         
         # OAuth2 configuration from environment
-        self.redirect_uri = os.getenv('GMAIL_REDIRECT_URI', 'https://969852c2-df19-4799-8b24-72ad4de8f1d2.preview.emergentagent.com/api/gmail/callback')
+        self.redirect_uri = os.getenv('GMAIL_REDIRECT_URI', 'https://84626dc5-5ece-4e7b-a44b-90230e6a6f03.preview.emergentagent.com/api/gmail/callback')
         
     def _load_credentials_config(self) -> Dict[str, Any]:
         """Load OAuth2 credentials configuration from credentials.json"""
