@@ -97,7 +97,7 @@ async def get_current_weather(location: str, username: str = None) -> Optional[s
         return f"⚠️ Unable to fetch weather information for '{location}' right now. Error: {str(e)}"
 
 def _apply_current_weather_template(raw_data: dict, location: str, username: str = None) -> str:
-    """Apply friendly current weather template"""
+    """Apply friendly current weather template with detailed bullet points"""
     temperature = raw_data.get("temperature", "N/A")
     feels_like = raw_data.get("feels_like", "N/A") 
     humidity = raw_data.get("humidity", "N/A")
@@ -132,14 +132,64 @@ def _apply_current_weather_template(raw_data: dict, location: str, username: str
     }
     condition = condition_map.get(condition_code, "🌥️ Moderate conditions")
     
-    # Friendly current weather template
+    # Get comfort level based on temperature
+    comfort_level = ""
+    if temperature != "N/A":
+        temp_val = float(temperature)
+        if temp_val < 0:
+            comfort_level = "❄️ **Freezing conditions** - Bundle up with heavy winter clothing!"
+        elif temp_val < 10:
+            comfort_level = "🧥 **Cold weather** - Wear a warm jacket and consider gloves"
+        elif temp_val < 20:
+            comfort_level = "🌡️ **Cool temperature** - Light jacket or sweater recommended"
+        elif temp_val < 25:
+            comfort_level = "👕 **Pleasant weather** - Perfect for outdoor activities"
+        elif temp_val < 30:
+            comfort_level = "☀️ **Warm conditions** - Light clothing and stay hydrated"
+        else:
+            comfort_level = "🔥 **Hot weather** - Stay cool, drink plenty of water, and avoid prolonged sun exposure"
+    
+    # Wind comfort assessment
+    wind_comfort = ""
+    if wind_speed != "N/A":
+        wind_val = float(wind_speed)
+        if wind_val < 5:
+            wind_comfort = "🍃 **Calm winds** - Barely noticeable breeze, perfect for outdoor dining"
+        elif wind_val < 15:
+            wind_comfort = "🌬️ **Light breeze** - Pleasant wind conditions, ideal for walking"
+        elif wind_val < 25:
+            wind_comfort = "💨 **Moderate winds** - Noticeable breeze, secure loose items"
+        else:
+            wind_comfort = "🌪️ **Strong winds** - Windy conditions, be cautious of flying debris"
+    
+    # Humidity comfort
+    humidity_comfort = ""
+    if humidity != "N/A":
+        humidity_val = float(humidity)
+        if humidity_val < 30:
+            humidity_comfort = "🏜️ **Low humidity** - Dry air, consider moisturizing and staying hydrated"
+        elif humidity_val < 60:
+            humidity_comfort = "✨ **Comfortable humidity** - Pleasant moisture levels in the air"
+        else:
+            humidity_comfort = "💧 **High humidity** - Muggy conditions, may feel warmer than actual temperature"
+    
+    # Enhanced current weather template with detailed bullet points
     response = (
-        f"🌤️ Hey {username or 'there'}! Here's the current weather in {location}:\n"
-        f"- 🌡️ Temperature: {temperature}°C (Feels like {feels_like}°C)\n"
-        f"- ☁️ Condition: {condition}\n"
-        f"- 💧 Humidity: {humidity}%\n"
-        f"- 🌬️ Wind: {wind_speed} km/h\n"
-        f"Would you like me to share tomorrow's forecast too? 😊"
+        f"🌤️ **Current Weather Report for {location}**\n\n"
+        f"Hey {username or 'there'}! Here's your detailed current weather conditions:\n\n"
+        f"**📊 Temperature Details:**\n"
+        f"• 🌡️ **Current Temperature:** {temperature}°C\n"
+        f"• 🤔 **Feels Like:** {feels_like}°C (accounting for wind chill and humidity)\n"
+        f"• {comfort_level}\n\n"
+        f"**🌤️ Weather Conditions:**\n"
+        f"• ☁️ **Sky Condition:** {condition}\n"
+        f"• 💧 **Humidity Level:** {humidity}% - {humidity_comfort}\n"
+        f"• 🌬️ **Wind Speed:** {wind_speed} km/h - {wind_comfort}\n\n"
+        f"**💡 Weather Tips:**\n"
+        f"• 👔 **Clothing Suggestion:** Based on current conditions, dress appropriately for the temperature and wind\n"
+        f"• ⏰ **Best Time:** Current conditions are perfect for checking what's coming up!\n"
+        f"• 🔮 **Planning Ahead:** Would you like me to share tomorrow's detailed forecast as well?\n\n"
+        f"💬 Feel free to ask me about the extended forecast, air quality, or any specific weather concerns! 😊"
     )
     
     return response
