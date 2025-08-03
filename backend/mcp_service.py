@@ -357,6 +357,356 @@ async def health_check():
         logger.error(f"❌ Health check failed: {e}")
         raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
 
+# WhatsApp MCP Integration - Production Endpoint
+@app.post("/api/mcp")
+async def whatsapp_mcp_handler(
+    request: dict,
+    token: str = None,
+    authorization: str = Header(None)
+):
+    """
+    Production WhatsApp MCP Integration Handler
+    Processes WhatsApp messages through Elva AI backend pipeline
+    
+    Supports token authentication via:
+    - Query parameter: ?token=<TOKEN>
+    - Authorization header: Bearer <TOKEN>
+    
+    Expected payload: {"session_id": "...", "message": "...", "user_id": "..."}
+    """
+    try:
+        # Extract and validate authentication token
+        auth_token = None
+        
+        # Check query parameter first (from request if available)
+        if hasattr(request, 'query_params') and 'token' in request.query_params:
+            auth_token = request.query_params.get('token')
+        elif token:
+            auth_token = token
+        
+        # Check Authorization header
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]  # Remove 'Bearer ' prefix
+            else:
+                auth_token = authorization
+        
+        # Validate token against environment variable
+        if not auth_token or auth_token != MCP_API_TOKEN:
+            logger.warning(f"🚫 WhatsApp MCP - Invalid token attempt")
+            raise HTTPException(
+                status_code=401, 
+                detail={
+                    "error": "invalid_token",
+                    "message": "Invalid or missing MCP API token",
+                    "expected_format": "Bearer <token> in header or ?token=<token> in query"
+                }
+            )
+        
+        # Validate request payload
+        if not isinstance(request, dict):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "invalid_payload",
+                    "message": "Request must be a JSON object",
+                    "expected_format": '{"session_id": "...", "message": "...", "user_id": "..."}'
+                }
+            )
+        
+        session_id = request.get('session_id')
+        message = request.get('message')
+        user_id = request.get('user_id', 'whatsapp_user')
+        
+        if not session_id or not message:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "missing_fields",
+                    "message": "Both session_id and message are required",
+                    "received": {"session_id": session_id, "message": message}
+                }
+            )
+        
+        logger.info(f"📱 WhatsApp MCP Message - Session: {session_id}, Message: {message[:100]}...")
+        
+        # Forward to main Elva AI backend for processing
+        try:
+            backend_url = os.getenv("ELVA_BACKEND_URL", "https://603a1fa3-b3e5-4d58-b2f2-589bb867edd6.preview.emergentagent.com")
+            
+            chat_payload = {
+                "message": message,
+                "session_id": f"whatsapp_{session_id}",  # Prefix to distinguish WhatsApp sessions
+                "user_id": user_id
+            }
+            
+            import httpx
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{backend_url}/api/chat",
+                    json=chat_payload,
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                if response.status_code == 200:
+                    chat_response = response.json()
+                    
+                    # Store WhatsApp conversation in MCP context
+                    context_data = {
+                        "platform": "whatsapp",
+                        "session_id": session_id,
+                        "user_id": user_id,
+                        "user_message": message,
+                        "ai_response": chat_response.get("response", ""),
+                        "intent_data": chat_response.get("intent_data", {}),
+                        "needs_approval": chat_response.get("needs_approval", False),
+                        "chat_history": [
+                            {
+                                "role": "user",
+                                "content": message,
+                                "timestamp": datetime.utcnow().isoformat()
+                            },
+                            {
+                                "role": "assistant", 
+                                "content": chat_response.get("response", ""),
+                                "timestamp": datetime.utcnow().isoformat()
+                            }
+                        ]
+                    }
+                    
+                    # Write to MCP context for session memory
+                    context_key = f"{CONTEXT_PREFIX}whatsapp_{session_id}"
+                    await redis_client.setex(
+                        context_key,
+                        REDIS_TTL,
+                        json.dumps(context_data, default=str)
+                    )
+                    
+                    # Store in MongoDB for persistence
+                    await mongo_db.whatsapp_conversations.replace_one(
+                        {"session_id": f"whatsapp_{session_id}"},
+                        {
+                            **context_data,
+                            "timestamp": datetime.utcnow(),
+                            "conversation_id": str(uuid.uuid4())
+                        },
+                        upsert=True
+                    )
+                    
+                    logger.info(f"💾 WhatsApp context stored - Session: whatsapp_{session_id}")
+                    
+                    # Format response for WhatsApp/Puch AI
+                    whatsapp_response = {
+                        "success": True,
+                        "session_id": session_id,
+                        "message": chat_response.get("response", ""),
+                        "intent": chat_response.get("intent_data", {}).get("intent", "general_chat"),
+                        "needs_approval": chat_response.get("needs_approval", False),
+                        "platform": "whatsapp",
+                        "timestamp": chat_response.get("timestamp", datetime.utcnow().isoformat()),
+                        "mcp_service": "elva-mcp-service.onrender.com"
+                    }
+                    
+                    # Add special handling for Gmail and Weather intents
+                    if chat_response.get("intent_data") and chat_response["intent_data"].get("intent") in ["check_gmail_inbox", "gmail_summary", "get_weather_forecast"]:
+                        whatsapp_response["intent_data"] = {
+                            "type": chat_response["intent_data"].get("intent"),
+                            "confidence": chat_response["intent_data"].get("confidence", 0.8),
+                            "data": chat_response["intent_data"]
+                        }
+                    
+                    # Add approval workflow info if needed
+                    if chat_response.get("needs_approval"):
+                        whatsapp_response["approval_info"] = {
+                            "required": True,
+                            "intent": chat_response.get("intent_data", {}).get("intent"),
+                            "message_id": chat_response.get("id"),
+                            "approval_endpoint": f"{backend_url}/api/approve"
+                        }
+                    
+                    logger.info(f"✅ WhatsApp MCP Response - Session: {session_id}, Intent: {whatsapp_response['intent']}")
+                    return whatsapp_response
+                    
+                else:
+                    logger.error(f"❌ Backend processing failed - Status: {response.status_code}")
+                    raise HTTPException(
+                        status_code=502,
+                        detail={
+                            "error": "backend_processing_failed",
+                            "message": "Failed to process message through Elva AI backend",
+                            "backend_status": response.status_code
+                        }
+                    )
+                    
+        except httpx.TimeoutException:
+            logger.error(f"⏱️ Backend processing timeout for session {session_id}")
+            raise HTTPException(
+                status_code=504,
+                detail={
+                    "error": "processing_timeout",
+                    "message": "Message processing timed out",
+                    "session_id": session_id
+                }
+            )
+        except Exception as backend_error:
+            logger.error(f"💥 Backend communication error: {backend_error}")
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "error": "backend_communication_failed",
+                    "message": "Failed to communicate with Elva AI backend",
+                    "details": str(backend_error)
+                }
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"💥 WhatsApp MCP Handler Error: {e}")
+        
+        # Log error to MongoDB for debugging
+        try:
+            error_log = {
+                "id": str(uuid.uuid4()),
+                "platform": "whatsapp",
+                "session_id": request.get('session_id', 'unknown') if isinstance(request, dict) else 'unknown',
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "timestamp": datetime.utcnow()
+            }
+            await mongo_db.whatsapp_errors.insert_one(error_log)
+        except:
+            pass  # Don't fail if error logging fails
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "processing_failed",
+                "message": "Failed to process WhatsApp message",
+                "details": str(e),
+                "session_id": request.get('session_id') if isinstance(request, dict) else None
+            }
+        )
+
+@app.get("/api/mcp/health")
+async def whatsapp_mcp_health():
+    """WhatsApp MCP Health Check for Production"""
+    try:
+        # Test database connections
+        await mongo_client.admin.command('ping')
+        await redis_client.ping()
+        
+        # Test backend connectivity
+        backend_url = os.getenv("ELVA_BACKEND_URL", "https://603a1fa3-b3e5-4d58-b2f2-589bb867edd6.preview.emergentagent.com")
+        backend_healthy = False
+        
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(f"{backend_url}/api/health")
+                backend_healthy = response.status_code == 200
+        except:
+            backend_healthy = False
+        
+        return {
+            "status": "healthy",
+            "service": "WhatsApp MCP Integration (Production)",
+            "version": "1.0.0",
+            "platform": "whatsapp",
+            "deployment": "elva-mcp-service.onrender.com",
+            "uptime": "24/7",
+            "databases": {
+                "mongodb": "connected",
+                "redis": "connected"
+            },
+            "backend_connection": {
+                "url": backend_url,
+                "status": "connected" if backend_healthy else "disconnected"
+            },
+            "integrations": {
+                "gmail": "ready",
+                "weather": "ready", 
+                "hybrid_ai": "ready",
+                "mcp_context": "ready"
+            },
+            "endpoints": [
+                "POST /api/mcp",
+                "GET /api/mcp/health",
+                "GET /api/mcp/sessions"
+            ],
+            "authentication": {
+                "methods": ["query_parameter", "authorization_header"],
+                "token_configured": bool(MCP_API_TOKEN),
+                "example_usage": [
+                    "POST /api/mcp?token=<TOKEN>",
+                    "POST /api/mcp (with Authorization: Bearer <TOKEN>)"
+                ]
+            },
+            "whatsapp_integration": {
+                "puch_ai_compatible": True,
+                "session_memory": True,
+                "intent_detection": ["gmail", "weather", "general_chat"],
+                "approval_workflows": True,
+                "conversation_logging": True
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ WhatsApp MCP Health Check Error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+
+@app.get("/api/mcp/sessions")
+async def get_whatsapp_sessions(
+    token: str = None,
+    authorization: str = Header(None),
+    limit: int = 20
+):
+    """Get recent WhatsApp conversation sessions"""
+    try:
+        # Validate token (same logic as main endpoint)
+        auth_token = token
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]
+            else:
+                auth_token = authorization
+        
+        if not auth_token or auth_token != MCP_API_TOKEN:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Get recent WhatsApp sessions from MongoDB
+        sessions = []
+        cursor = mongo_db.whatsapp_conversations.find().sort([("timestamp", -1)]).limit(limit)
+        async for session in cursor:
+            # Convert ObjectId to string for JSON serialization
+            session_data = {}
+            for key, value in session.items():
+                if hasattr(value, '__dict__') and hasattr(value, 'binary'):  # ObjectId
+                    session_data[key] = str(value)
+                else:
+                    session_data[key] = value
+            sessions.append(session_data)
+        
+        return {
+            "success": True,
+            "sessions": sessions,
+            "total": len(sessions),
+            "platform": "whatsapp",
+            "service": "elva-mcp-service.onrender.com"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ WhatsApp sessions error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -364,6 +714,12 @@ async def root():
         "service": "MCP (Model Context Protocol)",
         "description": "Centralized context management for Elva AI + SuperAGI integration",
         "version": "1.0.0",
+        "whatsapp_integration": {
+            "status": "production_ready",
+            "endpoint": "/api/mcp",
+            "health_check": "/api/mcp/health",
+            "sessions": "/api/mcp/sessions"
+        },
         "documentation": "/docs",
         "health": "/health"
     }
