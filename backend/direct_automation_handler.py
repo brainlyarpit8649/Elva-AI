@@ -168,7 +168,11 @@ class DirectAutomationHandler:
             
             # Format result using template
             if result["success"]:
-                formatted_message = self._format_success_result(intent, result["data"], template_info)
+                # For weather intents, return the friendly message directly without automation wrapper
+                if automation_type == "weather_api":
+                    formatted_message = result["message"]
+                else:
+                    formatted_message = self._format_success_result(intent, result["data"], template_info)
             else:
                 formatted_message = template_info["error_template"].format(
                     error=result.get("message", "Unknown error"),
