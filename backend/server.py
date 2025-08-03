@@ -20,6 +20,7 @@ from playwright_service import playwright_service, AutomationResult
 from direct_automation_handler import direct_automation_handler
 from gmail_oauth_service import GmailOAuthService
 from conversation_memory import initialize_conversation_memory
+from message_memory import ensure_indexes
 from superagi_client import superagi_client
 from mcp_integration import get_mcp_service, initialize_mcp_service
 
