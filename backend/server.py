@@ -1064,6 +1064,82 @@ async def clear_conversation_memory(session_id: str):
         logger.error(f"Clear conversation memory error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Weather API endpoints using Tomorrow.io
+@api_router.get("/weather/current")
+async def get_current_weather_endpoint(location: str):
+    """Get current weather for a location using Tomorrow.io API"""
+    try:
+        logger.info(f"🌦️ Current weather request for: {location}")
+        result = await get_current_weather(location)
+        return {"status": "success", "data": result, "location": location}
+    except Exception as e:
+        logger.error(f"Current weather error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weather/forecast")
+async def get_weather_forecast_endpoint(location: str, days: int = 3):
+    """Get weather forecast for a location using Tomorrow.io API"""
+    try:
+        logger.info(f"📅 Weather forecast request for: {location} ({days} days)")
+        result = await get_weather_forecast(location, days)
+        return {"status": "success", "data": result, "location": location, "days": days}
+    except Exception as e:
+        logger.error(f"Weather forecast error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weather/air-quality")
+async def get_air_quality_endpoint(location: str):
+    """Get air quality index for a location using Tomorrow.io API"""
+    try:
+        logger.info(f"🌬️ Air quality request for: {location}")
+        result = await get_air_quality_index(location)
+        return {"status": "success", "data": result, "location": location}
+    except Exception as e:
+        logger.error(f"Air quality error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weather/alerts")
+async def get_weather_alerts_endpoint(location: str):
+    """Get weather alerts for a location"""
+    try:
+        logger.info(f"⚠️ Weather alerts request for: {location}")
+        result = await get_weather_alerts(location)
+        return {"status": "success", "data": result, "location": location}
+    except Exception as e:
+        logger.error(f"Weather alerts error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weather/sun-times")
+async def get_sun_times_endpoint(location: str):
+    """Get sunrise and sunset times for a location using Tomorrow.io API"""
+    try:
+        logger.info(f"🌅 Sun times request for: {location}")
+        result = await get_sun_times(location)
+        return {"status": "success", "data": result, "location": location}
+    except Exception as e:
+        logger.error(f"Sun times error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weather/cache/stats")
+async def get_weather_cache_stats():
+    """Get weather cache statistics"""
+    try:
+        stats = get_cache_stats()
+        return {"status": "success", "cache_stats": stats}
+    except Exception as e:
+        logger.error(f"Weather cache stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/weather/cache/clear")
+async def clear_weather_cache_endpoint():
+    """Clear weather cache"""
+    try:
+        await clear_weather_cache()
+        return {"status": "success", "message": "Weather cache cleared successfully"}
+    except Exception as e:
+        logger.error(f"Clear weather cache error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/health")
 async def health_check():
     try:
