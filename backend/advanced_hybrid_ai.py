@@ -877,9 +877,9 @@ Return ONLY the JSON object."""
                 if routing_decision.primary_model == ModelChoice.BOTH_SEQUENTIAL:
                     intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id, full_conversation_context)
                 elif routing_decision.primary_model == ModelChoice.CLAUDE:
-                    # Claude for warm, contextual responses with FULL context
+                    # Claude for warm, contextual responses with FULL context ALWAYS
                     enhanced_prompt = user_input
-                    if routing_decision.use_context_enhancement and full_conversation_context:
+                    if full_conversation_context:
                         enhanced_prompt = f"{full_conversation_context}\n\nCurrent request: {user_input}"
                     
                     system_message = self._generate_claude_system_message(classification, {"intent": classification.primary_intent})
