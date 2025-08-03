@@ -921,7 +921,12 @@ Return ONLY the JSON object."""
                     # Import and use direct automation handler
                     try:
                         from direct_automation_handler import direct_automation_handler
-                        automation_result = await direct_automation_handler.process_direct_automation(quick_intent_data, session_id, username=None)
+                        automation_result = await direct_automation_handler.process_direct_automation(
+                            quick_intent_data, 
+                            session_id, 
+                            username=None, 
+                            conversation_context=full_conversation_context
+                        )
                         
                         if automation_result["success"]:
                             response_text = automation_result["message"]
