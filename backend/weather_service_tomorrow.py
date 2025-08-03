@@ -348,12 +348,20 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
         logger.error(f"❌ Error fetching forecast: {e}")
         return f"⚠️ Unable to fetch forecast information for '{location}' right now. Error: {str(e)}"
 
-def _apply_forecast_template(raw_data: dict, location: str, days: int, username: str = None) -> str:
-    """Apply detailed forecast template with comprehensive bullet points"""
+def _apply_forecast_template(raw_data: dict, location: str, days: int, username: str = None, conversation_context: str = None) -> str:
+    """Apply detailed forecast template with comprehensive bullet points and conversation context awareness"""
     forecasts = raw_data.get("forecasts", [])
     
     if not forecasts:
         return f"⚠️ No forecast data available for '{location}'."
+    
+    # Check conversation context for previous weather questions
+    context_reference = ""
+    if conversation_context:
+        if "forecast" in conversation_context.lower():
+            context_reference = f"\n💭 **Following up on your forecast question:** "
+        elif any(phrase in conversation_context.lower() for phrase in ["weather", "rain", "temperature"]):
+            context_reference = f"\n💭 **Continuing our weather discussion:** "
     
     # Build detailed forecast with bullet points
     forecast_details = ""
@@ -480,7 +488,7 @@ def _apply_forecast_template(raw_data: dict, location: str, days: int, username:
 
     # Enhanced forecast template with comprehensive details
     response = (
-        f"📅 **{days}-Day Weather Forecast for {location}**\n\n"
+        f"📅 **{days}-Day Weather Forecast for {location}**{context_reference}\n\n"
         f"Hi {username or 'there'}! Here's your comprehensive weather forecast with all the details you need:\n\n"
         f"{forecast_details}"
         f"**🌟 Additional Weather Tips:**\n"
