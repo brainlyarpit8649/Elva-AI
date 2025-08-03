@@ -117,7 +117,7 @@ class DirectAutomationHandler:
             }
         }
     
-    async def process_direct_automation(self, intent_data: Dict[str, Any], session_id: str = None, username: str = None) -> Dict[str, Any]:
+    async def process_direct_automation(self, intent_data: Dict[str, Any], session_id: str = None, username: str = None, conversation_context: str = None) -> Dict[str, Any]:
         """
         Process direct automation intent and return formatted result
         
@@ -125,6 +125,7 @@ class DirectAutomationHandler:
             intent_data: Intent data from AI detection
             session_id: Session ID for authentication
             username: Optional username for friendly responses
+            conversation_context: Conversation context for context-aware responses
             
         Returns:
             Dict containing automation result and formatting info
@@ -156,7 +157,7 @@ class DirectAutomationHandler:
             elif automation_type == "enhanced_gmail_automation":
                 result = await self._handle_enhanced_gmail_automation(intent, intent_data, session_id)
             elif automation_type == "weather_api":
-                result = await self._handle_weather_automation(intent, intent_data, username)
+                result = await self._handle_weather_automation(intent, intent_data, username, conversation_context)
             elif automation_type == "data_extraction":
                 result = await self._handle_data_extraction(intent, intent_data)
             elif automation_type == "web_scraping":
