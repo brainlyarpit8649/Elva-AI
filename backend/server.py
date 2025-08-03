@@ -1111,6 +1111,41 @@ async def whatsapp_mcp_handler(
                 }
             )
         
+        # Handle empty or test connection requests
+        if not request or request == {}:
+            logger.info("🔄 WhatsApp MCP - Connection test request")
+            return {
+                "status": "ok",
+                "message": "MCP connection successful",
+                "service": "WhatsApp MCP Integration",
+                "platform": "whatsapp",
+                "endpoints": ["POST /api/mcp", "GET /api/mcp/health"],
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Flexible payload validation - accept different formats
+        if not isinstance(request, dict):
+            # Try to handle string payloads (some clients send plain text)
+            if isinstance(request, str):
+                request = {
+                    "session_id": "connection_test",
+                    "message": request,
+                    "user_id": "test_user"
+                }
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "invalid_payload",
+                        "message": "Request must be JSON object or string",
+                        "expected_formats": [
+                            '{"session_id": "...", "message": "..."}',
+                            '{"session_id": "...", "text": "..."}',
+                            '{"session_id": "...", "query": "..."}'
+                        ]
+                    }
+                )
+        
         # Validate request payload
         if not isinstance(request, dict):
             raise HTTPException(
