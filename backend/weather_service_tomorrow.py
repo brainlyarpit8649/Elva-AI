@@ -255,6 +255,10 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
             rain_accumulation = values.get("rainAccumulationAvg", 0)
             condition_code = values.get("weatherCodeMax", 1001)
             temp_avg = values.get("temperatureAvg", "N/A")
+            temp_max = values.get("temperatureMax", "N/A")
+            temp_min = values.get("temperatureMin", "N/A")
+            humidity = values.get("humidityAvg", "N/A")
+            wind_speed = values.get("windSpeedAvg", "N/A")
             
             # Check if it will rain tomorrow - using rain intensity, accumulation, and probability
             will_rain = (rain_intensity > 0.5 or 
@@ -262,14 +266,56 @@ async def get_weather_forecast(location: str, days: int = 3, username: str = Non
                         rain_chance > 50 or 
                         condition_code in [4000, 4001, 4200, 4201, 8000])
             
-            # Friendly rain tomorrow template
+            # Get tomorrow's date for display
+            tomorrow_date = datetime.now() + timedelta(days=1)
+            tomorrow_formatted = tomorrow_date.strftime("%A, %B %d, %Y")
+            
+            # Enhanced rain tomorrow template with comprehensive bullet points
             if will_rain:
-                response = f"☔ Yes {username or 'friend'}, it looks like rain is likely tomorrow in {actual_location} with a {rain_chance}% chance of precipitation. Don't forget your umbrella! 🌧️"
+                response = (
+                    f"☔ **Rain Expected Tomorrow in {actual_location}**\n\n"
+                    f"Hey {username or 'friend'}! Yes, rain is likely tomorrow ({tomorrow_formatted}). Here are the detailed conditions:\n\n"
+                    f"**🌧️ Rain Forecast Details:**\n"
+                    f"• ☔ **Rain Probability:** {rain_chance}% chance of precipitation\n"
+                    f"• 💧 **Rain Intensity:** {'Light' if rain_intensity < 2 else 'Moderate' if rain_intensity < 5 else 'Heavy'} rainfall expected\n"
+                    f"• 🌊 **Accumulation:** Expected rainfall of {rain_accumulation:.1f}mm\n"
+                    f"• ⏰ **Duration:** Intermittent showers likely throughout the day\n\n"
+                    f"**🌡️ Temperature & Conditions:**\n"
+                    f"• 🌡️ **Temperature Range:** High {int(temp_max) if temp_max != 'N/A' else 'N/A'}°C / Low {int(temp_min) if temp_min != 'N/A' else 'N/A'}°C\n"
+                    f"• 💧 **Humidity:** {int(humidity) if humidity != 'N/A' else 'N/A'}% - Will feel muggy due to rain\n"
+                    f"• 🌬️ **Wind:** {wind_speed if wind_speed != 'N/A' else 'N/A'} km/h - May affect umbrella use\n\n"
+                    f"**☂️ Tomorrow's Rain Preparation Guide:**\n"
+                    f"• 🌂 **Essential Item:** Don't forget your umbrella or raincoat!\n"
+                    f"• 👟 **Footwear:** Wear waterproof shoes or boots to stay dry\n"
+                    f"• 🚗 **Driving:** Allow extra time for travel due to wet road conditions\n"
+                    f"• 📱 **Stay Updated:** Check weather updates as conditions may change\n"
+                    f"• 🏠 **Indoor Plans:** Consider backup indoor activities just in case\n\n"
+                    f"💡 **Pro Tips:** Plan your outdoor activities for early morning or late evening when rain might be lighter. Would you like me to set a rain reminder for tomorrow morning? 🌧️"
+                )
             else:
-                response = f"☀️ Nope, it should stay dry tomorrow in {actual_location}! Perfect weather to go out and enjoy your day! 😄"
+                response = (
+                    f"☀️ **No Rain Expected Tomorrow in {actual_location}**\n\n"
+                    f"Great news {username or 'friend'}! It should stay dry tomorrow ({tomorrow_formatted}). Here are the conditions:\n\n"
+                    f"**🌤️ Clear Weather Details:**\n"
+                    f"• ☀️ **Rain Probability:** Only {rain_chance}% chance of precipitation - Very unlikely!\n"
+                    f"• 🌤️ **Sky Conditions:** Mostly clear to partly cloudy skies expected\n"
+                    f"• ☔ **Dry Day:** No significant rainfall anticipated\n"
+                    f"• 🌈 **Perfect Day:** Great conditions for outdoor activities\n\n"
+                    f"**🌡️ Temperature & Conditions:**\n"
+                    f"• 🌡️ **Temperature Range:** High {int(temp_max) if temp_max != 'N/A' else 'N/A'}°C / Low {int(temp_min) if temp_min != 'N/A' else 'N/A'}°C\n"
+                    f"• 💧 **Humidity:** {int(humidity) if humidity != 'N/A' else 'N/A'}% - Comfortable moisture levels\n"
+                    f"• 🌬️ **Wind:** {wind_speed if wind_speed != 'N/A' else 'N/A'} km/h - Pleasant breeze conditions\n\n"
+                    f"**☀️ Perfect Weather Activity Guide:**\n"
+                    f"• 🚶‍♂️ **Outdoor Activities:** Perfect day for walks, hiking, or sports\n"
+                    f"• 🧺 **Picnic Weather:** Ideal conditions for outdoor dining or barbecues\n"
+                    f"• 📸 **Photography:** Great lighting for outdoor photography\n"
+                    f"• 🚲 **Exercise:** Perfect for cycling, jogging, or other outdoor fitness\n"
+                    f"• 🌻 **Gardening:** Excellent day for garden work or outdoor projects\n\n"
+                    f"💡 **Enjoy Your Day:** Take advantage of the beautiful weather! Would you like me to check the extended forecast to help you plan more activities? 😄"
+                )
             
             # Add follow-up action suggestion
-            response += f"\n\nWould you like me to set a rain alert for tomorrow?"
+            response += f"\n\n🔮 **Want More Details?** Ask me about the weekly forecast, air quality, or sunset times for tomorrow!"
             
             # Cache the result
             cache[cache_key] = {
