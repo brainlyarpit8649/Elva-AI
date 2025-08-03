@@ -47,7 +47,7 @@ async def get_current_weather(location: str, username: str = None, conversation_
     if cached_result and is_cache_valid(cached_result):
         logger.info(f"🚀 Returning cached current weather for {location}")
         # Re-apply friendly template with username for cached results
-        return _apply_current_weather_template(cached_result.get('raw_data', {}), location, username)
+        return _apply_current_weather_template(cached_result.get('raw_data', {}), location, username, conversation_context)
 
     try:
         params = {
