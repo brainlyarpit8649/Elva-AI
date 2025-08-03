@@ -805,6 +805,33 @@ Check website updates: {{"intent": "check_website_updates", "website": "website_
 Monitor competitors: {{"intent": "monitor_competitors", "company": "company_name", "data_type": "pricing/products/news"}}
 Scrape news articles: {{"intent": "scrape_news_articles", "topic": "news topic", "source": "news source"}}
 
+WEATHER INTENTS:
+Current weather: {{"intent": "get_current_weather", "location": "location name"}}
+Weather forecast: {{"intent": "get_weather_forecast", "location": "location name", "days": 3}}  
+Air quality: {{"intent": "get_air_quality_index", "location": "location name"}}
+Weather alerts: {{"intent": "get_weather_alerts", "location": "location name"}}
+Sun times: {{"intent": "get_sun_times", "location": "location name"}}
+
+WEATHER EXAMPLES:
+"What's the weather in Paris?" → {{"intent": "get_current_weather", "location": "Paris"}}
+"Current weather in Delhi" → {{"intent": "get_current_weather", "location": "Delhi"}}
+"How hot is it in Mumbai right now?" → {{"intent": "get_current_weather", "location": "Mumbai"}}
+"Is it raining in London?" → {{"intent": "get_current_weather", "location": "London"}}
+"Weather update for New York" → {{"intent": "get_current_weather", "location": "New York"}}
+"Forecast for London tomorrow" → {{"intent": "get_weather_forecast", "location": "London", "days": 1}}
+"7-day weather in Tokyo" → {{"intent": "get_weather_forecast", "location": "Tokyo", "days": 7}}
+"What's the weather this weekend in Goa?" → {{"intent": "get_weather_forecast", "location": "Goa", "days": 3}}
+"Will it rain tomorrow in Dubai?" → {{"intent": "get_weather_forecast", "location": "Dubai", "days": 1}}
+"Next 3 days weather in Sydney" → {{"intent": "get_weather_forecast", "location": "Sydney", "days": 3}}
+"Air quality in Delhi today" → {{"intent": "get_air_quality_index", "location": "Delhi"}}
+"Is it safe to jog outside in Beijing?" → {{"intent": "get_air_quality_index", "location": "Beijing"}}
+"AQI in Los Angeles right now" → {{"intent": "get_air_quality_index", "location": "Los Angeles"}}
+"Are there any weather warnings in Miami?" → {{"intent": "get_weather_alerts", "location": "Miami"}}
+"Storm alerts for Florida" → {{"intent": "get_weather_alerts", "location": "Florida"}}
+"Is there a heatwave alert in Madrid?" → {{"intent": "get_weather_alerts", "location": "Madrid"}}
+"When is sunrise in Paris today?" → {{"intent": "get_sun_times", "location": "Paris"}}
+"Sunset time in San Francisco" → {{"intent": "get_sun_times", "location": "San Francisco"}}
+
 General chat: {{"intent": "general_chat", "message": "original message"}}
 
 Return ONLY the JSON object."""
