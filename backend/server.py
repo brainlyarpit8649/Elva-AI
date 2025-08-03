@@ -1067,7 +1067,7 @@ async def clear_conversation_memory(session_id: str):
 # WhatsApp MCP Integration Endpoint
 @api_router.post("/mcp")
 async def whatsapp_mcp_handler(
-    request: dict,
+    request: Any,
     token: str = None,
     authorization: str = Header(None)
 ):
