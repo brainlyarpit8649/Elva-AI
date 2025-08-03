@@ -919,9 +919,11 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
                     // Only show the card format for post prompt packages
                     renderPostPromptPackage(message)
                   ) : (
-                    <ReactMarkdown className="chat-message">
-                      {message.response ? renderEmailDisplay(message.response) : message.message}
-                    </ReactMarkdown>
+                    <div className="chat-message">
+                      <ReactMarkdown>
+                        {message.response ? renderEmailDisplay(message.response) : message.message}
+                      </ReactMarkdown>
+                    </div>
                   )}
                   {renderIntentData(message.intent_data)}
                   <div className="text-xs opacity-70 mt-2">
