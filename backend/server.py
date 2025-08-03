@@ -1269,6 +1269,39 @@ async def health_check():
                     "groq_configured": bool(os.getenv("GROQ_API_KEY")),
                     "claude_configured": bool(os.getenv("CLAUDE_API_KEY"))
                 }
+            },
+            "weather_integration": {
+                "provider": "Tomorrow.io",
+                "status": "ready" if os.getenv("TOMORROW_API_KEY") else "missing_api_key",
+                "api_key_configured": bool(os.getenv("TOMORROW_API_KEY")),
+                "cache_enabled": True,
+                "cache_ttl_seconds": 300,
+                "endpoints": [
+                    "/api/weather/current",
+                    "/api/weather/forecast", 
+                    "/api/weather/air-quality",
+                    "/api/weather/alerts",
+                    "/api/weather/sun-times",
+                    "/api/weather/cache/stats",
+                    "/api/weather/cache/clear"
+                ],
+                "supported_intents": [
+                    "get_current_weather",
+                    "get_weather_forecast",
+                    "get_air_quality_index", 
+                    "get_weather_alerts",
+                    "get_sun_times"
+                ],
+                "features": [
+                    "current_weather_conditions",
+                    "multi_day_forecasts_up_to_7_days",
+                    "air_quality_monitoring",
+                    "weather_alerts_basic",
+                    "sunrise_sunset_times",
+                    "5_minute_location_based_caching",
+                    "emoji_formatted_responses",
+                    "instant_responses_no_approval"
+                ]
             }
         }
         
