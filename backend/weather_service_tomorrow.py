@@ -144,7 +144,7 @@ def _apply_current_weather_template(raw_data: dict, location: str, username: str
     
     return response
 
-async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
+async def get_weather_forecast(location: str, days: int = 3, username: str = None) -> Optional[str]:
     """
     Fetches weather forecast for next N days (up to 7) using Tomorrow.io API
     and returns a friendly, readable summary with enhanced rain detection.
@@ -160,7 +160,8 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
     cached_result = cache.get(cache_key)
     if cached_result and is_cache_valid(cached_result):
         logger.info(f"🚀 Returning cached forecast for {location}")
-        return cached_result['data']
+        # Re-apply friendly template with username for cached results
+        return _apply_forecast_template(cached_result.get('raw_data', {}), location, days, username)
 
     try:
         params = {
@@ -187,6 +188,13 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
         location_data = data.get("location", {})
         actual_location = location_data.get("name", location.title())
 
+        # Store raw forecast data
+        raw_forecast_data = {
+            "forecasts": forecasts[:days],
+            "actual_location": actual_location,
+            "days": days
+        }
+
         # Special handling for tomorrow-specific rain queries (days=1)
         if days == 1 and len(forecasts) >= 2:
             tomorrow_data = forecasts[1]  # Index 1 is tomorrow
@@ -204,96 +212,105 @@ async def get_weather_forecast(location: str, days: int = 3) -> Optional[str]:
                         rain_chance > 50 or 
                         condition_code in [4000, 4001, 4200, 4201, 8000])
             
+            # Friendly rain tomorrow template
             if will_rain:
-                return f"🌧️ Yes, rain is likely tomorrow in {actual_location}. {rain_chance}% chance of precipitation. Average temperature: {temp_avg}°C"
+                response = f"☔ Yes {username or 'friend'}, it looks like rain is likely tomorrow in {actual_location} with a {rain_chance}% chance of precipitation. Don't forget your umbrella! 🌧️"
             else:
-                return f"☀️ No, rain is unlikely tomorrow in {actual_location}. Only {rain_chance}% chance of precipitation. Average temperature: {temp_avg}°C"
+                response = f"☀️ Nope, it should stay dry tomorrow in {actual_location}! Perfect weather to go out and enjoy your day! 😄"
+            
+            # Add follow-up action suggestion
+            response += f"\n\nWould you like me to set a rain alert for tomorrow?"
+            
+            # Cache the result
+            cache[cache_key] = {
+                'data': response,
+                'raw_data': raw_forecast_data,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+            return response
 
         # Regular forecast display for multiple days
-        message = f"📅 **{days}-Day Weather Forecast for {actual_location}:**\n\n"
-        rain_tomorrow = False
-
-        for i, day_data in enumerate(forecasts[:days]):
-            date_str = day_data["time"].split("T")[0]
-            date_obj = datetime.fromisoformat(date_str)
-            day_name = date_obj.strftime("%A")
-            formatted_date = date_obj.strftime("%B %d")
-            
-            values = day_data["values"]
-            temp_max = values.get("temperatureMax", "N/A")
-            temp_min = values.get("temperatureMin", "N/A")
-            temp_avg = values.get("temperatureAvg", "N/A")
-            humidity_avg = values.get("humidityAvg", "N/A")
-            wind_speed_max = values.get("windSpeedMax", "N/A")
-            rain_chance = values.get("precipitationProbabilityAvg", 0)
-            rain_intensity = values.get("rainIntensityAvg", 0)
-            rain_accumulation = values.get("rainAccumulationAvg", 0)
-            condition_code = values.get("weatherCodeMax", 1001)
-
-            condition_map = {
-                0: "❓ Unknown",
-                1000: "☀️ Clear",
-                1100: "🌤️ Mostly Clear",
-                1101: "⛅ Partly Cloudy", 
-                1102: "☁️ Cloudy",
-                1001: "☁️ Cloudy",
-                2000: "🌫️ Fog",
-                4000: "🌧️ Light Rain",
-                4001: "🌦️ Rain",
-                4200: "🌧️ Light Rain",
-                4201: "🌧️ Heavy Rain",
-                5000: "❄️ Snow",
-                5001: "❄️ Flurries",
-                5100: "🌨️ Light Snow",
-                5101: "❄️ Heavy Snow",
-                6000: "🌧️ Freezing Drizzle",
-                8000: "⛈️ Thunderstorm"
-            }
-            condition_text = condition_map.get(condition_code, "🌥️ Moderate conditions")
-
-            # Check if tomorrow will have rain using actual rain data
-            if i == 1 and (rain_intensity > 0.5 or rain_accumulation > 0.5 or rain_chance > 50):
-                rain_tomorrow = True
-
-            if i == 0:
-                day_label = "**Today**"
-            elif i == 1:
-                day_label = "**Tomorrow**"
-            else:
-                day_label = f"**{day_name}**"
-
-            message += f"📌 {day_label} ({formatted_date}):\n"
-            message += f"   {condition_text}\n"
-            
-            if temp_max != "N/A" and temp_min != "N/A":
-                message += f"   🌡️ {temp_min}°C - {temp_max}°C"
-                if temp_avg != "N/A":
-                    message += f" (avg: {temp_avg}°C)"
-                message += "\n"
-            
-            if rain_chance > 0:
-                message += f"   🌧️ Rain chance: {rain_chance}%\n"
-            
-            if humidity_avg != "N/A":
-                message += f"   💧 Humidity: {humidity_avg}%\n"
-            
-            if wind_speed_max != "N/A":
-                message += f"   🌬️ Max Wind: {wind_speed_max} km/h\n"
-            
-            message += "\n"
+        result = _apply_forecast_template(raw_forecast_data, actual_location, days, username)
 
         # Cache the result
         cache[cache_key] = {
-            'data': message,
+            'data': result,
+            'raw_data': raw_forecast_data,
             'timestamp': datetime.utcnow().isoformat()
         }
         
         logger.info(f"✅ Successfully fetched and cached forecast for {location}")
-        return message
+        return result
 
     except Exception as e:
         logger.error(f"❌ Error fetching forecast: {e}")
         return f"⚠️ Unable to fetch forecast information for '{location}' right now. Error: {str(e)}"
+
+def _apply_forecast_template(raw_data: dict, location: str, days: int, username: str = None) -> str:
+    """Apply friendly forecast template"""
+    forecasts = raw_data.get("forecasts", [])
+    
+    if not forecasts:
+        return f"⚠️ No forecast data available for '{location}'."
+    
+    # Build forecast list
+    forecast_list = ""
+    
+    for i, day_data in enumerate(forecasts):
+        date_str = day_data["time"].split("T")[0]
+        date_obj = datetime.fromisoformat(date_str)
+        day_name = date_obj.strftime("%A")
+        
+        values = day_data["values"]
+        temp_max = values.get("temperatureMax", "N/A")
+        temp_min = values.get("temperatureMin", "N/A")
+        rain_chance = values.get("precipitationProbabilityAvg", 0)
+        condition_code = values.get("weatherCodeMax", 1001)
+
+        condition_map = {
+            0: "❓ Unknown",
+            1000: "☀️ Clear",
+            1100: "🌤️ Mostly Clear",
+            1101: "⛅ Partly Cloudy", 
+            1102: "☁️ Cloudy",
+            1001: "☁️ Cloudy",
+            2000: "🌫️ Fog",
+            4000: "🌧️ Light Rain",
+            4001: "🌦️ Rain",
+            4200: "🌧️ Light Rain",
+            4201: "🌧️ Heavy Rain",
+            5000: "❄️ Snow",
+            5001: "❄️ Flurries",
+            5100: "🌨️ Light Snow",
+            5101: "❄️ Heavy Snow",
+            6000: "🌧️ Freezing Drizzle",
+            8000: "⛈️ Thunderstorm"
+        }
+        condition_emoji = condition_map.get(condition_code, "🌥️")
+
+        if i == 0:
+            day_label = "Today"
+        elif i == 1:
+            day_label = "Tomorrow"
+        else:
+            day_label = day_name
+
+        if temp_max != "N/A" and temp_min != "N/A":
+            temp_display = f"{int(temp_max)}°C"
+        else:
+            temp_display = "N/A"
+
+        forecast_list += f"• {day_label}: {condition_emoji} {temp_display}, Rain chance {int(rain_chance)}%\n"
+
+    # Friendly forecast template
+    response = (
+        f"📅 Hi {username or 'buddy'}! Here's the {days}-day weather forecast for {location}:\n"
+        f"{forecast_list}\n"
+        f"🌟 Tip: I can set a reminder for rainy days if you'd like! ☔"
+    )
+    
+    return response
 
 async def get_air_quality_index(location: str) -> Optional[str]:
     """
