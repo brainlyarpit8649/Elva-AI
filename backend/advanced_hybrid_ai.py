@@ -972,7 +972,10 @@ Return ONLY the JSON object."""
             
             # Step 4: Calculate routing decision
             
-            # Step 3: Update conversation history
+            # Step 4: Calculate routing decision
+            routing_decision = self._calculate_routing_decision(classification, session_id)
+            
+            # Step 5: Update conversation history
             self._update_conversation_history(session_id, user_input, classification)
             
             logger.info(f"🧠 Classification: {classification.primary_intent} | Routing: {routing_decision.primary_model.value} | Confidence: {routing_decision.confidence:.2f}")
