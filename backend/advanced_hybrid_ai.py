@@ -112,7 +112,13 @@ class AdvancedHybridAI:
             "linkedin_job_alerts": "💼 Checking LinkedIn job alerts...",
             "check_website_updates": "🔍 Monitoring website updates...",
             "monitor_competitors": "📊 Analyzing competitor data...",
-            "scrape_news_articles": "📰 Gathering latest news..."
+            "scrape_news_articles": "📰 Gathering latest news...",
+            # Weather status messages
+            "get_current_weather": "🌦️ Fetching current weather conditions...",
+            "get_weather_forecast": "📅 Retrieving weather forecast...",
+            "get_air_quality_index": "🌬️ Checking air quality levels...",
+            "get_weather_alerts": "⚠️ Checking for weather alerts...",
+            "get_sun_times": "🌅 Getting sunrise and sunset times..."
         }
         return status_messages.get(intent, "🔍 Searching the web...")
 
