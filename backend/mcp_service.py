@@ -436,7 +436,7 @@ async def whatsapp_mcp_handler(
         
         # Forward to main Elva AI backend for processing
         try:
-            backend_url = os.getenv("ELVA_BACKEND_URL", "https://603a1fa3-b3e5-4d58-b2f2-589bb867edd6.preview.emergentagent.com")
+            backend_url = ELVA_BACKEND_URL
             
             chat_payload = {
                 "message": message,
