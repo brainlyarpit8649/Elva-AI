@@ -2481,6 +2481,265 @@ button:active:not(:disabled) {
   }
 }
 
+/* ==========================================
+   MARKDOWN RENDERING STYLES FOR CHAT MESSAGES
+   ========================================== */
+
+.chat-message {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* Headings in markdown */
+.chat-message h1,
+.chat-message h2,
+.chat-message h3,
+.chat-message h4,
+.chat-message h5,
+.chat-message h6 {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 700;
+  color: inherit;
+}
+
+.chat-message h1 { font-size: 1.5rem; }
+.chat-message h2 { font-size: 1.3rem; }
+.chat-message h3 { font-size: 1.1rem; }
+.chat-message h4 { font-size: 1rem; }
+.chat-message h5 { font-size: 0.9rem; }
+.chat-message h6 { font-size: 0.8rem; }
+
+/* Bold and italic text */
+.chat-message strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.chat-message em {
+  font-style: italic;
+  color: inherit;
+}
+
+.chat-message strong em,
+.chat-message em strong {
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* Lists */
+.chat-message ul,
+.chat-message ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.chat-message ul {
+  list-style-type: disc;
+}
+
+.chat-message ol {
+  list-style-type: decimal;
+}
+
+.chat-message li {
+  margin: 0.25rem 0;
+  color: inherit;
+}
+
+.chat-message li::marker {
+  color: inherit;
+}
+
+/* Nested lists */
+.chat-message ul ul,
+.chat-message ol ol,
+.chat-message ul ol,
+.chat-message ol ul {
+  margin: 0.25rem 0;
+}
+
+.chat-message ul ul {
+  list-style-type: circle;
+}
+
+.chat-message ul ul ul {
+  list-style-type: square;
+}
+
+/* Links */
+.chat-message a {
+  color: #60a5fa;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.chat-message a:hover {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+/* Light theme links */
+.light-theme .chat-message a {
+  color: #2563eb;
+}
+
+.light-theme .chat-message a:hover {
+  color: #3b82f6;
+}
+
+/* Code spans */
+.chat-message code {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fbbf24;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Light theme code spans */
+.light-theme .chat-message code {
+  background: rgba(0, 0, 0, 0.05);
+  color: #d97706;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Code blocks */
+.chat-message pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.chat-message pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e5e7eb;
+}
+
+/* Light theme code blocks */
+.light-theme .chat-message pre {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .chat-message pre code {
+  color: #374151;
+}
+
+/* Blockquotes */
+.chat-message blockquote {
+  border-left: 4px solid #60a5fa;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(96, 165, 250, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Light theme blockquotes */
+.light-theme .chat-message blockquote {
+  border-left-color: #2563eb;
+  color: rgba(0, 0, 0, 0.7);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+/* Horizontal rules */
+.chat-message hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  margin: 1rem 0;
+}
+
+/* Light theme horizontal rules */
+.light-theme .chat-message hr {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2), transparent);
+}
+
+/* Tables (if supported) */
+.chat-message table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.chat-message th,
+.chat-message td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.chat-message th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+}
+
+/* Light theme tables */
+.light-theme .chat-message th,
+.light-theme .chat-message td {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .chat-message th {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Preserve line breaks and spacing */
+.chat-message p {
+  margin: 0.5rem 0;
+  color: inherit;
+}
+
+.chat-message p:first-child {
+  margin-top: 0;
+}
+
+.chat-message p:last-child {
+  margin-bottom: 0;
+}
+
+/* Ensure emojis render properly */
+.chat-message img[alt*="emoji"] {
+  width: 1.2em;
+  height: 1.2em;
+  display: inline;
+  vertical-align: text-bottom;
+}
+
+/* Special styling for weather and other structured content */
+.chat-message p:has(> strong:first-child) {
+  margin-top: 0.75rem;
+}
+
+/* Responsive font sizes for mobile */
+@media (max-width: 768px) {
+  .chat-message {
+    font-size: 0.95rem;
+  }
+  
+  .chat-message h1 { font-size: 1.3rem; }
+  .chat-message h2 { font-size: 1.2rem; }
+  .chat-message h3 { font-size: 1.05rem; }
+  
+  .chat-message code {
+    font-size: 0.85em;
+  }
+  
+  .chat-message pre {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
 /* Post Prompt Package Display Styling */
 .post-prompt-package-display {
   margin: 16px 0;
