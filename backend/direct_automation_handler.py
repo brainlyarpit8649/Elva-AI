@@ -1168,8 +1168,8 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
         # Default to personal
         return 'personal' if 'personal' in categories else categories[0]
 
-    async def _handle_weather_automation(self, intent: str, intent_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle weather automation using Tomorrow.io API"""
+    async def _handle_weather_automation(self, intent: str, intent_data: Dict[str, Any], username: str = None) -> Dict[str, Any]:
+        """Handle weather automation using Tomorrow.io API with friendly responses"""
         try:
             location = intent_data.get("location", "")
             
@@ -1183,22 +1183,22 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
             logger.info(f"🌦️ Processing weather intent '{intent}' for location: {location}")
             
             if intent == "get_current_weather":
-                weather_data = await get_current_weather(location)
+                weather_data = await get_current_weather(location, username)
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location},
-                    "message": f"Successfully retrieved current weather for {location}"
+                    "message": weather_data  # Return friendly message directly
                 }
             
             elif intent == "get_weather_forecast":
                 days = intent_data.get("days", 3)
                 # Ensure days is within valid range
                 days = max(1, min(days, 7))
-                weather_data = await get_weather_forecast(location, days)
+                weather_data = await get_weather_forecast(location, days, username)
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location, "days": days},
-                    "message": f"Successfully retrieved {days}-day forecast for {location}"
+                    "message": weather_data  # Return friendly message directly
                 }
             
             elif intent == "get_air_quality_index":
@@ -1206,7 +1206,7 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location},
-                    "message": f"Successfully retrieved air quality data for {location}"
+                    "message": weather_data  # Return the data directly for consistency
                 }
             
             elif intent == "get_weather_alerts":
@@ -1214,7 +1214,7 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location},
-                    "message": f"Successfully retrieved weather alerts for {location}"
+                    "message": weather_data  # Return the data directly for consistency
                 }
             
             elif intent == "get_sun_times":
@@ -1222,7 +1222,7 @@ Example: {{"0": "work", "1": "personal", "2": "promotions"}}"""),
                 return {
                     "success": True,
                     "data": {"weather_data": weather_data, "location": location},
-                    "message": f"Successfully retrieved sun times for {location}"
+                    "message": weather_data  # Return the data directly for consistency
                 }
             
             else:
