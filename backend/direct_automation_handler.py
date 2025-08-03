@@ -4,6 +4,15 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from playwright_service import playwright_service
 
+# Import weather service functions
+from weather_service_tomorrow import (
+    get_current_weather, 
+    get_weather_forecast,
+    get_air_quality_index, 
+    get_weather_alerts,
+    get_sun_times
+)
+
 logger = logging.getLogger(__name__)
 
 class DirectAutomationHandler:
