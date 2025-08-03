@@ -1077,11 +1077,11 @@ async def get_current_weather_endpoint(location: str, username: str = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/weather/forecast")
-async def get_weather_forecast_endpoint(location: str, days: int = 3):
+async def get_weather_forecast_endpoint(location: str, days: int = 3, username: str = None):
     """Get weather forecast for a location using Tomorrow.io API"""
     try:
         logger.info(f"📅 Weather forecast request for: {location} ({days} days)")
-        result = await get_weather_forecast(location, days)
+        result = await get_weather_forecast(location, days, username)
         return {"status": "success", "data": result, "location": location, "days": days}
     except Exception as e:
         logger.error(f"Weather forecast error: {e}")
