@@ -655,6 +655,7 @@ async def whatsapp_mcp_connection_test(
     """
     WhatsApp MCP Connection Test (GET)
     Handles GET requests from Puch AI for connection verification
+    Returns simple status as required by Puch AI
     """
     try:
         # Extract and validate authentication token
@@ -680,24 +681,10 @@ async def whatsapp_mcp_connection_test(
         
         logger.info("🔄 WhatsApp MCP - GET connection test successful")
         
+        # Return simple status as preferred by Puch AI
         return {
             "status": "ok",
-            "message": "MCP connection successful - WhatsApp integration ready",
-            "service": "WhatsApp MCP Integration",
-            "platform": "whatsapp",
-            "deployment": "elva-mcp-service.onrender.com",
-            "methods": ["GET", "POST"],
-            "integrations": {
-                "gmail": "ready",
-                "weather": "ready",
-                "general_chat": "ready"
-            },
-            "supported_formats": [
-                '{"session_id": "...", "message": "..."}',
-                '{"session_id": "...", "text": "..."}',
-                '{"session_id": "...", "query": "..."}'
-            ],
-            "timestamp": datetime.utcnow().isoformat()
+            "message": "MCP server active"
         }
         
     except HTTPException:
