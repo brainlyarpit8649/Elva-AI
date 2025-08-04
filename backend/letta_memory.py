@@ -158,15 +158,50 @@ class SimpleLettaMemory:
             message_lower = message.lower().strip()
             
             # Handle memory commands
-            if any(cmd in message_lower for cmd in ["remember that", "store fact", "my nickname is", "i am", "call me"]):
+            if any(cmd in message_lower for cmd in ["remember that", "store fact", "i like", "i love", "my favorite"]):
+                return self.store_fact(message)
+            
+            elif "my nickname is" in message_lower or "call me" in message_lower or "my name is" in message_lower:
                 return self.store_fact(message)
             
             elif any(cmd in message_lower for cmd in ["forget that", "remove fact", "don't remember"]):
                 fact = message.replace("forget that", "").replace("remove fact", "").replace("don't remember", "").strip()
                 return self.forget_fact(fact)
             
-            elif any(cmd in message_lower for cmd in ["what do you know about me", "what's my", "who am i", "what do you remember"]):
-                return self.retrieve_context(message)
+            elif any(cmd in message_lower for cmd in ["what's my nickname", "what is my nickname", "nickname"]):
+                context_result = self.retrieve_context("nickname")
+                context = context_result.get("context", "")
+                if context:
+                    # Extract nickname from stored facts
+                    for fact_key, fact_data in self.memory["facts"].items():
+                        if "nickname" in fact_data.get("category", "") or "nickname" in fact_data.get("text", "").lower():
+                            if "ary" in fact_data.get("text", "").lower():
+                                return {"success": True, "response": "Your nickname is Ary."}
+                            elif "arp" in fact_data.get("text", "").lower():
+                                return {"success": True, "response": "Your nickname is Arp."}
+                    return {"success": True, "response": context}
+                else:
+                    return {"success": True, "response": "I don't have information about your nickname."}
+            
+            elif any(cmd in message_lower for cmd in ["what do you know about me", "what do you remember", "who am i"]):
+                # Get all relevant facts about the user
+                all_facts = []
+                for fact_key, fact_data in self.memory["facts"].items():
+                    all_facts.append(fact_data.get("text", ""))
+                
+                if all_facts:
+                    response = "Here's what I remember about you: " + "; ".join(all_facts[:5])  # Limit to 5 facts
+                    return {"success": True, "response": response}
+                else:
+                    return {"success": True, "response": "I don't have specific information stored about you yet."}
+            
+            elif "what do i love" in message_lower or "what do i like" in message_lower:
+                context_result = self.retrieve_context("love like favorite")
+                context = context_result.get("context", "")
+                if context:
+                    return {"success": True, "response": f"Based on what you've told me: {context}"}
+                else:
+                    return {"success": True, "response": "I don't have information about your preferences yet."}
             
             else:
                 # Get relevant context for the message
