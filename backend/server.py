@@ -45,8 +45,8 @@ from weather_service_tomorrow import (
     clear_weather_cache
 )
 
-# Import Semantic Letta Memory System (New Enhanced Version)
-from semantic_letta_memory import initialize_semantic_letta_memory, get_semantic_letta_memory
+# Import Letta Memory System (Simple version - more reliable)
+from letta_memory import initialize_letta_memory, get_letta_memory
 from performance_optimizer import initialize_performance_optimizer, get_performance_optimizer
 
 ROOT_DIR = Path(__file__).parent
@@ -72,12 +72,12 @@ conversation_memory = initialize_conversation_memory(db)
 # Initialize MCP (Model Context Protocol) integration service
 mcp_service = initialize_mcp_service()
 
-# Initialize Semantic Letta Memory System
+# Initialize Letta Memory System
 try:
-    semantic_memory = initialize_semantic_letta_memory()
-    logging.info("✅ Semantic Letta Memory System initialized successfully")
+    semantic_memory = initialize_letta_memory()
+    logging.info("✅ Letta Memory System initialized successfully")
 except Exception as e:
-    logging.warning(f"⚠️ Semantic Letta Memory initialization failed: {e}")
+    logging.warning(f"⚠️ Letta Memory initialization failed: {e}")
     semantic_memory = None
 
 # Initialize Performance Optimizer
