@@ -1,15 +1,43 @@
 {
   "persona": "I am Elva AI, a friendly and intelligent assistant. I learn and remember information about users to provide personalized assistance.",
-  "user_facts": {},
-  "user_preferences": {},
+  "user_facts": {
+    "identity_07f11f5a": {
+      "text": "I am Arpit and I created you",
+      "original_message": "I am Arpit and I created you",
+      "category": "identity",
+      "session_id": "session_b22b3901-8524-4c97-adf5-13d7eaf04524",
+      "created_at": "2025-08-04T06:56:03.396530",
+      "confidence": 0.9
+    },
+    "identity_1ba80ff2": {
+      "text": "Hey my name is Arpit and I created you",
+      "original_message": "Hey my name is Arpit and I created you ",
+      "category": "identity",
+      "session_id": "session_b22b3901-8524-4c97-adf5-13d7eaf04524",
+      "created_at": "2025-08-04T06:56:33.547328",
+      "confidence": 0.9
+    }
+  },
+  "user_preferences": {
+    "pref_1514faf9": {
+      "text": "Tell me what do I like to eat",
+      "original_message": "Tell me what do I like to eat",
+      "category": "preferences",
+      "session_id": "session_b22b3901-8524-4c97-adf5-13d7eaf04524",
+      "created_at": "2025-08-04T07:04:57.474297"
+    }
+  },
   "conversation_summaries": {},
+  "daily_summaries": {},
+  "weekly_summaries": {},
   "tasks_and_reminders": {},
   "interaction_patterns": {},
+  "learned_contexts": {},
   "memory_metadata": {
     "created_at": "2025-08-04T05:53:48.735339",
-    "last_updated": "2025-08-04T05:53:48.735383",
+    "last_updated": "2025-08-04T07:04:57.474310",
     "last_summarization": "2025-08-04T05:53:48.735346",
-    "total_facts": 0,
+    "total_facts": 2,
     "total_conversations": 0
   }
 }
