@@ -168,11 +168,11 @@ class AdvancedHybridAI:
                 "get_sun_times": {"model": ModelChoice.GROQ, "confidence": 0.9, "direct_automation": True}
             },
             
-            # Emotional complexity routing
+            # Emotional complexity routing - ALL GROQ NOW
             "emotional_routing": {
-                "high": ModelChoice.CLAUDE,  # High emotional intelligence needed
-                "medium": ModelChoice.CLAUDE,  # Some emotional awareness needed
-                "low": ModelChoice.GROQ       # Minimal emotional processing
+                "high": ModelChoice.GROQ,    # Groq can handle emotional intelligence
+                "medium": ModelChoice.GROQ,  # Groq for medium emotional processing  
+                "low": ModelChoice.GROQ      # Groq for minimal emotional processing
             },
             
             # Professional tone routing
