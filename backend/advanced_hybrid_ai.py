@@ -911,6 +911,7 @@ Return ONLY the JSON object."""
             except Exception as e:
                 logger.warning(f"Could not retrieve MCP context: {e}")
             
+            # Step 1: Get comprehensive conversation context from message_memory
             classification = await self.analyze_task_classification(user_input, session_id)
             
             # Step 2: Check for direct automation intents first
