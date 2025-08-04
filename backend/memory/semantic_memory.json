@@ -8,12 +8,13 @@
       "source_message": "my name is arpit",
       "session_id": "test_semantic_memory",
       "created_at": "2025-08-04T07:34:56.899307",
-      "updated_at": "2025-08-04T07:44:17.182851",
+      "updated_at": "2025-08-04T07:55:30.742625",
       "related_facts": [],
       "metadata": {
         "source_messages": [
           "My name is Arpit",
-          "Hello my name is Arpit and I created you"
+          "Hello my name is Arpit and I created you",
+          "Hello my name is Arpit"
         ]
       }
     }
@@ -86,9 +87,9 @@
   "fact_relationships": {},
   "metadata": {
     "created_at": "2025-08-04T07:32:17.674137",
-    "last_updated": "2025-08-04T07:44:17.182860",
+    "last_updated": "2025-08-04T07:55:30.742634",
     "total_facts": 5,
-    "deduplication_count": 5,
+    "deduplication_count": 6,
     "semantic_extractions": 0
   }
 }
