@@ -1,8 +1,24 @@
 {
   "persona": "I am Elva AI, a friendly and intelligent assistant created to help Arpit with various tasks.",
   "user_preferences": {},
-  "facts": {},
+  "facts": {
+    "nickname": {
+      "text": "Actually, my nickname is Ary.",
+      "created_at": "2025-08-04T03:07:57.856227",
+      "category": "identity"
+    },
+    "fact_1": {
+      "text": "Remember that my favorite coffee is cappuccino.",
+      "created_at": "2025-08-04T03:07:36.877303",
+      "category": "preferences"
+    },
+    "manager": {
+      "text": "Remember that Alex is my project manager.",
+      "created_at": "2025-08-04T03:07:39.342044",
+      "category": "contacts"
+    }
+  },
   "tasks": {},
   "created_at": "2025-08-04T03:04:29.659999",
-  "last_updated": "2025-08-04T03:04:29.660039"
+  "last_updated": "2025-08-04T03:07:57.856242"
 }
