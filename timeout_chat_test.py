@@ -11,8 +11,8 @@ import time
 from datetime import datetime
 from typing import Dict, Any, List
 
-# Backend URL from frontend/.env
-BACKEND_URL = "https://0b30aab1-896e-477e-822b-002edcbac2b3.preview.emergentagent.com/api"
+# Backend URL - using localhost for testing
+BACKEND_URL = "http://localhost:8001/api"
 
 class TimeoutChatTester:
     def __init__(self):
