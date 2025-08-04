@@ -173,6 +173,25 @@ def get_session_welcome_message(session_id: str) -> str:
 @api_router.post("/chat", response_model=ChatResponse)
 async def enhanced_chat(request: ChatRequest):
     try:
+        # Lazy initialization of startup tasks
+        global startup_tasks, performance_optimizer
+        
+        if not startup_tasks["indexes_created"]:
+            try:
+                await ensure_indexes()
+                startup_tasks["indexes_created"] = True
+                logger.info("✅ Message memory indexes created successfully")
+            except Exception as e:
+                logger.warning(f"⚠️ Message memory index creation failed: {e}")
+        
+        if not startup_tasks["performance_optimizer_initialized"] and performance_optimizer is None:
+            try:
+                performance_optimizer = await initialize_performance_optimizer()
+                startup_tasks["performance_optimizer_initialized"] = True
+                logger.info("✅ Performance Optimizer initialized successfully")
+            except Exception as e:
+                logger.warning(f"⚠️ Performance Optimizer initialization failed: {e}")
+
         logger.info(f"💬 Enhanced chat request - Session: {request.session_id}, Message: {request.message[:100]}...")
 
         # STEP 0: Save user message to database first (with proper EnhancedChatMessage structure)
