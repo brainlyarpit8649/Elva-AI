@@ -80,3 +80,4 @@ pyparsing
 uritemplate
 
 backoff>=2.2.1
+letta>=0.7.0
