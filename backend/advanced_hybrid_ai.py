@@ -872,13 +872,14 @@ Return ONLY the JSON object."""
             logger.error(f"Enhanced intent detection error: {e}")
             return {"intent": "general_chat", "message": user_input, "error": str(e)}
 
-    async def process_message(self, user_input: str, session_id: str) -> Tuple[dict, str, RoutingDecision]:
+    async def process_message(self, user_input: str, session_id: str, memory_context: str = "") -> Tuple[dict, str, RoutingDecision]:
         """
         Enhanced message processing with comprehensive conversation memory integration.
         
         Args:
             user_input: User's input message
             session_id: Session identifier for context retrieval
+            memory_context: Memory context from Letta system (user facts, preferences, etc.)
             
         Returns:
             Tuple of (intent_data, response_text, routing_decision)
@@ -895,6 +896,11 @@ Return ONLY the JSON object."""
                 logger.warning(f"Could not retrieve full conversation context: {e}")
                 full_conversation_context = ""
             
+            # Add Letta Memory context if provided
+            if memory_context:
+                full_conversation_context += f"\n\n=== USER PERSONAL CONTEXT ===\n{memory_context}"
+                logger.info(f"🧠 Added Letta memory context for natural response generation")
+            
             # Also get MCP context for additional context
             try:
                 mcp_service = get_mcp_service()
@@ -905,7 +911,6 @@ Return ONLY the JSON object."""
             except Exception as e:
                 logger.warning(f"Could not retrieve MCP context: {e}")
             
-            # Step 1: Get comprehensive conversation context from message_memory
             classification = await self.analyze_task_classification(user_input, session_id)
             
             # Step 2: Check for direct automation intents first
