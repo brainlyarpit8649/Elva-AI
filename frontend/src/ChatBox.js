@@ -958,13 +958,13 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       </div>
 
       {/* 🔒 Admin Debug Toggle - Only visible for admin emails */}
-      { && (
+      {showAdminToggle && (
         <div className="admin-toggle-container px-4 pb-2">
           <div className="max-w-4xl mx-auto">
             <button
               onClick={toggleAdminMode}
-              className={`admin-debug-toggle ${ ? 'active' : ''}`}
-              title={ ? 'Admin Mode: ON' : 'Admin Mode: OFF'}
+              className={`admin-debug-toggle ${isAdminMode ? 'active' : ''}`}
+              title={isAdminMode ? 'Admin Mode: ON' : 'Admin Mode: OFF'}
             >
               <span className="toggle-icon">🔐</span>
               <span className="toggle-text">
