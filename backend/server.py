@@ -1620,6 +1620,97 @@ async def clear_weather_cache_endpoint():
         logger.error(f"Clear weather cache error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# MCP Validate Endpoints for Puch AI Integration
+@api_router.post("/mcp/validate")
+async def mcp_validate_post(
+    token: str = Query(None),
+    authorization: str = Header(None)
+):
+    """
+    Puch AI Validation Endpoint (POST)
+    Required by Puch AI to verify MCP server connection
+    Returns user's WhatsApp number with country code
+    """
+    try:
+        # Extract and validate authentication token
+        auth_token = token
+        
+        # Check Authorization header (preferred by Puch AI)
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]  # Remove 'Bearer ' prefix
+            else:
+                auth_token = authorization
+        
+        # Validate token against environment variable
+        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
+        if not auth_token or auth_token != expected_token:
+            logger.warning(f"🚫 Puch AI Validate POST - Invalid token attempt")
+            raise HTTPException(
+                status_code=401, 
+                detail={
+                    "error": "invalid_token",
+                    "message": "Invalid or missing MCP API token"
+                }
+            )
+        
+        logger.info("✅ Puch AI Validation POST - Token verified successfully")
+        
+        # Return user's WhatsApp number as required by Puch AI
+        return {
+            "number": "919654030351"  # Country code (91) + phone number (9654030351)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Puch AI Validate POST Error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "validation_failed",
+                "message": "Validation endpoint error"
+            }
+        )
+
+@api_router.get("/mcp/validate")  
+async def mcp_validate_get(
+    token: str = Query(None),
+    authorization: str = Header(None)
+):
+    """
+    Puch AI Validation Endpoint (GET)
+    GET version of validation endpoint for broader compatibility
+    """
+    try:
+        # Extract and validate authentication token
+        auth_token = token
+        
+        # Check Authorization header
+        if not auth_token and authorization:
+            if authorization.startswith('Bearer '):
+                auth_token = authorization[7:]
+            else:
+                auth_token = authorization
+        
+        # Validate token
+        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
+        if not auth_token or auth_token != expected_token:
+            logger.warning(f"🚫 Puch AI Validate GET - Invalid token attempt")
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        logger.info("✅ Puch AI Validation GET - Token verified successfully")
+        
+        return {
+            "number": "919654030351"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Puch AI Validate GET Error: {e}")
+        raise HTTPException(status_code=500, detail="Validation failed")
+
 @api_router.get("/health")
 async def health_check():
     try:
