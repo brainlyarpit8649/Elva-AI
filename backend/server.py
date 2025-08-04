@@ -792,7 +792,6 @@ async def health_check():
                 "mcp_service": mcp_status
             },
             "timeout_config": {
-                "global_chat_timeout": GLOBAL_CHAT_TIMEOUT,
                 "memory_operation_timeout": MEMORY_OPERATION_TIMEOUT,
                 "database_operation_timeout": DATABASE_OPERATION_TIMEOUT,
                 "ai_response_timeout": AI_RESPONSE_TIMEOUT
