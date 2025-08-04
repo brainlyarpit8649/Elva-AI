@@ -41,11 +41,19 @@ async def save_message(session_id: str, role: str, content: str):
     Save a message if not already stored (deduplicated).
     """
     try:
-        existing = await messages_collection.find_one({
-            "session_id": session_id,
-            "role": role,
-            "content": content
-        })
+        # Add timeout protection for database operations
+        try:
+            existing = await asyncio.wait_for(
+                messages_collection.find_one({
+                    "session_id": session_id,
+                    "role": role,
+                    "content": content
+                }), 
+                timeout=5.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"⚠️ Database timeout during duplicate check for session {session_id}, proceeding with insert")
+            existing = None
 
         if existing:
             logger.info(f"⚠️ Duplicate message ignored for session {session_id}")
@@ -57,8 +65,14 @@ async def save_message(session_id: str, role: str, content: str):
             "content": content,
             "timestamp": datetime.utcnow()
         }
-        await messages_collection.insert_one(message_doc)
-        logger.info(f"💾 Saved {role} message for session {session_id}")
+        
+        # Add timeout protection for insert operation
+        try:
+            await asyncio.wait_for(messages_collection.insert_one(message_doc), timeout=5.0)
+            logger.info(f"💾 Saved {role} message for session {session_id}")
+        except asyncio.TimeoutError:
+            logger.error(f"❌ Database timeout during message insert for session {session_id}")
+            
     except Exception as e:
         logger.error(f"❌ Error saving message: {e}")
 
