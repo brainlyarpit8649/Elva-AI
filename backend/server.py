@@ -44,8 +44,9 @@ from weather_service_tomorrow import (
     clear_weather_cache
 )
 
-# Import Letta Memory System
-from letta_memory import initialize_letta_memory, get_letta_memory
+# Import Enhanced Letta Memory System
+from enhanced_letta_memory import initialize_enhanced_letta_memory, get_enhanced_letta_memory
+from performance_optimizer import initialize_performance_optimizer, get_performance_optimizer
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
