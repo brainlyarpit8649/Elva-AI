@@ -887,11 +887,17 @@ Return ONLY the JSON object."""
         logger.info(f"🚀 Processing message with full conversation context: {user_input[:50]}...")
         
         try:
-            # Get comprehensive conversation context from message_memory
+            # Get comprehensive conversation context from message_memory with timeout protection
             try:
                 from message_memory import get_conversation_context_for_ai
-                full_conversation_context = await get_conversation_context_for_ai(session_id)
+                full_conversation_context = await asyncio.wait_for(
+                    get_conversation_context_for_ai(session_id), 
+                    timeout=15.0
+                )
                 logger.info(f"📚 Retrieved FULL conversation context: {len(full_conversation_context)} chars")
+            except asyncio.TimeoutError:
+                logger.warning(f"⚠️ Timeout retrieving conversation context for session {session_id}")
+                full_conversation_context = ""
             except Exception as e:
                 logger.warning(f"Could not retrieve full conversation context: {e}")
                 full_conversation_context = ""
