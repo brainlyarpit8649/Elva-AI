@@ -73,7 +73,13 @@ async def get_conversation_history(session_id: str, limit: Optional[int] = None)
     try:
         message_limit = limit or MEMORY_LIMIT
         cursor = messages_collection.find({"session_id": session_id}).sort("timestamp", 1).limit(message_limit)
-        history = await cursor.to_list(length=None)
+        
+        # Add timeout protection to prevent hanging
+        try:
+            history = await asyncio.wait_for(cursor.to_list(length=None), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning(f"⚠️ Database query timeout for session {session_id}, returning empty history")
+            return []
 
         # Convert timestamps for JSON compatibility
         for msg in history:
