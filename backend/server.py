@@ -289,15 +289,14 @@ async def process_regular_chat(request: ChatRequest):
         # Import message memory functions
         from message_memory import get_conversation_context_for_ai, search_conversation_memory
         
-        # STEP 1: Letta memory processing - selective memory operations only
+        # STEP 1: Letta memory processing - ONLY explicit memory commands
         if semantic_memory:
             message_lower = request.message.lower().strip()
             
-            # Only process explicit memory commands - be very selective
+            # Only process EXPLICIT memory commands - natural conversation should continue to AI
             memory_triggers = [
-                "remember that", "my name is", "call me", "i am", "store this",
-                "what do you remember", "what's my", "who am i", "forget that",
-                "don't remember", "my nickname is"
+                "remember that", "store this", "what do you remember", 
+                "what do you remember about", "forget that", "don't remember"
             ]
             
             is_memory_command = any(trigger in message_lower for trigger in memory_triggers)
