@@ -327,8 +327,8 @@ async def process_regular_chat(request: ChatRequest):
                     previous_context += f"\n\n=== ADDITIONAL CONTEXT ===\n{mcp_context}"
                 logger.info(f"📖 Added MCP context for session: {request.session_id}")
             
-            # Add Letta Memory context for better responses
-            if semantic_memory:
+            # Add Letta Memory context for better responses - TEMPORARILY DISABLED FOR DEBUGGING
+            if False and semantic_memory:
                 # Get memory context from simple Letta system
                 try:
                     memory_summary = semantic_memory.get_memory_summary()
