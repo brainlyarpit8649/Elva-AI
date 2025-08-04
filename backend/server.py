@@ -483,66 +483,40 @@ async def enhanced_chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def process_regular_chat(request: ChatRequest):
-    """Process regular chat with hybrid memory (MongoDB + message_memory + Letta)"""
+    """Process regular chat with enhanced memory system and performance optimization"""
     try:
+        # Performance optimization check
+        if performance_optimizer:
+            is_cached, cached_result = await performance_optimizer.optimize_chat_processing({
+                "message": request.message,
+                "session_id": request.session_id
+            })
+            if is_cached and cached_result:
+                return cached_result["response"], cached_result["intent_data"], cached_result.get("needs_approval", False)
+
         # Import message memory functions
         from message_memory import get_conversation_context_for_ai, search_conversation_memory
         
-        # STEP 1: Check for Letta memory commands first
-        user_msg_lower = request.message.lower().strip()
+        # STEP 1: Enhanced Letta memory command processing
+        if letta_memory:
+            memory_result = letta_memory.process_natural_language_command(request.message, request.session_id)
+            
+            if memory_result.get("is_memory_command"):
+                response_text = memory_result.get("response", "I processed your memory request.")
+                intent_data = memory_result.get("intent_data", {"intent": "memory_operation"})
+                needs_approval = False
+                
+                # Cache successful memory operations for performance
+                if performance_optimizer and memory_result.get("success"):
+                    performance_optimizer.cache_response(request.message, {
+                        "response": response_text,
+                        "intent_data": intent_data,
+                        "needs_approval": needs_approval
+                    })
+                
+                return response_text, intent_data, needs_approval
         
-        # Handle Letta memory commands
-        if letta_memory and any(cmd in user_msg_lower for cmd in [
-            "remember that", "store fact", "teach elva", "my nickname is", "i am", "call me"
-        ]):
-            # Extract the fact to store
-            fact = request.message.strip()
-            result = letta_memory.store_fact(fact)
-            
-            if result.get("success"):
-                response_text = f"✅ I'll remember that: {fact}"
-                intent_data = {"intent": "store_memory", "fact": fact}
-            else:
-                response_text = f"⚠️ I had trouble storing that information: {result.get('error', 'Unknown error')}"
-                intent_data = {"intent": "memory_error", "error": result.get('error')}
-            
-            needs_approval = False
-            return response_text, intent_data, needs_approval
-        
-        elif letta_memory and any(cmd in user_msg_lower for cmd in [
-            "forget that", "remove fact", "don't remember"
-        ]):
-            # Extract what to forget
-            fact_to_forget = request.message.replace("forget that", "").replace("remove fact", "").replace("don't remember", "").strip()
-            result = letta_memory.forget_fact(fact_to_forget)
-            
-            if result.get("success"):
-                response_text = f"✅ I've forgotten that information."
-                intent_data = {"intent": "forget_memory", "fact": fact_to_forget}
-            else:
-                response_text = f"⚠️ I had trouble forgetting that: {result.get('error', 'Unknown error')}"
-                intent_data = {"intent": "memory_error", "error": result.get('error')}
-            
-            needs_approval = False
-            return response_text, intent_data, needs_approval
-        
-        elif letta_memory and any(cmd in user_msg_lower for cmd in [
-            "what do you know about me", "what's my", "who am i", "tell me about", "what do you remember"
-        ]):
-            # Retrieve facts from memory
-            result = letta_memory.retrieve_context(request.message)
-            
-            if result.get("success") and result.get("relevant"):
-                response_text = result.get("context", "I don't have specific information about that.")
-                intent_data = {"intent": "recall_memory", "query": request.message}
-            else:
-                response_text = "I don't have specific information about that."
-                intent_data = {"intent": "no_memory", "query": request.message}
-            
-            needs_approval = False
-            return response_text, intent_data, needs_approval
-        
-        # STEP 2: Get FULL conversation context (MongoDB + message_memory + Letta)
+        # STEP 2: Get FULL conversation context (MongoDB + message_memory + Enhanced Letta)
         previous_context = ""
         try:
             # Get complete conversation history for context
@@ -557,14 +531,12 @@ async def process_regular_chat(request: ChatRequest):
                     previous_context += f"\n\n=== ADDITIONAL CONTEXT ===\n{mcp_context}"
                 logger.info(f"📖 Added MCP context for session: {request.session_id}")
             
-            # Add Letta memory context
+            # Add Enhanced Letta memory context for better responses
             if letta_memory:
-                letta_context_result = letta_memory.retrieve_context(f"relevant information for: {request.message}")
-                if letta_context_result.get("success") and letta_context_result.get("relevant"):
-                    letta_context = letta_context_result.get("context", "")
-                    if letta_context:
-                        previous_context += f"\n\n=== LONG-TERM MEMORY ===\n{letta_context}"
-                        logger.info(f"🧠 Added Letta long-term memory context for session: {request.session_id}")
+                letta_context = letta_memory._get_relevant_context(request.message, request.session_id)
+                if letta_context:
+                    previous_context += f"\n\n=== PERSONALIZED MEMORY ===\n{letta_context}"
+                    logger.info(f"🧠 Added Enhanced Letta memory context for session: {request.session_id}")
                 
         except Exception as context_error:
             logger.warning(f"⚠️ Error reading conversation context: {context_error}")
