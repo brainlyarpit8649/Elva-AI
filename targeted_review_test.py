@@ -10,7 +10,7 @@ import uuid
 import time
 from datetime import datetime
 
-BACKEND_URL = "https://31274c15-fd00-4c3b-bace-e8891cc7016e.preview.emergentagent.com/api"
+BACKEND_URL = "https://f5c2c367-6cff-43f3-900f-2f2a9f7fba8e.preview.emergentagent.com/api"
 
 def test_basic_chat():
     """Test basic chat functionality - looking for 'sorry I've encountered an error' messages"""
