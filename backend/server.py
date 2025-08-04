@@ -309,7 +309,7 @@ async def _process_with_cascading_fallbacks(request: ChatRequest) -> tuple[str, 
             return await _process_simple_fallback(request)
 
 async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict, bool]:
-    """Process chat with full memory context (ideal path)"""
+    """Process chat with Letta memory context - simplified approach"""
     
     # Import message memory functions safely
     try:
@@ -318,20 +318,22 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
         logger.warning(f"⚠️ Could not import message memory functions: {e}")
         return await _process_groq_only(request)
     
-    # STEP 1: Letta memory processing (re-enabled with timeouts)
+    # STEP 1: Handle Letta memory commands directly
     memory_context = ""
     if MEMORY_ENABLED and semantic_memory:
         message_lower = request.message.lower().strip()
         
-        # Handle explicit memory commands
+        # Handle explicit memory commands with direct responses
         memory_triggers = [
             "remember that", "store this", "what do you remember", 
-            "what do you remember about", "forget that", "don't remember"
+            "what's my", "forget that", "my name is", "call me"
         ]
         
         is_memory_command = any(trigger in message_lower for trigger in memory_triggers)
         
         if is_memory_command:
+            logger.info(f"🧠 Processing Letta memory command: {request.message[:50]}...")
+            
             memory_result = await safe_memory_operation(
                 semantic_memory.chat_with_memory, 
                 request.message, 
@@ -339,11 +341,14 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
             )
             
             if memory_result and memory_result.get("success"):
-                response_text = memory_result.get("response", "Got it")
+                response_text = memory_result.get("response", "Got it!")
                 intent_data = {"intent": "memory_operation", "operation_type": "letta_memory"}
+                logger.info(f"✅ Letta memory operation completed: {response_text[:50]}...")
                 return response_text, intent_data, False
+            else:
+                logger.warning("⚠️ Letta memory operation failed, continuing with normal processing")
     
-    # STEP 2: Get conversation context with timeouts
+    # STEP 2: Get conversation context for AI responses
     previous_context = ""
     try:
         # Get full conversation history for context
@@ -353,7 +358,30 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
         )
         if context_result:
             previous_context = context_result
-            logger.info(f"📖 Retrieved full conversation context for session: {request.session_id}")
+            logger.info(f"📖 Retrieved conversation context ({len(previous_context)} chars)")
+            
+        # Add Letta Memory context for natural responses
+        if MEMORY_ENABLED and semantic_memory:
+            try:
+                memory_summary = await safe_memory_operation(
+                    semantic_memory.get_memory_summary
+                )
+                if memory_summary and memory_summary.get("success"):
+                    memory_info = memory_summary.get("memory_info", {})
+                    total_facts = memory_info.get("total_facts", 0)
+                    if total_facts > 0:
+                        # Get relevant facts for this message
+                        context_result = await safe_memory_operation(
+                            semantic_memory.retrieve_context,
+                            request.message
+                        )
+                        if context_result and context_result.get("success"):
+                            memory_context = context_result.get("context", "")
+                            if memory_context:
+                                previous_context += f"\n\n=== USER MEMORY ===\n{memory_context}"
+                                logger.info(f"🧠 Added Letta memory context ({len(memory_context)} chars)")
+            except Exception as memory_context_error:
+                logger.warning(f"⚠️ Error retrieving memory context: {memory_context_error}")
         
         # Add MCP context
         mcp_context_result = await safe_memory_operation(
@@ -366,27 +394,8 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
                 request.session_id
             )
             if mcp_context:
-                previous_context += f"\n\n=== ADDITIONAL CONTEXT ===\n{mcp_context}"
-                logger.info(f"📖 Added MCP context for session: {request.session_id}")
-        
-        # Add Letta Memory context (re-enabled)
-        if MEMORY_ENABLED and semantic_memory:
-            try:
-                memory_summary = await safe_memory_operation(
-                    semantic_memory.get_memory_summary
-                )
-                if memory_summary and memory_summary.get("success"):
-                    memory_info = memory_summary.get("memory_info", {})
-                    if memory_info.get("total_facts", 0) > 0:
-                        context_result = await safe_memory_operation(
-                            semantic_memory.retrieve_context,
-                            "user information preferences facts"
-                        )
-                        if context_result and context_result.get("success"):
-                            memory_context = context_result.get("context", "")
-                            logger.info(f"🧠 Retrieved Letta Memory context for natural AI response generation")
-            except Exception as memory_context_error:
-                logger.warning(f"⚠️ Error retrieving memory context: {memory_context_error}")
+                previous_context += f"\n\n=== MCP CONTEXT ===\n{mcp_context}"
+                logger.info(f"📖 Added MCP context")
                 
     except Exception as context_error:
         logger.warning(f"⚠️ Error reading conversation context: {context_error}")
@@ -408,16 +417,19 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
             response_text = "✅ **Package sent to your automation workflow!** I've forwarded your post description and AI instructions for processing."
             return response_text, intent_data, True
 
-    # STEP 4: Process through advanced hybrid AI with timeout
+    # STEP 4: Process through advanced hybrid AI with context
     try:
         intent_data, response_text, routing_decision = await asyncio.wait_for(
             advanced_hybrid_ai.process_message(
                 user_input=request.message,
                 session_id=request.session_id,
-                memory_context=memory_context
+                memory_context=previous_context  # Pass full context including Letta memory
             ),
             timeout=AI_RESPONSE_TIMEOUT
         )
+        
+        logger.info(f"🚀 AI processing completed: {intent_data.get('intent', 'unknown')} -> {len(response_text)} chars")
+        
     except asyncio.TimeoutError:
         logger.warning(f"⚠️ AI response generation timed out, using fallback")
         return await _process_groq_only(request)
@@ -427,7 +439,7 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
     if intent_data.get("intent") in ["send_email", "create_event", "add_todo", "set_reminder"]:
         needs_approval = True
 
-    # STEP 5: Auto-store important information in semantic memory
+    # STEP 5: Auto-store important information in Letta memory
     if MEMORY_ENABLED and semantic_memory and intent_data.get("intent") != "memory_operation":
         await _auto_store_facts(request, semantic_memory)
 
