@@ -3,7 +3,7 @@
 # MCP Puch AI Integration Testing Script
 # Tests the newly implemented MCP validate endpoint for Puch AI integration
 
-BACKEND_URL="https://395a2c43-f9bd-494c-beb2-dd30fbdf7e7e.preview.emergentagent.com/api"
+BACKEND_URL="https://a306185b-5af9-42eb-b13a-8333a56f33fb.preview.emergentagent.com/api"
 VALID_TOKEN="kumararpit9468"
 INVALID_TOKEN="wrongtoken"
 
@@ -115,7 +115,7 @@ echo "❌ FAILED: $FAILED"
 
 if [ $FAILED -eq 0 ]; then
     echo "🎉 ALL TESTS PASSED! MCP service is ready for Puch AI integration!"
-    echo "🔗 Puch AI can connect using: /mcp connect https://395a2c43-f9bd-494c-beb2-dd30fbdf7e7e.preview.emergentagent.com/api/mcp kumararpit9468"
+    echo "🔗 Puch AI can connect using: /mcp connect https://a306185b-5af9-42eb-b13a-8333a56f33fb.preview.emergentagent.com/api/mcp kumararpit9468"
     SUCCESS_RATE=100
 else
     echo "⚠️ Some tests failed. Please check the implementation."

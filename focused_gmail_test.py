@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://395a2c43-f9bd-494c-beb2-dd30fbdf7e7e.preview.emergentagent.com/api"
+BACKEND_URL = "https://a306185b-5af9-42eb-b13a-8333a56f33fb.preview.emergentagent.com/api"
 
 def test_gmail_integration_issues():
     """Test the specific Gmail integration issues mentioned by the user"""
