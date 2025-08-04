@@ -1,0 +1,18 @@
+{
+  "user_identity": {},
+  "preferences": {},
+  "relationships": {},
+  "facts": {},
+  "skills_abilities": {},
+  "goals_tasks": {},
+  "communication_style": {},
+  "contexts": {},
+  "fact_relationships": {},
+  "metadata": {
+    "created_at": "2025-08-04T07:32:17.674137",
+    "last_updated": "2025-08-04T07:32:17.674177",
+    "total_facts": 0,
+    "deduplication_count": 0,
+    "semantic_extractions": 0
+  }
+}
