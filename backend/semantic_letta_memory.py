@@ -488,28 +488,45 @@ Facts:"""
 
     def _find_similar_fact(self, new_fact: SemanticFact, existing_facts: Dict[str, Any]) -> Optional[str]:
         """Find similar existing fact for deduplication"""
-        new_content_lower = new_fact.content.lower()
+        new_content_lower = new_fact.content.lower().strip()
         new_words = set(new_content_lower.split())
         
         for fact_id, fact_data in existing_facts.items():
-            existing_content_lower = fact_data["content"].lower()
+            existing_content_lower = fact_data["content"].lower().strip()
             existing_words = set(existing_content_lower.split())
             
-            # Calculate word overlap
-            overlap = len(new_words.intersection(existing_words))
-            total_words = len(new_words.union(existing_words))
-            
-            if total_words > 0:
-                similarity = overlap / total_words
-                
-                # If very similar (70%+ word overlap), consider it duplicate
-                if similarity >= 0.7:
+            # For identity facts, be very strict about matching
+            if new_fact.category == "user_identity":
+                if any(word in both for both in [new_content_lower, existing_content_lower] 
+                       for word in ["name", "called", "nickname"]):
                     return fact_id
+            
+            # For preferences, check semantic similarity
+            elif new_fact.category == "preferences":
+                # Check if both contain similar preference indicators
+                preference_words = ["like", "love", "prefer", "enjoy", "hate", "dislike"]
+                new_pref_words = [w for w in new_words if w in preference_words]
+                existing_pref_words = [w for w in existing_words if w in preference_words]
+                
+                if new_pref_words and existing_pref_words:
+                    # Check overlap of key content words (excluding preference indicators)
+                    content_words_new = new_words - set(preference_words) - {"i", "my", "the", "a", "an", "and", "or"}
+                    content_words_existing = existing_words - set(preference_words) - {"i", "my", "the", "a", "an", "and", "or"}
                     
-                # Special cases for identity facts
-                if new_fact.category == "user_identity":
-                    if any(word in both for both in [new_content_lower, existing_content_lower] 
-                           for word in ["name", "called", "nickname"]):
+                    overlap = len(content_words_new.intersection(content_words_existing))
+                    if overlap > 0 and len(content_words_new) <= 3:  # For short preferences, even 1 overlap is significant
+                        return fact_id
+                    elif overlap >= 2:  # For longer preferences, need more overlap
+                        return fact_id
+            
+            # For other categories, use general similarity
+            else:
+                overlap = len(new_words.intersection(existing_words))
+                total_words = len(new_words.union(existing_words))
+                
+                if total_words > 0:
+                    similarity = overlap / total_words
+                    if similarity >= 0.7:  # 70% similarity threshold
                         return fact_id
         
         return None
