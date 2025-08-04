@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://62aee014-87df-4846-a0fa-78e485afb511.preview.emergentagent.com/api"
+BACKEND_URL = "https://31274c15-fd00-4c3b-bace-e8891cc7016e.preview.emergentagent.com/api"
 
 class WeatherEnhancedTester:
     def __init__(self):
