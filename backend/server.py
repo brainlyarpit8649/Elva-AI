@@ -1651,7 +1651,52 @@ async def whatsapp_approve_action(
         logger.error(f"❌ WhatsApp approval error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Weather API endpoints using Tomorrow.io
+@api_router.get("/letta/memory-stats")
+async def get_letta_memory_stats():
+    """Get Letta memory system statistics"""
+    try:
+        if letta_memory:
+            stats = letta_memory.get_memory_summary()
+            return stats
+        else:
+            return {"success": False, "error": "Letta memory not initialized"}
+    except Exception as e:
+        logger.error(f"❌ Error getting Letta memory stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/letta/store-fact")
+async def store_letta_fact(request: dict):
+    """Manually store a fact in Letta memory"""
+    try:
+        fact = request.get("fact", "")
+        if not fact:
+            raise HTTPException(status_code=400, detail="Fact is required")
+        
+        if letta_memory:
+            result = letta_memory.store_fact(fact)
+            return result
+        else:
+            return {"success": False, "error": "Letta memory not initialized"}
+    except Exception as e:
+        logger.error(f"❌ Error storing fact: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/letta/retrieve-context")
+async def retrieve_letta_context(request: dict):
+    """Retrieve context from Letta memory"""
+    try:
+        query = request.get("query", "")
+        if not query:
+            raise HTTPException(status_code=400, detail="Query is required")
+        
+        if letta_memory:
+            result = letta_memory.retrieve_context(query)
+            return result
+        else:
+            return {"success": False, "error": "Letta memory not initialized"}
+    except Exception as e:
+        logger.error(f"❌ Error retrieving context: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 @api_router.get("/weather/current")
 async def get_current_weather_endpoint(location: str, username: str = None):
     """Get current weather for a location using Tomorrow.io API"""
