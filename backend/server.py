@@ -803,46 +803,6 @@ async def append_mcp_context(request: dict):
         logger.error(f"❌ MCP context append error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-        if not command:
-            return {"error": "Missing command parameter"}
-        
-        if not session_id:
-            return {"error": "Missing session_id parameter"}
-        
-        # Read context from MCP
-        mcp_context = await mcp_service.read_context(session_id)
-        
-        if not mcp_context.get('success'):
-            return {
-                "success": False,
-                "session_id": session_id,
-                "error": "Failed to read MCP context",
-                "details": mcp_context.get('error', 'Unknown error')
-            }
-        
-        # Format the response for clean display in chat
-        context_data = mcp_context.get('data', {})
-        appends = mcp_context.get('appends', [])
-        
-        
-        return {
-            "success": True,
-            "session_id": session_id,
-            "formatted_context": formatted_context,
-            "raw_data": {
-                "context_summary": {
-                    "initial_context": context_data.get('context', {}),
-                    "total_appends": len(appends),
-                    "last_updated": context_data.get('updated_at', 'Unknown')
-                },
-                "message_history": appends
-            }
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ Admin debug context error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @api_router.post("/web-automation")
 async def execute_web_automation(request: MCPContextRequest):
     """Execute web automation tasks using Playwright"""
