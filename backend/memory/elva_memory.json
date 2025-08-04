@@ -26,9 +26,19 @@
       "text": "Remember that I love pizza.",
       "created_at": "2025-08-04T03:09:49.775984",
       "category": "general"
+    },
+    "fact_5": {
+      "text": "Remember that I work at TechCorp.",
+      "created_at": "2025-08-04T03:12:31.263861",
+      "category": "general"
+    },
+    "email": {
+      "text": "I prefer short emails",
+      "created_at": "2025-08-04T03:12:31.713735",
+      "category": "preferences"
     }
   },
   "tasks": {},
   "created_at": "2025-08-04T03:04:29.659999",
-  "last_updated": "2025-08-04T03:09:49.776003"
+  "last_updated": "2025-08-04T03:12:31.713753"
 }
