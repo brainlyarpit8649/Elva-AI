@@ -349,6 +349,9 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
                 logger.error(f"❌ Memory processing error: {memory_error}")
                 # Continue with normal processing
     
+    # Initialize memory context for later use
+    memory_context = ""
+    
     # STEP 2: Get conversation context for AI responses
     previous_context = ""
     try:
