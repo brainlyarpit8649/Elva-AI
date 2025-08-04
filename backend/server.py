@@ -600,16 +600,11 @@ async def _safe_context_storage(request: ChatRequest, response_text: str, intent
     
     # Store in conversation memory system
     conversation_store_result = await safe_memory_operation(
-        conversation_memory.store_conversation_turn,
+        conversation_memory.add_message_to_memory,
         session_id=request.session_id,
         user_message=request.message,
         ai_response=response_text,
-        intent_data=intent_data or {},
-        additional_context={
-            "needs_approval": intent_data.get("needs_approval", False),
-            "user_id": request.user_id,
-            "message_id": ai_msg.id
-        }
+        intent_data=intent_data or {}
     )
     
     # Store in MCP service
