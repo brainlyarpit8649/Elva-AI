@@ -211,14 +211,6 @@ async def _handle_post_package_confirmation(request: ChatRequest) -> tuple:
         intent_data = {"intent": "post_package_error", "error": str(e)}
         return response_text, intent_data
 
-def format_admin_debug_context(context_data: dict, session_id: str) -> str:
-    """Format MCP context data for admin debug display"""
-    try:
-        formatted_output = f"🧠 **Stored Context for Session: {session_id}**\n\n"
-        
-        if not context_data:
-            return formatted_output + "❌ No context data found for this session."
-        
         # Group by intent type
         intents = {}
         for entry in context_data:
@@ -412,11 +404,11 @@ async def enhanced_chat(request: ChatRequest):
                                 'user_query': request.message,
                                 'gmail_intent': gmail_result.get('intent'),
                                 'confidence': gmail_result.get('confidence', 0.8),
-                                'user_email': 'brainlyarpit8649@gmail.com',
+                                'user_email': '',
                                 'emails': emails,
                                 'email_count': email_count
                             },
-                            user_id='brainlyarpit8649@gmail.com'
+                            user_id=''
                         )
                         
                         # Always provide structured Gmail response
@@ -850,14 +842,6 @@ async def append_mcp_context(request: dict):
         logger.error(f"❌ MCP context append error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/admin/debug/context")
-async def admin_debug_context_get(session_id: str = None, command: str = None, token: str = Header(None, alias="x-debug-token")):
-    """Admin Debug Toggle: View MCP-stored messages for debugging (GET endpoint)"""
-    try:
-        # Verify admin token
-        if token != os.getenv("DEBUG_ADMIN_TOKEN", "elva-admin-debug-2024-secure"):
-            raise HTTPException(status_code=403, detail="Invalid debug token")
-        
         if not command:
             return {"error": "Missing command parameter"}
         
@@ -879,7 +863,6 @@ async def admin_debug_context_get(session_id: str = None, command: str = None, t
         context_data = mcp_context.get('data', {})
         appends = mcp_context.get('appends', [])
         
-        formatted_context = format_admin_debug_context(appends, session_id)
         
         return {
             "success": True,

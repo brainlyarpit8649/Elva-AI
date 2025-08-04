@@ -156,14 +156,6 @@ async def send_to_n8n_gmail_summarization(payload: dict):
         logger.error(f"❌ N8N Gmail summarization error: {e}")
         return {"success": False, "error": str(e)}
 
-def format_admin_debug_context(context_data: dict, session_id: str) -> str:
-    """Format MCP context data for admin debug display"""
-    try:
-        formatted_output = f"🧠 **Stored Context for Session: {session_id}**\n\n"
-        
-        if not context_data:
-            return formatted_output + "❌ No context data found for this session."
-        
         # Group by intent type
         intents = {}
         for entry in context_data:
@@ -346,11 +338,11 @@ async def enhanced_chat(request: ChatRequest):
                                 'user_query': request.message,
                                 'gmail_intent': gmail_result.get('intent'),
                                 'confidence': gmail_result.get('confidence', 0.8),
-                                'user_email': 'brainlyarpit8649@gmail.com',
+                                'user_email': '',
                                 'emails': emails,
                                 'email_count': email_count
                             },
-                            user_id='brainlyarpit8649@gmail.com'
+                            user_id=''
                         )
                         
                         # Always provide structured Gmail response

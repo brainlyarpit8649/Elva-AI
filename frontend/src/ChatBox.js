@@ -32,18 +32,11 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   const [automationStatus, setAutomationStatus] = useState(null);
   const [isDirectAutomation, setIsDirectAutomation] = useState(false);
   
-  // Admin Debug State
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [userEmail, setUserEmail] = useState(null);
-  const [showAdminToggle, setShowAdminToggle] = useState(false);
-  
+      const [userEmail, setUserEmail] = useState(null);
+    
   const messagesEndRef = useRef(null);
 
-  // Admin email whitelist
-  const ADMIN_EMAILS = [
-    'brainlyarpit8649@gmail.com',
-    'kumararpit9468@gmail.com'
-  ];
+    const ;
 
   // Stable ID generator to prevent flickering - using UUID instead of Date.now()
   const generateStableId = useCallback((prefix = 'msg') => {
@@ -291,8 +284,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   };
 
   // 🔒 Admin Email Detection and Toggle Functions
-  const checkAdminEmail = useCallback(async () => {
-    if (!gmailAuthStatus.authenticated) {
+      if (!gmailAuthStatus.authenticated) {
       setShowAdminToggle(false);
       return;
     }
@@ -322,16 +314,16 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   // Check for admin email when Gmail status changes
   useEffect(() => {
     if (gmailAuthStatus.authenticated) {
-      checkAdminEmail();
+      ();
     } else {
       setShowAdminToggle(false);
       setIsAdminMode(false);
       setUserEmail(null);
     }
-  }, [gmailAuthStatus.authenticated, checkAdminEmail]);
+  }, [gmailAuthStatus.authenticated, ]);
 
   const toggleAdminMode = () => {
-    const newAdminMode = !isAdminMode;
+    const newAdminMode = !;
     setIsAdminMode(newAdminMode);
     
     if (newAdminMode) {
@@ -595,7 +587,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       }
 
       // 🔒 Admin Debug Commands - Only available in admin mode
-      if (isAdminMode && (inputMessage.toLowerCase().includes('show my context') || inputMessage.toLowerCase().includes('show context for session'))) {
+      if ( && (inputMessage.toLowerCase().includes('show my context') || inputMessage.toLowerCase().includes('show context for session'))) {
         await handleAdminDebugCommand(inputMessage);
       }
 
@@ -960,19 +952,19 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       </div>
 
       {/* 🔒 Admin Debug Toggle - Only visible for admin emails */}
-      {showAdminToggle && (
+      { && (
         <div className="admin-toggle-container px-4 pb-2">
           <div className="max-w-4xl mx-auto">
             <button
               onClick={toggleAdminMode}
-              className={`admin-debug-toggle ${isAdminMode ? 'active' : ''}`}
-              title={isAdminMode ? 'Admin Mode: ON' : 'Admin Mode: OFF'}
+              className={`admin-debug-toggle ${ ? 'active' : ''}`}
+              title={ ? 'Admin Mode: ON' : 'Admin Mode: OFF'}
             >
               <span className="toggle-icon">🔐</span>
               <span className="toggle-text">
-                {isAdminMode ? 'Admin Debug: ON' : 'Admin Debug: OFF'}
+                { ? 'Admin Debug: ON' : 'Admin Debug: OFF'}
               </span>
-              <div className={`toggle-indicator ${isAdminMode ? 'active' : ''}`}>
+              <div className={`toggle-indicator ${ ? 'active' : ''}`}>
                 <div className="toggle-slider"></div>
               </div>
             </button>

@@ -292,7 +292,6 @@ function App() {
     }
   };
 
-
   return (
     <ToastProvider>
       <GmailAuthHandlerWrapper 
