@@ -125,7 +125,7 @@ class AdvancedHybridAI:
     def _initialize_routing_rules(self) -> Dict[str, Any]:
         """Initialize sophisticated routing rules"""
         return {
-            # Intent-based primary routing
+            # Intent-based primary routing - ALL GROQ NOW
             "intent_routing": {
                 "general_chat": {"model": ModelChoice.GROQ, "confidence": 0.9},
                 "send_email": {"model": ModelChoice.GROQ, "confidence": 0.85},
