@@ -378,7 +378,7 @@ async def process_regular_chat(request: ChatRequest):
             needs_approval = True
 
         # STEP 5: Store important information in semantic memory automatically
-        if semantic_memory and not memory_result.get("is_memory_operation", False):
+        if semantic_memory and intent_data.get("intent") != "memory_operation":
             # Check if the conversation contains important personal information to auto-store
             user_message_lower = request.message.lower()
             
