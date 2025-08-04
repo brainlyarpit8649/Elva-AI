@@ -1,16 +1,8 @@
 """
 Letta (MemGPT) Long-term Memory Integration for Elva AI
 
-This module provides persistent memory capabilities using Letta SDK, allowing Elva AI to:
-- Remember facts and instructions across sessions
-- Self-edit memory blocks when updated
-- Retrieve relevant context for better responses
-- Forget facts when requested
-
-Memory Architecture:
-- Persona: Friendly assistant for Arpit
-- User Preferences: Communication styles, settings
-- Facts & Tasks: Important information and reminders
+This module provides persistent memory capabilities using a simplified approach
+that stores facts in JSON format and uses basic retrieval.
 """
 
 import json
@@ -19,160 +11,68 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
-
-# Letta imports
-from letta import create_client, Client
-from letta.schemas.agent import CreateAgentRequest
-from letta.schemas.memory import Block, CreateBlock
-from letta.schemas.user import User
-from letta.client.client import LocalClient
-from letta.schemas.llm_config import LLMConfig
-from letta.schemas.embedding_config import EmbeddingConfig
+import re
 
 logger = logging.getLogger(__name__)
 
-class LettaMemory:
+class SimpleLettaMemory:
     def __init__(self, memory_dir: str = "/app/backend/memory"):
         self.memory_dir = Path(memory_dir)
         self.memory_dir.mkdir(exist_ok=True)
         self.memory_file = self.memory_dir / "elva_memory.json"
         
-        self.client: Optional[LocalClient] = None
-        self.agent_id: Optional[str] = None
-        self.agent_state: Dict[str, Any] = {}
+        # Memory structure
+        self.memory = {
+            "persona": "I am Elva AI, a friendly and intelligent assistant created to help Arpit with various tasks.",
+            "user_preferences": {},
+            "facts": {},
+            "tasks": {},
+            "created_at": datetime.utcnow().isoformat(),
+            "last_updated": datetime.utcnow().isoformat()
+        }
         
-        # Initialize the Letta client and agent
-        self._initialize_client()
-        self._load_or_create_agent()
+        # Load existing memory
+        self._load_memory()
 
-    def _initialize_client(self):
-        """Initialize Letta client with appropriate configuration"""
-        try:
-            # Create a local Letta client (no external server required)
-            self.client = create_client()
-            
-            # Ensure we have a default user
-            try:
-                users = self.client.list_users()
-                if not users:
-                    # Create default user
-                    user = self.client.create_user()
-                    logger.info(f"✅ Created default Letta user: {user.id}")
-                else:
-                    user = users[0]
-                    logger.info(f"✅ Using existing Letta user: {user.id}")
-            except Exception as e:
-                logger.warning(f"⚠️ User setup warning: {e}")
-                
-            logger.info("✅ Letta client initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to initialize Letta client: {e}")
-            raise
-
-    def _load_or_create_agent(self):
-        """Load existing agent from memory file or create a new one"""
+    def _load_memory(self):
+        """Load memory from file if it exists"""
         try:
             if self.memory_file.exists():
-                # Load existing agent state
                 with open(self.memory_file, 'r') as f:
-                    self.agent_state = json.load(f)
-                
-                agent_id = self.agent_state.get('agent_id')
-                if agent_id:
-                    # Try to get the existing agent
-                    try:
-                        agent = self.client.get_agent(agent_id)
-                        self.agent_id = agent_id
-                        logger.info(f"✅ Loaded existing Letta agent: {agent_id}")
-                        return
-                    except Exception:
-                        logger.warning(f"⚠️ Agent {agent_id} not found, creating new one")
-            
-            # Create new agent
-            self._create_new_agent()
-            
+                    loaded_memory = json.load(f)
+                    # Merge with defaults to ensure all keys exist
+                    self.memory.update(loaded_memory)
+                logger.info("✅ Loaded existing memory from file")
+            else:
+                # Create new memory file
+                self._save_memory()
+                logger.info("✅ Created new memory file")
         except Exception as e:
-            logger.error(f"❌ Error loading/creating agent: {e}")
-            # Fallback: create new agent
-            self._create_new_agent()
-
-    def _create_new_agent(self):
-        """Create a new Letta agent with initial memory blocks"""
-        try:
-            # Define initial memory blocks for Elva AI
-            memory_blocks = [
-                {
-                    "name": "persona",
-                    "value": "I am Elva AI, a friendly and intelligent assistant created to help Arpit with various tasks. I am knowledgeable, professional, and always eager to assist. I maintain a warm but efficient communication style."
-                },
-                {
-                    "name": "user_preferences", 
-                    "value": "User (Arpit) preferences: Prefers short, professional responses. Values efficiency and clear communication."
-                },
-                {
-                    "name": "facts_and_tasks",
-                    "value": "Important facts and tasks I need to remember about the user and their requests."
-                }
-            ]
-            
-            # Create the agent with memory blocks
-            agent_request = CreateAgentRequest(
-                name="elva_agent",
-                description="Elva AI's persistent memory agent for long-term context and facts",
-                memory_blocks=memory_blocks,
-                system="You are Elva AI's memory system. Store important facts, user preferences, and tasks. Always update memory when new information is provided. Be concise and accurate."
-            )
-            
-            agent = self.client.create_agent(agent_request)
-            self.agent_id = agent.id
-            
-            # Save agent state
-            self.agent_state = {
-                'agent_id': agent.id,
-                'created_at': datetime.utcnow().isoformat(),
-                'memory_blocks': memory_blocks
-            }
-            self._save_memory()
-            
-            logger.info(f"✅ Created new Letta agent: {agent.id}")
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to create new agent: {e}")
-            raise
+            logger.error(f"❌ Error loading memory: {e}")
 
     def _save_memory(self):
-        """Save agent state to persistent storage"""
+        """Save memory to file"""
         try:
+            self.memory["last_updated"] = datetime.utcnow().isoformat()
             with open(self.memory_file, 'w') as f:
-                json.dump(self.agent_state, f, indent=2)
+                json.dump(self.memory, f, indent=2)
         except Exception as e:
-            logger.error(f"❌ Failed to save memory: {e}")
+            logger.error(f"❌ Error saving memory: {e}")
 
     def store_fact(self, fact_text: str) -> Dict[str, Any]:
-        """
-        Store a new fact in Letta's memory
-        
-        Args:
-            fact_text: The fact to store
-            
-        Returns:
-            Dictionary with success status and details
-        """
+        """Store a new fact in memory"""
         try:
-            if not self.client or not self.agent_id:
-                return {"success": False, "error": "Agent not initialized"}
+            # Extract key information from the fact
+            fact_key = self._extract_fact_key(fact_text)
             
-            # Send message to agent to store the fact
-            message = f"STORE_FACT: {fact_text}"
-            response = self.client.send_message(
-                agent_id=self.agent_id,
-                message=message,
-                role="user"
-            )
+            # Store the fact
+            self.memory["facts"][fact_key] = {
+                "text": fact_text,
+                "created_at": datetime.utcnow().isoformat(),
+                "category": self._categorize_fact(fact_text)
+            }
             
-            # Update our local state tracking
-            self.agent_state['last_updated'] = datetime.utcnow().isoformat()
+            # Save to file
             self._save_memory()
             
             logger.info(f"✅ Stored fact: {fact_text[:50]}...")
@@ -180,7 +80,8 @@ class LettaMemory:
             return {
                 "success": True,
                 "fact": fact_text,
-                "response": response.messages[-1].text if response.messages else "Fact stored successfully"
+                "key": fact_key,
+                "response": "Fact stored successfully"
             }
             
         except Exception as e:
@@ -188,183 +89,171 @@ class LettaMemory:
             return {"success": False, "error": str(e)}
 
     def retrieve_context(self, query: str) -> Dict[str, Any]:
-        """
-        Retrieve relevant facts and context for a given query
-        
-        Args:
-            query: The query to search for relevant context
-            
-        Returns:
-            Dictionary with relevant context information
-        """
+        """Retrieve relevant facts for a query"""
         try:
-            if not self.client or not self.agent_id:
-                return {"success": False, "error": "Agent not initialized"}
+            query_lower = query.lower()
+            relevant_facts = []
             
-            # Send query to agent to retrieve relevant information
-            message = f"RETRIEVE_CONTEXT: {query}"
-            response = self.client.send_message(
-                agent_id=self.agent_id,
-                message=message,
-                role="user"
-            )
+            # Search through facts
+            for key, fact_data in self.memory["facts"].items():
+                fact_text = fact_data["text"].lower()
+                
+                # Simple keyword matching
+                if any(word in fact_text for word in query_lower.split()):
+                    relevant_facts.append(fact_data["text"])
             
-            context = response.messages[-1].text if response.messages else ""
+            # Search user preferences
+            for pref_key, pref_value in self.memory["user_preferences"].items():
+                if any(word in pref_key.lower() for word in query_lower.split()):
+                    relevant_facts.append(f"{pref_key}: {pref_value}")
             
-            logger.info(f"✅ Retrieved context for: {query[:50]}...")
+            context = "\n".join(relevant_facts) if relevant_facts else ""
+            
+            logger.info(f"✅ Retrieved {len(relevant_facts)} relevant facts for query: {query[:50]}...")
             
             return {
                 "success": True,
                 "query": query,
                 "context": context,
-                "relevant": len(context) > 10  # Simple relevance check
+                "relevant": len(relevant_facts) > 0,
+                "fact_count": len(relevant_facts)
             }
             
         except Exception as e:
             logger.error(f"❌ Error retrieving context: {e}")
             return {"success": False, "error": str(e)}
 
-    def chat_with_memory(self, message: str, session_id: str) -> Dict[str, Any]:
-        """
-        Process a chat message using Letta's memory system
-        
-        Args:
-            message: User's message
-            session_id: Current session ID
-            
-        Returns:
-            Dictionary with response and memory information
-        """
-        try:
-            if not self.client or not self.agent_id:
-                return {"success": False, "error": "Agent not initialized"}
-            
-            # Check if this is a memory command
-            message_lower = message.lower().strip()
-            
-            # Handle memory commands
-            if any(cmd in message_lower for cmd in ["remember that", "store fact", "teach elva"]):
-                fact = message.replace("remember that", "").replace("store fact", "").replace("teach elva", "").strip()
-                return self.store_fact(fact)
-            
-            elif any(cmd in message_lower for cmd in ["forget that", "remove fact", "delete"]):
-                fact = message.replace("forget that", "").replace("remove fact", "").replace("delete", "").strip()
-                return self.forget_fact(fact)
-            
-            elif any(cmd in message_lower for cmd in ["what do you know about", "tell me about", "recall"]):
-                query = message.replace("what do you know about", "").replace("tell me about", "").replace("recall", "").strip()
-                return self.retrieve_context(query)
-            
-            else:
-                # Regular chat with memory context
-                response = self.client.send_message(
-                    agent_id=self.agent_id,
-                    message=message,
-                    role="user"
-                )
-                
-                return {
-                    "success": True,
-                    "response": response.messages[-1].text if response.messages else "I understand.",
-                    "used_memory": True,
-                    "session_id": session_id
-                }
-                
-        except Exception as e:
-            logger.error(f"❌ Error in chat with memory: {e}")
-            return {"success": False, "error": str(e)}
-
     def forget_fact(self, fact_text: str) -> Dict[str, Any]:
-        """
-        Remove/forget a specific fact from memory
-        
-        Args:
-            fact_text: The fact to forget/remove
-            
-        Returns:
-            Dictionary with success status
-        """
+        """Remove a fact from memory"""
         try:
-            if not self.client or not self.agent_id:
-                return {"success": False, "error": "Agent not initialized"}
+            fact_text_lower = fact_text.lower()
+            removed_keys = []
             
-            # Send message to agent to forget the fact
-            message = f"FORGET_FACT: {fact_text}"
-            response = self.client.send_message(
-                agent_id=self.agent_id,
-                message=message,
-                role="user"
-            )
+            # Find and remove matching facts
+            for key in list(self.memory["facts"].keys()):
+                fact_data = self.memory["facts"][key]
+                if fact_text_lower in fact_data["text"].lower():
+                    del self.memory["facts"][key]
+                    removed_keys.append(key)
             
-            logger.info(f"✅ Forgot fact: {fact_text[:50]}...")
+            # Save changes
+            self._save_memory()
+            
+            logger.info(f"✅ Removed {len(removed_keys)} facts matching: {fact_text[:50]}...")
             
             return {
                 "success": True,
                 "fact": fact_text,
-                "response": response.messages[-1].text if response.messages else "Fact forgotten successfully"
+                "removed_count": len(removed_keys),
+                "response": f"Removed {len(removed_keys)} matching facts"
             }
             
         except Exception as e:
             logger.error(f"❌ Error forgetting fact: {e}")
             return {"success": False, "error": str(e)}
 
-    def get_memory_summary(self) -> Dict[str, Any]:
-        """
-        Get a summary of current memory state
-        
-        Returns:
-            Dictionary with memory statistics and summary
-        """
+    def chat_with_memory(self, message: str, session_id: str) -> Dict[str, Any]:
+        """Process a message with memory context"""
         try:
-            if not self.client or not self.agent_id:
-                return {"success": False, "error": "Agent not initialized"}
+            message_lower = message.lower().strip()
             
-            # Get agent memory blocks
-            agent = self.client.get_agent(self.agent_id)
-            memory_info = {
-                "agent_id": self.agent_id,
-                "memory_blocks": len(agent.memory.blocks) if hasattr(agent, 'memory') and hasattr(agent.memory, 'blocks') else 0,
-                "last_updated": self.agent_state.get('last_updated', 'Unknown'),
-                "created_at": self.agent_state.get('created_at', 'Unknown'),
-                "memory_file_exists": self.memory_file.exists()
-            }
+            # Handle memory commands
+            if any(cmd in message_lower for cmd in ["remember that", "store fact", "my nickname is", "i am", "call me"]):
+                return self.store_fact(message)
             
+            elif any(cmd in message_lower for cmd in ["forget that", "remove fact", "don't remember"]):
+                fact = message.replace("forget that", "").replace("remove fact", "").replace("don't remember", "").strip()
+                return self.forget_fact(fact)
+            
+            elif any(cmd in message_lower for cmd in ["what do you know about me", "what's my", "who am i", "what do you remember"]):
+                return self.retrieve_context(message)
+            
+            else:
+                # Get relevant context for the message
+                context_result = self.retrieve_context(message)
+                context = context_result.get("context", "")
+                
+                return {
+                    "success": True,
+                    "response": f"I understand. {context}" if context else "I understand.",
+                    "used_memory": len(context) > 0,
+                    "session_id": session_id,
+                    "context": context
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Error in chat with memory: {e}")
+            return {"success": False, "error": str(e)}
+
+    def _extract_fact_key(self, fact_text: str) -> str:
+        """Extract a key for the fact"""
+        fact_lower = fact_text.lower()
+        
+        # Look for common patterns
+        if "nickname" in fact_lower or "call me" in fact_lower:
+            return "nickname"
+        elif "name is" in fact_lower:
+            return "name"
+        elif "email" in fact_lower:
+            return "email"
+        elif "prefer" in fact_lower:
+            return f"preference_{len(self.memory['user_preferences'])}"
+        elif "manager" in fact_lower or "boss" in fact_lower:
+            return "manager"
+        else:
+            # Generate a unique key
+            return f"fact_{len(self.memory['facts'])}"
+
+    def _categorize_fact(self, fact_text: str) -> str:
+        """Categorize the fact"""
+        fact_lower = fact_text.lower()
+        
+        if any(word in fact_lower for word in ["nickname", "name", "call me"]):
+            return "identity"
+        elif any(word in fact_lower for word in ["prefer", "like", "favorite"]):
+            return "preferences"
+        elif any(word in fact_lower for word in ["manager", "boss", "colleague"]):
+            return "contacts"
+        elif any(word in fact_lower for word in ["remind", "task", "todo"]):
+            return "tasks"
+        else:
+            return "general"
+
+    def get_memory_summary(self) -> Dict[str, Any]:
+        """Get memory statistics"""
+        try:
             return {
                 "success": True,
-                "memory_info": memory_info
+                "memory_info": {
+                    "total_facts": len(self.memory["facts"]),
+                    "user_preferences": len(self.memory["user_preferences"]),
+                    "tasks": len(self.memory["tasks"]),
+                    "created_at": self.memory.get("created_at"),
+                    "last_updated": self.memory.get("last_updated"),
+                    "memory_file_exists": self.memory_file.exists()
+                }
             }
-            
         except Exception as e:
             logger.error(f"❌ Error getting memory summary: {e}")
             return {"success": False, "error": str(e)}
 
-    def cleanup_memory(self):
-        """Clean up resources and save final state"""
-        try:
-            if self.agent_state:
-                self.agent_state['last_cleanup'] = datetime.utcnow().isoformat()
-                self._save_memory()
-            logger.info("✅ Letta memory cleanup completed")
-        except Exception as e:
-            logger.error(f"❌ Error during cleanup: {e}")
-
 
 # Global instance
-letta_memory: Optional[LettaMemory] = None
+simple_letta_memory: Optional[SimpleLettaMemory] = None
 
-def get_letta_memory() -> LettaMemory:
-    """Get or create the global Letta memory instance"""
-    global letta_memory
-    if letta_memory is None:
-        letta_memory = LettaMemory()
-    return letta_memory
+def get_letta_memory() -> SimpleLettaMemory:
+    """Get or create the global simple Letta memory instance"""
+    global simple_letta_memory
+    if simple_letta_memory is None:
+        simple_letta_memory = SimpleLettaMemory()
+    return simple_letta_memory
 
-def initialize_letta_memory() -> LettaMemory:
-    """Initialize Letta memory system"""
+def initialize_letta_memory() -> SimpleLettaMemory:
+    """Initialize simple Letta memory system"""
     try:
         memory = get_letta_memory()
-        logger.info("✅ Letta memory system initialized")
+        logger.info("✅ Simple Letta memory system initialized")
         return memory
     except Exception as e:
-        logger.error(f"❌ Failed to initialize Letta memory: {e}")
+        logger.error(f"❌ Failed to initialize simple Letta memory: {e}")
         raise
