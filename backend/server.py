@@ -222,47 +222,6 @@ async def _handle_post_package_confirmation(request: ChatRequest) -> tuple:
         intent_data = {"intent": "post_package_error", "error": str(e)}
         return response_text, intent_data
 
-        # Group by intent type
-        intents = {}
-        for entry in context_data:
-            intent = entry.get('intent', 'unknown')
-            if intent not in intents:
-                intents[intent] = []
-            intents[intent].append(entry)
-        
-        for intent, entries in intents.items():
-            formatted_output += f"### 🎯 Intent: {intent.upper()}\n"
-            
-            for i, entry in enumerate(entries, 1):
-                timestamp = entry.get('timestamp', 'Unknown')
-                formatted_output += f"\n**Entry {i}** (⏰ {timestamp})\n"
-                
-                if 'user_message' in entry:
-                    formatted_output += f"👤 **User:** {entry['user_message']}\n"
-                
-                if 'ai_response' in entry:
-                    response_preview = entry['ai_response'][:150] + "..." if len(entry['ai_response']) > 150 else entry['ai_response']
-                    formatted_output += f"🤖 **AI:** {response_preview}\n"
-                
-                if 'routing_info' in entry and entry['routing_info']:
-                    routing = entry['routing_info']
-                    formatted_output += f"🧭 **Routing:** {routing.get('model', 'Unknown')} (confidence: {routing.get('confidence', 0):.2f})\n"
-                
-                if 'agent_results' in entry and entry['agent_results']:
-                    results = entry['agent_results']
-                    formatted_output += f"🎯 **Agent Results:** {len(results)} entries\n"
-                    for j, result in enumerate(results[:3], 1):  # Show first 3 results
-                        result_preview = str(result)[:100] + "..." if len(str(result)) > 100 else str(result)
-                        formatted_output += f"   {j}. {result_preview}\n"
-                
-                formatted_output += "---\n"
-        
-        return formatted_output
-        
-    except Exception as e:
-        logger.error(f"Context formatting error: {e}")
-        return f"🧠 **Stored Context for Session: {session_id}**\n\n❌ Error formatting context: {str(e)}"
-
 # Routes
 @api_router.post("/chat", response_model=ChatResponse)
 async def enhanced_chat(request: ChatRequest):
