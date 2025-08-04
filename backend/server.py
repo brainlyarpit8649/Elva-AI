@@ -327,12 +327,21 @@ async def process_regular_chat(request: ChatRequest):
                     previous_context += f"\n\n=== ADDITIONAL CONTEXT ===\n{mcp_context}"
                 logger.info(f"📖 Added MCP context for session: {request.session_id}")
             
-            # Add Semantic Memory context for better responses
+            # Add Letta Memory context for better responses
             if semantic_memory:
-                memory_context = semantic_memory.get_memory_context_for_ai(request.session_id)
-                if memory_context:
-                    previous_context += f"\n\n=== PERSONALIZED MEMORY ===\n{memory_context}"
-                    logger.info(f"🧠 Added Semantic Memory context for session: {request.session_id}")
+                # Get memory context from simple Letta system
+                try:
+                    memory_summary = semantic_memory.get_memory_summary()
+                    if memory_summary.get("success"):
+                        memory_info = memory_summary.get("memory_info", {})
+                        if memory_info.get("total_facts", 0) > 0:
+                            # Add basic memory context
+                            context_result = semantic_memory.retrieve_context("user information preferences facts")
+                            if context_result.get("success") and context_result.get("context"):
+                                previous_context += f"\n\n=== USER MEMORY ===\n{context_result['context']}"
+                                logger.info(f"🧠 Added Letta Memory context for session: {request.session_id}")
+                except Exception as memory_context_error:
+                    logger.warning(f"⚠️ Error retrieving memory context: {memory_context_error}")
                 
         except Exception as context_error:
             logger.warning(f"⚠️ Error reading conversation context: {context_error}")
