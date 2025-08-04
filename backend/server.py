@@ -82,13 +82,17 @@ except Exception as e:
 
 # Initialize Performance Optimizer
 try:
-    import asyncio
-    loop = asyncio.get_event_loop()
-    performance_optimizer = loop.run_until_complete(initialize_performance_optimizer())
-    logging.info("✅ Performance Optimizer initialized successfully")
+    performance_optimizer = None  # Will be initialized on first use
+    logging.info("✅ Performance Optimizer marked for lazy initialization")
 except Exception as e:
-    logging.warning(f"⚠️ Performance Optimizer initialization failed: {e}")
+    logging.warning(f"⚠️ Performance Optimizer setup failed: {e}")
     performance_optimizer = None
+
+# Create indexes for message memory (will be done on first request)
+startup_tasks = {
+    "indexes_created": False,
+    "performance_optimizer_initialized": False
+}
 
 # Global variables for tracking
 pending_post_packages = {}
@@ -112,15 +116,6 @@ logger = logging.getLogger(__name__)
 # Setup API router
 from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
-
-# Create indexes for message memory
-import asyncio
-loop = asyncio.get_event_loop()
-try:
-    loop.run_until_complete(ensure_indexes())
-    logging.info("✅ Message memory indexes created successfully")
-except Exception as e:
-    logging.warning(f"⚠️ Message memory index creation failed: {e}")
 
 # Pydantic models for request/response validation
 class ChatRequest(BaseModel):
