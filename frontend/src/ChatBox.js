@@ -968,9 +968,9 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
             >
               <span className="toggle-icon">🔐</span>
               <span className="toggle-text">
-                { ? 'Admin Debug: ON' : 'Admin Debug: OFF'}
+                {isAdminMode ? 'Admin Debug: ON' : 'Admin Debug: OFF'}
               </span>
-              <div className={`toggle-indicator ${ ? 'active' : ''}`}>
+              <div className={`toggle-indicator ${isAdminMode ? 'active' : ''}`}>
                 <div className="toggle-slider"></div>
               </div>
             </button>
