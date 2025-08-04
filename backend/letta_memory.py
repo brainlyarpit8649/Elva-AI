@@ -152,7 +152,7 @@ class SimpleLettaMemory:
             logger.error(f"❌ Error forgetting fact: {e}")
             return {"success": False, "error": str(e)}
 
-    def chat_with_memory(self, message: str, session_id: str) -> Dict[str, Any]:
+    async def chat_with_memory(self, message: str, session_id: str) -> Dict[str, Any]:
         """Process a message with memory context"""
         try:
             message_lower = message.lower().strip()
