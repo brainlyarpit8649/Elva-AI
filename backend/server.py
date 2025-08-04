@@ -1,14 +1,15 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Header, Query, Request
-from fastapi.responses import RedirectResponse
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
-from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List, Optional, Any
 import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Optional, Any
+from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import FastAPI, HTTPException, Request, Query, Header
+from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from dotenv import load_dotenv
 from datetime import datetime
 import json
 import httpx
@@ -30,10 +31,10 @@ from enhanced_gmail_service import EnhancedGmailService
 from enhanced_chat_models import EnhancedChatMessage, UserMessage, AIMessage
 
 # Import new DeBERTa-based Gmail system
-from deberta_gmail_intent_detector import deberta_gmail_detector
 from realtime_gmail_service import RealTimeGmailService
+from deberta_gmail_intent_detector import deberta_gmail_detector
 
-# Import Tomorrow.io Weather Service
+# Import weather service
 from weather_service_tomorrow import (
     get_current_weather, 
     get_weather_forecast, 
@@ -44,8 +45,8 @@ from weather_service_tomorrow import (
     clear_weather_cache
 )
 
-# Import Enhanced Letta Memory System
-from enhanced_letta_memory import initialize_enhanced_letta_memory, get_enhanced_letta_memory
+# Import Semantic Letta Memory System (New Enhanced Version)
+from semantic_letta_memory import initialize_semantic_letta_memory, get_semantic_letta_memory
 from performance_optimizer import initialize_performance_optimizer, get_performance_optimizer
 
 ROOT_DIR = Path(__file__).parent
@@ -71,13 +72,13 @@ conversation_memory = initialize_conversation_memory(db)
 # Initialize MCP (Model Context Protocol) integration service
 mcp_service = initialize_mcp_service()
 
-# Initialize Enhanced Letta Memory System
+# Initialize Semantic Letta Memory System
 try:
-    letta_memory = initialize_enhanced_letta_memory()
-    logging.info("✅ Enhanced Letta Memory System initialized successfully")
+    semantic_memory = initialize_semantic_letta_memory()
+    logging.info("✅ Semantic Letta Memory System initialized successfully")
 except Exception as e:
-    logging.warning(f"⚠️ Enhanced Letta Memory initialization failed: {e}")
-    letta_memory = None
+    logging.warning(f"⚠️ Semantic Letta Memory initialization failed: {e}")
+    semantic_memory = None
 
 # Initialize Performance Optimizer
 try:
@@ -89,333 +90,103 @@ except Exception as e:
     logging.warning(f"⚠️ Performance Optimizer initialization failed: {e}")
     performance_optimizer = None
 
-# In-memory store for pending post prompt packages
+# Global variables for tracking
 pending_post_packages = {}
 
-# Create the main app without a prefix
-app = FastAPI()
+# Create FastAPI app
+app = FastAPI(title="Elva AI Backend", description="Enhanced AI Assistant Backend")
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Models
-class ChatMessage(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    session_id: str
-    user_id: str = "default_user"
-    message: str
-    response: str
-    intent_data: Optional[dict] = None
-    approved: Optional[bool] = None
-    n8n_response: Optional[dict] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+# Setup API router
+from fastapi import APIRouter
+api_router = APIRouter(prefix="/api")
 
+# Create indexes for message memory
+ensure_indexes(db)
+
+# Pydantic models for request/response validation
 class ChatRequest(BaseModel):
     message: str
     session_id: str
-    user_id: str = "default_user"
+    user_id: str = "anonymous"
 
 class ChatResponse(BaseModel):
     id: str
     message: str
     response: str
-    intent_data: Optional[dict] = None
+    intent_data: Optional[Dict[str, Any]] = None
     needs_approval: bool = False
     timestamp: datetime
+    session_id: str
+    user_id: str
 
 class ApprovalRequest(BaseModel):
-    session_id: str
     message_id: str
     approved: bool
-    edited_data: Optional[dict] = None
+    edited_data: Optional[Dict[str, Any]] = None
 
 class SuperAGITaskRequest(BaseModel):
-    session_id: str
     goal: str
-    agent_type: str = "auto"  # auto, email_agent, linkedin_agent, research_agent
+    agent_type: str
+    session_id: str
 
 class MCPContextRequest(BaseModel):
     session_id: str
-    user_id: str = "default_user"
+    user_id: str = "anonymous"
     intent: str
-    data: dict
+    data: Dict[str, Any]
 
-# Gmail Summarization Request Models
-class GmailSummarizeRequest(BaseModel):
-    intent: str  # "summarize_to_chat" or "summarize_and_send_email"
-    limit: int = 4
-    toEmail: Optional[str] = None  # Required for summarize_and_send_email
-
+class DebugToggleRequest(BaseModel):
+    session_id: str
+    
 # Helper functions
-def convert_objectid_to_str(doc):
+def convert_objectid_to_str(document):
     """Convert MongoDB ObjectId to string for JSON serialization"""
-    if isinstance(doc, dict):
-        return {key: convert_objectid_to_str(value) for key, value in doc.items()}
-    elif isinstance(doc, list):
-        return [convert_objectid_to_str(item) for item in doc]
-    elif hasattr(doc, '__dict__'):
-        return str(doc)
-    else:
-        return doc
+    if isinstance(document, list):
+        return [convert_objectid_to_str(doc) for doc in document]
+    if isinstance(document, dict):
+        for key, value in document.items():
+            if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
+                document[key] = str(value)
+            elif isinstance(value, (dict, list)):
+                document[key] = convert_objectid_to_str(value)
+    return document
 
-async def send_to_n8n_gmail_summarization(payload: dict):
-    """Send Gmail summarization request to n8n webhook"""
-    try:
-        webhook_url = os.environ.get('N8N_WEBHOOK_URL')
-        if not webhook_url:
-            raise ValueError("N8N_WEBHOOK_URL not configured")
-        
-        logger.info(f"📧 Sending Gmail summarization request to n8n: {payload}")
-        
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                webhook_url,
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            response.raise_for_status()
-            result = response.json() if response.text else {}
-            
-        logger.info(f"✅ N8N Gmail summarization response: {result}")
-        return {"success": True, "data": result}
-        
-    except Exception as e:
-        logger.error(f"❌ N8N Gmail summarization error: {e}")
-        return {"success": False, "error": str(e)}
+def get_session_welcome_message(session_id: str) -> str:
+    """Generate session welcome message"""
+    return f"👋 Hello! I'm Elva AI, your intelligent assistant. I can help with emails, scheduling, research, and much more! How can I help you today?"
 
-async def _handle_post_package_confirmation(request: ChatRequest) -> tuple:
-    """Handle confirmation of pending post prompt package"""
-    try:
-        pending_data = pending_post_packages[request.session_id]
-        
-        # Send to N8N webhook
-        webhook_result = await send_to_n8n({
-            "intent": "generate_post_prompt_package",
-            "session_id": request.session_id,
-            "post_description": pending_data.get("post_description", ""),
-            "ai_instructions": pending_data.get("ai_instructions", ""),
-            "topic": pending_data.get("topic", ""),
-            "project_name": pending_data.get("project_name", ""),
-            "project_type": pending_data.get("project_type", ""),
-            "tech_stack": pending_data.get("tech_stack", ""),
-            "status": "pending"
-        })
-        
-        # Clear the pending data
-        del pending_post_packages[request.session_id]
-        
-        response_text = "✅ **Post Prompt Package Sent Successfully!**\n\nYour LinkedIn post preparation package has been sent to the automation system. You can now use the Post Description and AI Instructions to generate your LinkedIn post with any AI tool of your choice."
-        intent_data = {"intent": "post_package_sent", "webhook_result": webhook_result}
-        
-        return response_text, intent_data
-        
-    except Exception as e:
-        logger.error(f"Error sending post package to webhook: {e}")
-        response_text = "❌ **Error sending post package.** Please try again or contact support if the issue persists."
-        intent_data = {"intent": "post_package_error", "error": str(e)}
-        return response_text, intent_data
-
-# Routes
+# Main chat endpoint
 @api_router.post("/chat", response_model=ChatResponse)
 async def enhanced_chat(request: ChatRequest):
-    """Enhanced chat endpoint with comprehensive message memory and Gmail summarization support"""
     try:
-        logger.info(f"🚀 Enhanced Chat Processing: {request.message}")
-        
-        # Import message memory functions
-        from message_memory import save_message, get_conversation_context_for_ai
-        
-        # STEP 1: Save user message IMMEDIATELY for comprehensive conversation history
-        await save_message(request.session_id, "user", request.message)
-        
-        # Also save to enhanced chat collection for compatibility 
+        logger.info(f"💬 Enhanced chat request - Session: {request.session_id}, Message: {request.message[:100]}...")
+
+        # STEP 0: Save user message to database first (with proper EnhancedChatMessage structure)
         user_msg = UserMessage(
-            session_id=request.session_id,
             user_id=request.user_id,
+            session_id=request.session_id,
             message=request.message
         )
         await db.chat_messages.insert_one(user_msg.dict())
-        logger.info(f"💾 Saved user message to both systems: {user_msg.id}")
+        logger.info(f"💾 Saved user message: {user_msg.id}")
+
+        # STEP 1: Process the message through the main processing pipeline
+        response_text, intent_data, needs_approval = await process_regular_chat(request)
         
-        # STEP 2: Check for Gmail summarization intents first
-        user_msg_lower = request.message.lower().strip()
-        
-        # Gmail summarization intent detection
-        if any(phrase in user_msg_lower for phrase in [
-            "summarize my emails", "summarize my last", "summarize emails", 
-            "summarise my emails", "summarise my last", "summarise emails",
-            "email summary", "summarize my gmail", "summarize my inbox",
-            "summarise my gmail", "summarise my inbox"
-        ]):
-            # Extract number of emails to summarize (default to 4)
-            import re
-            numbers = re.findall(r'\d+', request.message)
-            limit = int(numbers[0]) if numbers else 4
-            
-            # Check if they want to send to email
-            send_to_email = any(phrase in user_msg_lower for phrase in [
-                "send to", "email to", "send summary to", "email summary to"
-            ])
-            
-            if send_to_email:
-                # Extract email address if present
-                email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-                emails = re.findall(email_pattern, request.message)
-                to_email = emails[0] if emails else None
-                
-                if not to_email:
-                    response_text = "📧 Please specify the email address where you want to send the summary. For example: 'Summarize my last 4 emails and send to john@example.com'"
-                    intent_data = {"intent": "gmail_summarize_email_missing", "limit": limit}
-                    needs_approval = False
-                else:
-                    # Send summarize_and_send_email request to n8n
-                    payload = {
-                        "intent": "summarize_and_send_email",
-                        "limit": limit,
-                        "toEmail": to_email
-                    }
-                    
-                    n8n_result = await send_to_n8n_gmail_summarization(payload)
-                    
-                    if n8n_result.get("success"):
-                        response_text = f"✅ Gmail summary of your last {limit} emails has been sent to {to_email}!"
-                        intent_data = {
-                            "intent": "summarize_and_send_email",
-                            "count": limit,
-                            "time_filter": "latest",
-                            "include_unread_only": False,
-                            "user_email": to_email,
-                            "n8n_response": n8n_result.get("data")
-                        }
-                    else:
-                        response_text = f"❌ Failed to send email summary: {n8n_result.get('error', 'Unknown error')}"
-                        intent_data = {
-                            "intent": "gmail_summarize_error",
-                            "error": n8n_result.get("error"),
-                            "limit": limit,
-                            "toEmail": to_email
-                        }
-                    needs_approval = False
-            else:
-                # Send summarize_to_chat request to n8n
-                payload = {
-                    "intent": "summarize_to_chat",
-                    "limit": limit
-                }
-                
-                n8n_result = await send_to_n8n_gmail_summarization(payload)
-                
-                if n8n_result.get("success"):
-                    # Get the summary from n8n response
-                    n8n_data = n8n_result.get("data", {})
-                    summary = n8n_data.get("summary", "Email summary received from n8n workflow")
-                    response_text = f"📧 **Gmail Summary (Last {limit} emails):**\n\n{summary}"
-                    intent_data = {
-                        "intent": "summarize_to_chat",
-                        "count": limit,
-                        "time_filter": "latest", 
-                        "include_unread_only": False,
-                        "summary": summary,
-                        "n8n_response": n8n_data
-                    }
-                else:
-                    response_text = f"❌ Failed to get email summary: {n8n_result.get('error', 'Unknown error')}"
-                    intent_data = {
-                        "intent": "gmail_summarize_error",
-                        "error": n8n_result.get("error"),
-                        "limit": limit
-                    }
-                needs_approval = False
-        
-        # STEP 3: Check for DeBERTa Gmail queries (existing logic) - but exclude summarization
-        elif any(phrase in user_msg_lower for phrase in [
-            "check my gmail", "check my inbox", "show me my emails", 
-            "any unread emails", "new emails", "gmail inbox"
-        ]) and not any(phrase in user_msg_lower for phrase in ["summarize", "summary"]):
-            gmail_result = await realtime_gmail_service.process_gmail_query(
-                request.message, 
-                request.session_id
-            )
-            
-            if gmail_result.get('success') and gmail_result.get('is_gmail_query'):
-                if gmail_result.get('requires_auth'):
-                    response_text = gmail_result.get('message', '🔐 Please connect Gmail to access your emails.')
-                    intent_data = {
-                        'intent': gmail_result.get('intent', 'gmail_auth_required'),
-                        'requires_auth': True,
-                        'auth_url': '/api/gmail/auth'
-                    }
-                    needs_approval = False
-                else:
-                    # Gmail query with authentication - fetch data
-                    gmail_data_result = await realtime_gmail_service._fetch_gmail_data(
-                        gmail_result.get('intent', 'gmail_summary'), 
-                        request.message, 
-                        request.session_id
-                    )
-                    
-                    if gmail_data_result.get('success') and gmail_data_result.get('data'):
-                        gmail_data = gmail_data_result.get('data', {})
-                        emails = gmail_data.get('emails', [])
-                        email_count = gmail_data.get('count', 0)
-                        
-                        # Write Gmail data to MCP context
-                        await mcp_service.write_context(
-                            session_id=request.session_id,
-                            intent=gmail_result.get('intent', 'gmail_summary'),
-                            data={
-                                'user_query': request.message,
-                                'gmail_intent': gmail_result.get('intent'),
-                                'confidence': gmail_result.get('confidence', 0.8),
-                                'user_email': '',
-                                'emails': emails,
-                                'email_count': email_count
-                            },
-                            user_id=''
-                        )
-                        
-                        # Always provide structured Gmail response
-                        response_text = f"📧 **Here are your emails ({email_count} found):**\n\n"
-                        
-                        for i, email in enumerate(emails[:10], 1):
-                            from_name = email.get('from', 'Unknown')
-                            subject = email.get('subject', 'No Subject')
-                            snippet = email.get('snippet', 'No preview available')[:100]
-                            response_text += f"**{i}. {from_name}** – {subject}\n{snippet}...\n\n"
-                        
-                        intent_data = {
-                            'intent': gmail_result.get('intent'),
-                            'emails': emails,
-                            'email_count': email_count,
-                            'method': 'enhanced_gmail',
-                            'confidence': gmail_result.get('confidence', 0.8)
-                        }
-                    else:
-                        response_text = gmail_data_result.get('message', '❌ Failed to access Gmail data')
-                        intent_data = {
-                            'intent': gmail_result.get('intent'),
-                            'error': gmail_data_result.get('error', 'Gmail data fetch failed'),
-                            'method': 'gmail_data_fetch_failed'
-                        }
-                    needs_approval = False
-            else:
-                # Not a Gmail query, proceed with normal processing
-                response_text, intent_data, needs_approval = await process_regular_chat(request)
-        else:
-            # STEP 4: Regular chat processing with MCP context awareness
-            response_text, intent_data, needs_approval = await process_regular_chat(request)
-        
-        # STEP 5: Save AI response message to BOTH memory systems for comprehensive conversation history
-        from message_memory import save_message
-        await save_message(request.session_id, "assistant", response_text)
-        
+        # STEP 2: Create response message with proper structure
         ai_msg = AIMessage(
             session_id=request.session_id,
             user_id=request.user_id,
@@ -426,43 +197,66 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(ai_msg.dict())
         logger.info(f"💾 Saved AI response to both memory systems: {ai_msg.id}")
         
-        # STEP 6: Enhanced Periodic Conversation Summarization
+        # STEP 3: Enhanced Conversation Context Storage for both systems
         try:
-            from enhanced_letta_memory import get_enhanced_letta_memory
-            enhanced_memory = get_enhanced_letta_memory()
+            # Store in conversation memory system
+            await conversation_memory.store_conversation_turn(
+                session_id=request.session_id,
+                user_message=request.message,
+                ai_response=response_text,
+                intent_data=intent_data or {},
+                additional_context={
+                    "needs_approval": needs_approval,
+                    "user_id": request.user_id,
+                    "message_id": ai_msg.id
+                }
+            )
             
-            # Trigger periodic summarization if conditions are met
-            summarization_result = await enhanced_memory.trigger_periodic_summarization_if_needed(request.session_id)
-            
-            if summarization_result.get("success"):
-                logger.info(f"✅ Periodic summarization completed for session {request.session_id}")
-                logger.info(f"📊 Facts discovered: {summarization_result.get('facts_discovered', 0)}")
-            elif summarization_result.get("reason") == "Summarization not needed yet":
-                logger.debug(f"📝 Summarization not needed for session {request.session_id}")
-            else:
-                logger.warning(f"⚠️ Summarization check failed: {summarization_result.get('error', 'Unknown error')}")
+            # Store in MCP service
+            try:
+                mcp_context_data = mcp_service.prepare_context_data(
+                    user_message=request.message,
+                    ai_response=response_text,
+                    intent_data=intent_data or {},
+                    routing_info={
+                        "hybrid_ai_routing": intent_data.get("routing_info") if intent_data else None,
+                        "session_id": request.session_id,
+                        "user_id": request.user_id
+                    }
+                )
                 
-        except Exception as summarization_error:
-            logger.warning(f"⚠️ Enhanced periodic conversation summarization failed: {summarization_error}")
+                await mcp_service.write_context(
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    intent=intent_data.get("intent", "general_chat") if intent_data else "general_chat",
+                    data=mcp_context_data
+                )
+                logger.info(f"✅ Context stored in both conversation memory and MCP: {request.session_id}")
+            except Exception as mcp_error:
+                logger.warning(f"⚠️ MCP context storage failed: {mcp_error}")
+            
+        except Exception as memory_error:
+            logger.warning(f"⚠️ Enhanced conversation context storage failed: {memory_error}")
 
-        final_response = ChatResponse(
+        return ChatResponse(
             id=ai_msg.id,
             message=request.message,
             response=response_text,
             intent_data=intent_data,
             needs_approval=needs_approval,
-            timestamp=ai_msg.timestamp
+            timestamp=ai_msg.timestamp,
+            session_id=request.session_id,
+            user_id=request.user_id
         )
-        
-        return final_response
-        
+
     except Exception as e:
-        logger.error(f"💥 Enhanced Chat Error: {e}")
+        logger.error(f"Enhanced chat error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def process_regular_chat(request: ChatRequest):
-    """Process regular chat with enhanced memory system and performance optimization"""
     try:
+        logger.info(f"🤖 Processing regular chat for session: {request.session_id}")
+
         # Performance optimization check
         if performance_optimizer:
             is_cached, cached_result = await performance_optimizer.optimize_chat_processing({
@@ -475,17 +269,17 @@ async def process_regular_chat(request: ChatRequest):
         # Import message memory functions
         from message_memory import get_conversation_context_for_ai, search_conversation_memory
         
-        # STEP 1: Enhanced Letta memory command processing
-        if letta_memory:
-            memory_result = letta_memory.process_natural_language_command(request.message, request.session_id)
+        # STEP 1: Semantic Letta memory processing with new system
+        if semantic_memory:
+            memory_result = await semantic_memory.process_message_for_memory(request.message, request.session_id)
             
-            if memory_result.get("is_memory_command"):
-                response_text = memory_result.get("response", "I processed your memory request.")
-                intent_data = memory_result.get("intent_data", {"intent": "memory_operation"})
+            if memory_result.get("is_memory_operation"):
+                response_text = memory_result.get("response", "Got it 👍")
+                intent_data = {"intent": "memory_operation", "operation_type": "semantic_memory"}
                 needs_approval = False
                 
                 # Cache successful memory operations for performance
-                if performance_optimizer and memory_result.get("success"):
+                if performance_optimizer and memory_result.get("facts_extracted"):
                     performance_optimizer.cache_response(request.message, {
                         "response": response_text,
                         "intent_data": intent_data,
@@ -494,7 +288,7 @@ async def process_regular_chat(request: ChatRequest):
                 
                 return response_text, intent_data, needs_approval
         
-        # STEP 2: Get FULL conversation context (MongoDB + message_memory + Enhanced Letta)
+        # STEP 2: Get FULL conversation context (MongoDB + message_memory + Semantic Memory)
         previous_context = ""
         try:
             # Get complete conversation history for context
@@ -509,125 +303,86 @@ async def process_regular_chat(request: ChatRequest):
                     previous_context += f"\n\n=== ADDITIONAL CONTEXT ===\n{mcp_context}"
                 logger.info(f"📖 Added MCP context for session: {request.session_id}")
             
-            # Add Enhanced Letta memory context for better responses
-            if letta_memory:
-                letta_context = letta_memory._get_relevant_context(request.message, request.session_id)
-                if letta_context:
-                    previous_context += f"\n\n=== PERSONALIZED MEMORY ===\n{letta_context}"
-                    logger.info(f"🧠 Added Enhanced Letta memory context for session: {request.session_id}")
+            # Add Semantic Memory context for better responses
+            if semantic_memory:
+                memory_context = semantic_memory.get_memory_context_for_ai(request.session_id)
+                if memory_context:
+                    previous_context += f"\n\n=== PERSONALIZED MEMORY ===\n{memory_context}"
+                    logger.info(f"🧠 Added Semantic Memory context for session: {request.session_id}")
                 
         except Exception as context_error:
             logger.warning(f"⚠️ Error reading conversation context: {context_error}")
             previous_context = ""
-        
-        # Check if this is a send confirmation for a pending post prompt package
-        user_msg_lower = request.message.lower().strip()
-        send_commands = ["send", "yes, go ahead", "submit", "send it", "yes go ahead", "go ahead"]
-        
-        email_keywords = ["email", "mail", "@", "message to", "write to"]
-        is_likely_email = any(keyword in user_msg_lower for keyword in email_keywords)
-        is_short_message = len(request.message.split()) <= 5
-        
-        is_send_command = (
-            any(cmd in user_msg_lower for cmd in send_commands) and 
-            is_short_message and 
-            not is_likely_email
-        )
-        
-        if is_send_command and request.session_id in pending_post_packages:
-            # Handle pending post package confirmation
-            response_text, intent_data = await _handle_post_package_confirmation(request)
-            needs_approval = False
-            
-        elif is_send_command and request.session_id not in pending_post_packages:
-            # User said send but no pending post package
-            response_text = "🤔 I don't see any pending LinkedIn post prompt package to send. Please first ask me to help you prepare a LinkedIn post about your project or topic."
-            intent_data = {"intent": "no_pending_package"}
-            needs_approval = False
-            
-        else:
-            # Regular hybrid AI processing with context
-            intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
-                request.message, 
-                request.session_id
-            )
-            
-            logger.info(f"🧠 Advanced Routing: {routing_decision.primary_model.value} (confidence: {routing_decision.confidence:.2f})")
-            logger.info(f"💡 Routing Logic: {routing_decision.reasoning}")
-            
-            # Write context to MCP for memory management
-            try:
-                context_data = mcp_service.prepare_context_data(
-                    user_message=request.message,
-                    ai_response=response_text,
-                    intent_data=intent_data,
-                    routing_info={
-                        "model": routing_decision.primary_model.value,
-                        "confidence": routing_decision.confidence,
-                        "reasoning": routing_decision.reasoning
-                    }
-                )
+
+        # STEP 3: Handle Post Prompt Package confirmation check
+        if request.session_id in pending_post_packages:
+            if any(confirmation in request.message.lower() for confirmation in ["send", "yes", "go ahead", "submit", "confirm", "ok"]):
+                logger.info(f"📤 Confirmed post package send for session {request.session_id}")
                 
-                await mcp_service.write_context(
-                    session_id=request.session_id,
-                    user_id=request.user_id,
-                    intent=intent_data.get("intent", "general_chat"),
-                    data=context_data
-                )
-                
-                logger.info(f"💾 Wrote enhanced context to MCP for session: {request.session_id}")
-                
-                # STEP 3: Auto-store important facts in Letta memory
-                if letta_memory:
-                    # Check if the conversation contains important personal information
-                    user_message_lower = request.message.lower()
-                    
-                    # Look for personal information patterns
-                    fact_patterns = [
-                        ("my name is", "name"),
-                        ("call me", "nickname"),
-                        ("i am", "identity"),
-                        ("i work as", "job"),
-                        ("i'm a", "profession"),
-                        ("my email is", "email"),
-                        ("my phone", "phone"),
-                        ("i prefer", "preference"),
-                        ("i like", "preference"),
-                        ("remember that", "reminder"),
-                        ("my manager", "contact"),
-                        ("my boss", "contact"),
-                    ]
-                    
-                    for pattern, fact_type in fact_patterns:
-                        if pattern in user_message_lower:
-                            try:
-                                # Store the fact automatically
-                                fact_result = letta_memory.store_fact(request.message)
-                                if fact_result.get("success"):
-                                    logger.info(f"🧠 Auto-stored {fact_type} fact in Letta memory: {request.message[:50]}...")
-                                break  # Only store once per message
-                            except Exception as letta_error:
-                                logger.warning(f"⚠️ Auto-storage to Letta failed: {letta_error}")
-                
-            except Exception as context_error:
-                logger.warning(f"⚠️ Error writing context to MCP: {context_error}")
-            
-            # Determine if approval is needed - ONLY for send_email intent
-            needs_approval = intent_data.get("intent") == "send_email"
-            
-            # Handle generate_post_prompt_package intent
-            if intent_data.get("intent") == "generate_post_prompt_package":
-                pending_post_packages[request.session_id] = {
-                    "post_description": intent_data.get("post_description", ""),
-                    "ai_instructions": intent_data.get("ai_instructions", ""),
-                    "topic": intent_data.get("topic", ""),
-                    "project_name": intent_data.get("project_name", ""),
-                    "project_type": intent_data.get("project_type", ""),
-                    "tech_stack": intent_data.get("tech_stack", ""),
-                    "timestamp": datetime.utcnow().isoformat()
+                package_data = pending_post_packages[request.session_id]
+                intent_data = {
+                    "intent": "generate_post_prompt_package_confirmed",
+                    **package_data
                 }
-                response_text += "\n\n💬 **Ready to send?** Just say **'send'**, **'yes, go ahead'**, or **'submit'** to send this package to your automation workflow!"
-                logger.info(f"📝 Stored pending post package for session {request.session_id}")
+                
+                # Remove from pending
+                del pending_post_packages[request.session_id]
+                
+                response_text = "✅ **Package sent to your automation workflow!** I've forwarded your post description and AI instructions for processing."
+                needs_approval = True  # This will trigger the automation workflow
+                return response_text, intent_data, needs_approval
+
+        # STEP 4: Run through advanced hybrid AI system
+        result = await advanced_hybrid_ai(
+            message=request.message,
+            session_id=request.session_id,
+            conversation_context=previous_context,
+            user_id=request.user_id
+        )
+
+        response_text = result.get("response", "I understand.")
+        intent_data = result.get("intent_data", {})
+        needs_approval = result.get("needs_approval", False)
+
+        # STEP 5: Store important information in semantic memory automatically
+        if semantic_memory and not memory_result.get("is_memory_operation", False):
+            # Check if the conversation contains important personal information to auto-store
+            user_message_lower = request.message.lower()
+            
+            # Patterns that suggest personal information that should be stored
+            info_patterns = {
+                "identity": ["my name is", "i am", "call me", "i'm"],
+                "preferences": ["i like", "i love", "i prefer", "i hate", "i dislike", "my favorite"],
+                "contacts": ["my manager", "my boss", "my colleague", "my friend", "my family"],
+                "work": ["i work", "my job", "my company", "my role", "my position"],
+                "location": ["i live", "i'm from", "my address", "my location"],
+                "skills": ["i can", "i know how to", "i'm good at", "i have experience"]
+            }
+            
+            for fact_type, patterns in info_patterns.items():
+                if any(pattern in user_message_lower for pattern in patterns):
+                    try:
+                        # Auto-store facts silently (no confirmation message)
+                        auto_memory_result = await semantic_memory.process_message_for_memory(request.message, request.session_id)
+                        if auto_memory_result.get("facts_extracted"):
+                            logger.info(f"🧠 Auto-stored {fact_type} facts from conversation: {len(auto_memory_result['facts_extracted'])} facts")
+                    except Exception as auto_store_error:
+                        logger.warning(f"⚠️ Auto-store failed: {auto_store_error}")
+                    break
+
+        # STEP 6: Handle generate_post_prompt_package intent
+        if intent_data.get("intent") == "generate_post_prompt_package":
+            pending_post_packages[request.session_id] = {
+                "post_description": intent_data.get("post_description", ""),
+                "ai_instructions": intent_data.get("ai_instructions", ""),
+                "topic": intent_data.get("topic", ""),
+                "project_name": intent_data.get("project_name", ""),
+                "project_type": intent_data.get("project_type", ""),
+                "tech_stack": intent_data.get("tech_stack", ""),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            response_text += "\n\n💬 **Ready to send?** Just say **'send'**, **'yes, go ahead'**, or **'submit'** to send this package to your automation workflow!"
+            logger.info(f"📝 Stored pending post package for session {request.session_id}")
         
         return response_text, intent_data, needs_approval
         
@@ -1518,18 +1273,16 @@ async def whatsapp_approve_action(
         # Convert to internal session format
         internal_session_id = f"whatsapp_{session_id}"
         
-        # Create approval request for existing pipeline
+        # Call internal approval endpoint
         approval_request = ApprovalRequest(
-            session_id=internal_session_id,
             message_id=message_id,
             approved=approved,
             edited_data=edited_data
         )
         
-        # Process through existing approval pipeline
         result = await approve_action(approval_request)
         
-        # Log WhatsApp approval
+        # Store WhatsApp approval log
         approval_log = {
             "id": str(uuid.uuid4()),
             "platform": "whatsapp",
@@ -1542,6 +1295,7 @@ async def whatsapp_approve_action(
         }
         
         await db.whatsapp_approvals.insert_one(approval_log)
+        logger.info(f"📝 Logged WhatsApp approval: {approval_log['id']}")
         
         return {
             "success": result.get("success", False),
@@ -1555,406 +1309,117 @@ async def whatsapp_approve_action(
         logger.error(f"❌ WhatsApp approval error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/letta/memory-stats")
-async def get_letta_memory_stats():
-    """Get Letta memory system statistics"""
+# New Semantic Memory endpoints (replacing old Letta endpoints)
+@api_router.get("/memory/stats")
+async def get_semantic_memory_stats():
+    """Get semantic memory system statistics"""
     try:
-        if letta_memory:
-            stats = letta_memory.get_memory_summary()
+        if semantic_memory:
+            stats = semantic_memory.get_memory_stats()
             return stats
         else:
-            return {"success": False, "error": "Letta memory not initialized"}
+            return {"success": False, "error": "Semantic memory not initialized"}
     except Exception as e:
-        logger.error(f"❌ Error getting Letta memory stats: {e}")
+        logger.error(f"❌ Error getting semantic memory stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.post("/letta/store-fact")
-async def store_letta_fact(request: dict):
-    """Manually store a fact in Letta memory"""
+@api_router.post("/memory/process")
+async def process_memory_message(request: dict):
+    """Process a message through semantic memory"""
     try:
-        fact = request.get("fact", "")
-        if not fact:
-            raise HTTPException(status_code=400, detail="Fact is required")
+        message = request.get("message", "")
+        session_id = request.get("session_id", "")
         
-        if letta_memory:
-            result = letta_memory.store_fact(fact)
+        if not message or not session_id:
+            raise HTTPException(status_code=400, detail="Message and session_id are required")
+        
+        if semantic_memory:
+            result = await semantic_memory.process_message_for_memory(message, session_id)
             return result
         else:
-            return {"success": False, "error": "Letta memory not initialized"}
+            return {"success": False, "error": "Semantic memory not initialized"}
     except Exception as e:
-        logger.error(f"❌ Error storing fact: {e}")
+        logger.error(f"❌ Error processing memory message: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.post("/letta/retrieve-context")
-async def retrieve_letta_context(request: dict):
-    """Retrieve context from Letta memory"""
+@api_router.get("/memory/context/{session_id}")
+async def get_memory_context(session_id: str):
+    """Get memory context for a session"""
     try:
-        query = request.get("query", "")
-        if not query:
-            raise HTTPException(status_code=400, detail="Query is required")
-        
-        if letta_memory:
-            result = letta_memory.retrieve_context(query)
-            return result
+        if semantic_memory:
+            context = semantic_memory.get_memory_context_for_ai(session_id)
+            return {"session_id": session_id, "context": context}
         else:
-            return {"success": False, "error": "Letta memory not initialized"}
+            return {"success": False, "error": "Semantic memory not initialized"}
     except Exception as e:
-        logger.error(f"❌ Error retrieving context: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-@api_router.get("/weather/current")
-async def get_current_weather_endpoint(location: str, username: str = None):
-    """Get current weather for a location using Tomorrow.io API"""
-    try:
-        logger.info(f"🌦️ Current weather request for: {location}")
-        result = await get_current_weather(location, username)
-        return {"status": "success", "data": result, "location": location}
-    except Exception as e:
-        logger.error(f"Current weather error: {e}")
+        logger.error(f"❌ Error getting memory context: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/weather/forecast")
-async def get_weather_forecast_endpoint(location: str, days: int = 3, username: str = None):
-    """Get weather forecast for a location using Tomorrow.io API"""
-    try:
-        logger.info(f"📅 Weather forecast request for: {location} ({days} days)")
-        result = await get_weather_forecast(location, days, username)
-        return {"status": "success", "data": result, "location": location, "days": days}
-    except Exception as e:
-        logger.error(f"Weather forecast error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/weather/air-quality")
-async def get_air_quality_endpoint(location: str):
-    """Get air quality index for a location using Tomorrow.io API"""
-    try:
-        logger.info(f"🌬️ Air quality request for: {location}")
-        result = await get_air_quality_index(location)
-        return {"status": "success", "data": result, "location": location}
-    except Exception as e:
-        logger.error(f"Air quality error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/weather/alerts")
-async def get_weather_alerts_endpoint(location: str):
-    """Get weather alerts for a location"""
-    try:
-        logger.info(f"⚠️ Weather alerts request for: {location}")
-        result = await get_weather_alerts(location)
-        return {"status": "success", "data": result, "location": location}
-    except Exception as e:
-        logger.error(f"Weather alerts error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/weather/sun-times")
-async def get_sun_times_endpoint(location: str):
-    """Get sunrise and sunset times for a location using Tomorrow.io API"""
-    try:
-        logger.info(f"🌅 Sun times request for: {location}")
-        result = await get_sun_times(location)
-        return {"status": "success", "data": result, "location": location}
-    except Exception as e:
-        logger.error(f"Sun times error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/weather/cache/stats")
-async def get_weather_cache_stats():
-    """Get weather cache statistics"""
-    try:
-        stats = get_cache_stats()
-        return {"status": "success", "cache_stats": stats}
-    except Exception as e:
-        logger.error(f"Weather cache stats error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.post("/weather/cache/clear")
-async def clear_weather_cache_endpoint():
-    """Clear weather cache"""
-    try:
-        await clear_weather_cache()
-        return {"status": "success", "message": "Weather cache cleared successfully"}
-    except Exception as e:
-        logger.error(f"Clear weather cache error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# MCP Validate Endpoints for Puch AI Integration
-@api_router.post("/mcp/validate")
-async def mcp_validate_post(
-    token: str = Query(None),
-    authorization: str = Header(None)
-):
-    """
-    Puch AI Validation Endpoint (POST)
-    Required by Puch AI to verify MCP server connection
-    Returns user's WhatsApp number with country code
-    """
-    try:
-        # Extract and validate authentication token
-        auth_token = token
-        
-        # Check Authorization header (preferred by Puch AI)
-        if not auth_token and authorization:
-            if authorization.startswith('Bearer '):
-                auth_token = authorization[7:]  # Remove 'Bearer ' prefix
-            else:
-                auth_token = authorization
-        
-        # Validate token against environment variable
-        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
-        if not auth_token or auth_token != expected_token:
-            logger.warning(f"🚫 Puch AI Validate POST - Invalid token attempt")
-            raise HTTPException(
-                status_code=401, 
-                detail={
-                    "error": "invalid_token",
-                    "message": "Invalid or missing MCP API token"
-                }
-            )
-        
-        logger.info("✅ Puch AI Validation POST - Token verified successfully")
-        
-        # Return user's WhatsApp number as required by Puch AI
-        return {
-            "number": "919654030351"  # Country code (91) + phone number (9654030351)
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Puch AI Validate POST Error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error": "validation_failed",
-                "message": "Validation endpoint error"
-            }
-        )
-
-@api_router.get("/mcp/validate")  
-async def mcp_validate_get(
-    token: str = Query(None),
-    authorization: str = Header(None)
-):
-    """
-    Puch AI Validation Endpoint (GET)
-    GET version of validation endpoint for broader compatibility
-    """
-    try:
-        # Extract and validate authentication token
-        auth_token = token
-        
-        # Check Authorization header
-        if not auth_token and authorization:
-            if authorization.startswith('Bearer '):
-                auth_token = authorization[7:]
-            else:
-                auth_token = authorization
-        
-        # Validate token
-        expected_token = os.getenv("MCP_API_TOKEN", "kumararpit9468")
-        if not auth_token or auth_token != expected_token:
-            logger.warning(f"🚫 Puch AI Validate GET - Invalid token attempt")
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        logger.info("✅ Puch AI Validation GET - Token verified successfully")
-        
-        return {
-            "number": "919654030351"
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Puch AI Validate GET Error: {e}")
-        raise HTTPException(status_code=500, detail="Validation failed")
-
+# Health check endpoint
 @api_router.get("/health")
 async def health_check():
     try:
-        # Check MongoDB connection
-        try:
-            await client.admin.command('ping')
-            mongodb_status = "connected"
-        except Exception:
-            mongodb_status = "disconnected"
+        # Check database connection
+        await client.admin.command('ping')
         
-        # Check MCP service
-        try:
-            mcp_health = await mcp_service.health_check()
-            mcp_status = "connected" if mcp_health.get("success") else "disconnected"
-        except Exception:
-            mcp_status = "disconnected"
+        # Check service health
+        gmail_status = await gmail_oauth_service.get_auth_status()
+        mcp_health = await mcp_service.health_check()
         
-        # Check DeBERTa Gmail system stats
-        try:
-            deberta_stats = await deberta_gmail_detector.get_classification_stats()
-        except Exception:
-            deberta_stats = {"error": "Statistics unavailable"}
-        
-        health_status = {
+        return {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
             "services": {
-                "mongodb": mongodb_status,
-                "mcp_service": mcp_status,
-                "groq_api": "configured" if os.getenv("GROQ_API_KEY") else "missing",
-                "claude_api": "configured" if os.getenv("CLAUDE_API_KEY") else "missing"
-            },
-            "gmail_api_integration": {
-                "status": "ready",
-                "oauth2_flow": "implemented",
-                "credentials_configured": True,
-                "scopes": ["gmail.readonly", "gmail.send", "gmail.compose", "gmail.modify"],
-                "endpoints": [
-                    "/api/gmail/auth", "/api/gmail/callback", "/api/gmail/status",
-                    "/api/gmail/inbox", "/api/gmail/send", "/api/gmail/email/{id}"
-                ]
-            },
-            "deberta_gmail_integration": {
-                "version": "2.0", 
-                "model": "microsoft/deberta-v3-base",
-                "status": "ready",
-                "features": [
-                    "high_accuracy_intent_classification",
-                    "real_gmail_data_only",
-                    "no_placeholder_responses", 
-                    "instant_oauth_refresh",
-                    "formatted_chat_responses",
-                    "inbox_summary", "email_search", "unread_count", "email_summarization"
-                ],
-                "classification_stats": deberta_stats
-            },
-            "advanced_hybrid_ai_system": {
-                "version": "2.0",
-                "groq_api_key": "configured" if os.getenv("GROQ_API_KEY") else "missing",
-                "claude_api_key": "configured" if os.getenv("CLAUDE_API_KEY") else "missing",
-                "groq_model": "llama3-8b-8192",
-                "claude_model": "claude-3-5-sonnet-20241022",
-                "sophisticated_features": {
-                    "task_classification": [
-                        "primary_intent", "emotional_complexity", "professional_tone", 
-                        "creative_requirement", "technical_complexity", "response_length",
-                        "user_engagement_level", "context_dependency", "reasoning_type"
-                    ],
-                    "routing_strategies": [
-                        "intent_based", "emotional_routing", "professional_routing",
-                        "creative_routing", "sequential_execution", "context_enhancement"
-                    ],
-                    "advanced_capabilities": [
-                        "conversation_history_tracking", "context_aware_responses",
-                        "fallback_mechanisms", "confidence_scoring", "routing_explanation"
+                "mongodb": "connected",
+                "gmail_api_integration": {
+                    "status": "ready",
+                    "oauth2_flow": "implemented",
+                    "credentials_configured": gmail_status.get("credentials_configured", False),
+                    "scopes": gmail_status.get("scopes", []),
+                    "endpoints": [
+                        "/api/gmail/auth",
+                        "/api/gmail/callback", 
+                        "/api/gmail/status",
+                        "/api/gmail/inbox",
+                        "/api/gmail/send",
+                        "/api/gmail/email/{id}"
                     ]
                 },
-                "routing_models": {
-                    "claude_tasks": ["high_emotional", "creative_content", "conversational", "professional_warm"],
-                    "groq_tasks": ["logical_reasoning", "structured_analysis", "technical_complex", "intent_detection"],
-                    "sequential_tasks": ["professional_emails", "complex_creative"],
-                    "web_automation_tasks": ["web_scraping", "data_extraction"]
-                }
-            },
-            "n8n_webhook": "configured" if os.getenv("N8N_WEBHOOK_URL") else "missing",
-            "gmail_summarization": {
-                "status": "ready",
-                "intents": ["summarize_to_chat", "summarize_and_send_email"],
-                "webhook_url": os.getenv("N8N_WEBHOOK_URL"),
-                "features": ["context_aware_summarization", "email_count_extraction", "targeted_email_sending"]
-            },
-            "playwright_service": {
-                "status": "available",
-                "browser": "chromium",
-                "capabilities": [
-                    "dynamic_data_extraction", "web_scraping"
-                ]
-            },
-            "conversation_memory_system": {
-                "status": "available",
-                "langchain_integration": "enabled", 
-                "memory_types": [
-                    "ConversationBufferMemory",
-                    "ConversationSummaryBufferMemory"
-                ],
-                "features": [
-                    "context_retention",
-                    "conversation_summarization", 
-                    "intent_context_storage",
-                    "memory_cleanup",
-                    "mongodb_integration",
-                    "redis_caching",
-                    "native_mongodb_history",
-                    "enhanced_fallback_messaging",
-                    "memory_stats_api",
-                    "early_api_key_validation"
-                ],
-                "max_token_limit": conversation_memory.max_token_limit,
-                "buffer_window_size": conversation_memory.buffer_window_size,
-                "memory_cleanup_interval_hours": conversation_memory.memory_cleanup_hours,
-                "redis_integration": {
-                    "enabled": conversation_memory.redis is not None,
-                    "url": conversation_memory.redis_url if conversation_memory.redis is not None else "not_configured",
-                    "ttl_seconds": conversation_memory.redis_ttl
+                "groq_api": {
+                    "configured": bool(os.getenv("GROQ_API_KEY")),
+                    "model": "llama3-8b-8192"
                 },
-                "api_keys": {
-                    "groq_configured": bool(os.getenv("GROQ_API_KEY")),
-                    "claude_configured": bool(os.getenv("CLAUDE_API_KEY"))
+                "claude_api": {
+                    "configured": bool(os.getenv("ANTHROPIC_API_KEY")), 
+                    "model": "claude-3-5-sonnet-20241022"
+                },
+                "n8n_webhook": {
+                    "configured": bool(os.getenv("N8N_WEBHOOK_URL"))
+                },
+                "mcp_service": {
+                    "status": "connected" if mcp_health.get("success") else "disconnected"
+                },
+                "semantic_memory": {
+                    "status": "initialized" if semantic_memory else "not_initialized"
+                },
+                "performance_optimizer": {
+                    "status": "initialized" if performance_optimizer else "not_initialized"
                 }
             },
-            "weather_integration": {
-                "provider": "Tomorrow.io",
-                "status": "ready" if os.getenv("TOMORROW_API_KEY") else "missing_api_key",
-                "api_key_configured": bool(os.getenv("TOMORROW_API_KEY")),
-                "cache_enabled": True,
-                "cache_ttl_seconds": 300,
-                "endpoints": [
-                    "/api/weather/current",
-                    "/api/weather/forecast", 
-                    "/api/weather/air-quality",
-                    "/api/weather/alerts",
-                    "/api/weather/sun-times",
-                    "/api/weather/cache/stats",
-                    "/api/weather/cache/clear"
-                ],
-                "supported_intents": [
-                    "get_current_weather",
-                    "get_weather_forecast",
-                    "get_air_quality_index", 
-                    "get_weather_alerts",
-                    "get_sun_times"
-                ],
-                "features": [
-                    "current_weather_conditions",
-                    "multi_day_forecasts_up_to_7_days",
-                    "air_quality_monitoring",
-                    "weather_alerts_basic",
-                    "sunrise_sunset_times",
-                    "5_minute_location_based_caching",
-                    "emoji_formatted_responses",
-                    "instant_responses_no_approval"
-                ]
-            }
+            "version": "2.0.0-semantic-memory"
         }
-        
-        return health_status
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Health check failed: {str(e)}")
+        logger.error(f"Health check error: {e}")
+        raise HTTPException(status_code=503, detail=str(e))
 
-# Include the router in the main app
+# Add the API router to the main app
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Root endpoint
+@app.get("/")
+async def root():
+    return {"message": "Elva AI Backend is running with Semantic Memory!", "version": "2.0.0-semantic-memory"}
 
-@app.on_event("startup")
-async def startup_db_indexes():
-    # Create TTL and text search indexes for message memory
-    await ensure_indexes()
-    logger.info("🚀 Application startup completed with database indexes")
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
-    # Close Playwright service
-    await playwright_service.close()
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)
