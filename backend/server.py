@@ -765,8 +765,7 @@ async def health_check():
             "services": {
                 "database": db_status,
                 "semantic_memory": memory_status,
-                "mcp_service": mcp_status,
-                "performance_optimizer": "ready" if performance_optimizer else "not_initialized"
+                "mcp_service": mcp_status
             },
             "timeout_config": {
                 "global_chat_timeout": GLOBAL_CHAT_TIMEOUT,
