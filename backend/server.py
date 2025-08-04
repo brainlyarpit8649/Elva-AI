@@ -46,9 +46,8 @@ from weather_service_tomorrow import (
     clear_weather_cache
 )
 
-# Import Letta Memory System (Re-enabled with safe fallbacks)
+# Import simplified Letta Memory System 
 from letta_memory import initialize_letta_memory, get_letta_memory
-from performance_optimizer import initialize_performance_optimizer, get_performance_optimizer
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -86,14 +85,6 @@ except Exception as e:
     semantic_memory = None
     MEMORY_ENABLED = False
 
-# Initialize Performance Optimizer
-try:
-    performance_optimizer = None  # Will be initialized on first use
-    logging.info("✅ Performance Optimizer marked for lazy initialization")
-except Exception as e:
-    logging.warning(f"⚠️ Performance Optimizer setup failed: {e}")
-    performance_optimizer = None
-
 # Global timeout configuration
 GLOBAL_CHAT_TIMEOUT = 50.0  # 50 seconds max
 MEMORY_OPERATION_TIMEOUT = 15.0  # 15 seconds for memory operations
@@ -102,8 +93,7 @@ AI_RESPONSE_TIMEOUT = 30.0  # 30 seconds for AI response generation
 
 # Create indexes for message memory (will be done on first request)
 startup_tasks = {
-    "indexes_created": False,
-    "performance_optimizer_initialized": False
+    "indexes_created": False
 }
 
 # Global variables for tracking
