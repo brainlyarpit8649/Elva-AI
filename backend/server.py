@@ -206,16 +206,8 @@ async def enhanced_chat_with_timeout(request: ChatRequest):
     start_time = asyncio.get_event_loop().time()
     
     try:
-        # Wrap entire chat processing in global timeout
-        return await asyncio.wait_for(
-            _process_chat_with_fallbacks(request, start_time),
-            timeout=GLOBAL_CHAT_TIMEOUT
-        )
-    except asyncio.TimeoutError:
-        logger.error(f"🚨 Global chat timeout exceeded {GLOBAL_CHAT_TIMEOUT}s for session {request.session_id}")
-        
-        # Ultimate fallback - immediate response
-        return await _create_emergency_response(request, "I'm here to help! What would you like to know?")
+        # Process chat directly without global timeout wrapper
+        return await _process_chat_with_fallbacks(request, start_time)
     except Exception as e:
         logger.error(f"🚨 Critical chat error: {e}")
         
