@@ -320,13 +320,13 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   // Check for admin email when Gmail status changes
   useEffect(() => {
     if (gmailAuthStatus.authenticated) {
-      ();
+      checkAdminEmail();
     } else {
       setShowAdminToggle(false);
       setIsAdminMode(false);
       setUserEmail(null);
     }
-  }, [gmailAuthStatus.authenticated, ]);
+  }, [gmailAuthStatus.authenticated, checkAdminEmail]);
 
   const toggleAdminMode = () => {
     const newAdminMode = !;
