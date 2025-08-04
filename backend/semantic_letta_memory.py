@@ -328,24 +328,24 @@ class SemanticLettaMemory:
         try:
             # Use the existing AI system for semantic extraction
             extraction_prompt = f"""
-            Extract meaningful facts from this user message. Focus on personal information, preferences, and important details.
-            
-            User message: "{message}"
-            
-            Extract facts in this format - only the core facts, not the command itself:
-            - If user says "remember that I like samosas and murmura" → extract "likes samosas and murmura"
-            - If user says "my name is John" → extract "name is John"  
-            - If user says "call me Mike" → extract "nickname is Mike"
-            
-            Return only the core meaningful facts, not the instruction text. Separate multiple facts with |
-            
-            Facts:
-            """
+Extract meaningful facts from this user message. Focus on personal information, preferences, and important details.
+
+User message: "{message}"
+
+Extract only the core facts, not the command itself. Here are examples:
+- "remember that I like samosas and murmura" → "likes samosas and murmura"  
+- "my name is John" → "name is John"  
+- "call me Mike" → "nickname is Mike"
+- "I prefer working in the morning" → "prefers working in the morning"
+
+Return only the meaningful facts, not the instruction text. If there are multiple facts, separate them with |
+
+Facts:"""
             
             # Use Claude for semantic extraction
             response = await handle_general_chat(extraction_prompt, session_id, "")
             
-            if not response or len(response) < 2:
+            if not response or len(response.strip()) < 2:
                 return []
             
             # Parse extracted facts
@@ -353,18 +353,28 @@ class SemanticLettaMemory:
             fact_texts = [f.strip() for f in response.split('|') if f.strip()]
             
             for fact_text in fact_texts:
-                if len(fact_text) > 5:  # Basic validation
-                    fact = SemanticFact(
-                        id=str(uuid.uuid4()),
-                        content=fact_text,
-                        category=self._categorize_semantic_fact(fact_text),
-                        confidence=0.8,  # Default confidence
-                        source_message=message,
-                        session_id=session_id,
-                        created_at=datetime.utcnow().isoformat(),
-                        updated_at=datetime.utcnow().isoformat()
-                    )
-                    facts.append(fact)
+                # Clean up the fact text
+                fact_text = fact_text.strip().strip('"').strip("'")
+                
+                # Skip if too short or if it looks like a question
+                if len(fact_text) < 5 or fact_text.endswith('?'):
+                    continue
+                    
+                # Make sure it starts with a proper fact format
+                if not any(word in fact_text.lower() for word in ['like', 'name', 'prefer', 'love', 'hate', 'is', 'work', 'live']):
+                    continue
+                
+                fact = SemanticFact(
+                    id=str(uuid.uuid4()),
+                    content=fact_text.lower(),  # Normalize to lowercase
+                    category=self._categorize_semantic_fact(fact_text),
+                    confidence=0.8,  # Default confidence
+                    source_message=message,
+                    session_id=session_id,
+                    created_at=datetime.utcnow().isoformat(),
+                    updated_at=datetime.utcnow().isoformat()
+                )
+                facts.append(fact)
             
             self.memory["metadata"]["semantic_extractions"] += len(facts)
             return facts
