@@ -329,7 +329,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   }, [gmailAuthStatus.authenticated, checkAdminEmail]);
 
   const toggleAdminMode = () => {
-    const newAdminMode = !;
+    const newAdminMode = !isAdminMode;
     setIsAdminMode(newAdminMode);
     
     if (newAdminMode) {
