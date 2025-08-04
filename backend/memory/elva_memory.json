@@ -61,9 +61,14 @@
       "text": "Remember that I love samosas",
       "created_at": "2025-08-04T09:48:29.355353",
       "category": "general"
+    },
+    "fact_12": {
+      "text": "Remember that I love burgers",
+      "created_at": "2025-08-04T09:49:28.509263",
+      "category": "general"
     }
   },
   "tasks": {},
   "created_at": "2025-08-04T03:04:29.659999",
-  "last_updated": "2025-08-04T09:48:29.355364"
+  "last_updated": "2025-08-04T09:49:28.509280"
 }
