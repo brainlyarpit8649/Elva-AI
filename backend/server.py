@@ -467,6 +467,39 @@ async def enhanced_chat(request: ChatRequest):
         await db.chat_messages.insert_one(ai_msg.dict())
         logger.info(f"💾 Saved AI response to both memory systems: {ai_msg.id}")
         
+        # STEP 6: Periodic conversation summarization (Enhanced Memory Feature)
+        try:
+            if letta_memory:
+                # Get recent messages for potential summarization
+                from message_memory import get_conversation_history
+                recent_messages = await get_conversation_history(request.session_id, limit=20)
+                
+                # Convert to format expected by enhanced memory system
+                formatted_messages = []
+                for msg in recent_messages:
+                    formatted_messages.append({
+                        "role": msg.get("role", "user"),
+                        "content": msg.get("message") or msg.get("content", ""),
+                        "timestamp": msg.get("timestamp", datetime.utcnow().isoformat())
+                    })
+                
+                # Trigger periodic summarization
+                if len(formatted_messages) >= 5:  # Only summarize if we have enough messages
+                    summary_result = await letta_memory.periodic_conversation_summary(
+                        request.session_id, 
+                        formatted_messages
+                    )
+                    if summary_result.get("summarized"):
+                        logger.info(f"📝 Conversation summarized for session {request.session_id}")
+                        
+                        # Auto-discovered facts are already stored during summarization
+                        discovered_count = summary_result.get("discovered_facts", 0)
+                        if discovered_count > 0:
+                            logger.info(f"🧠 Auto-discovered and stored {discovered_count} facts from conversation")
+                
+        except Exception as summarization_error:
+            logger.warning(f"⚠️ Conversation summarization failed: {summarization_error}")
+
         final_response = ChatResponse(
             id=ai_msg.id,
             message=request.message,
