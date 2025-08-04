@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 from collections import defaultdict
 import hashlib
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -24,20 +25,26 @@ class EnhancedLettaMemory:
         self.memory_file = self.memory_dir / "elva_enhanced_memory.json"
         self.conversation_summaries_file = self.memory_dir / "conversation_summaries.json"
         
-        # Enhanced memory structure
+        # Enhanced memory structure with periodic summarization
         self.memory = {
             "persona": "I am Elva AI, a friendly and intelligent assistant. I learn and remember information about users to provide personalized assistance.",
             "user_facts": {},  # Personal information, preferences, relationships
             "user_preferences": {},  # Settings, likes/dislikes, communication style
-            "conversation_summaries": {},  # Periodic summaries of conversations
+            "conversation_summaries": {},  # Periodic summaries of conversations by session
+            "daily_summaries": {},  # Daily conversation summaries
+            "weekly_summaries": {},  # Weekly conversation patterns
             "tasks_and_reminders": {},  # User tasks, reminders, and scheduling
             "interaction_patterns": {},  # User behavior patterns and preferences
+            "learned_contexts": {},  # Context learned from conversations
             "memory_metadata": {
                 "created_at": datetime.utcnow().isoformat(),
                 "last_updated": datetime.utcnow().isoformat(),
                 "last_summarization": datetime.utcnow().isoformat(),
+                "last_daily_summary": datetime.utcnow().isoformat(),
                 "total_facts": 0,
-                "total_conversations": 0
+                "total_conversations": 0,
+                "summarization_interval": 3600,  # 1 hour in seconds
+                "conversation_threshold": 10  # Min messages before summarizing
             }
         }
         
@@ -45,6 +52,11 @@ class EnhancedLettaMemory:
         self._memory_cache = {}
         self._cache_timestamp = None
         self.CACHE_TTL = 300  # 5 minutes cache TTL
+        
+        # Summarization settings
+        self.SUMMARIZATION_INTERVAL = 3600  # 1 hour
+        self.MIN_MESSAGES_FOR_SUMMARY = 10  # Minimum messages before creating summary
+        self.MAX_SUMMARY_AGE = 86400  # 24 hours
         
         # Load existing memory
         self._load_memory()
