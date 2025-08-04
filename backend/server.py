@@ -85,8 +85,7 @@ except Exception as e:
     semantic_memory = None
     MEMORY_ENABLED = False
 
-# Global timeout configuration
-GLOBAL_CHAT_TIMEOUT = 50.0  # 50 seconds max
+# Memory and processing timeout configuration  
 MEMORY_OPERATION_TIMEOUT = 15.0  # 15 seconds for memory operations
 DATABASE_OPERATION_TIMEOUT = 10.0  # 10 seconds for DB operations
 AI_RESPONSE_TIMEOUT = 30.0  # 30 seconds for AI response generation
