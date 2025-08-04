@@ -236,7 +236,7 @@ async def _process_chat_with_fallbacks(request: ChatRequest, start_time: float):
     """Process chat with comprehensive fallback system"""
     
     # Lazy initialization of startup tasks
-    global startup_tasks, performance_optimizer
+    global startup_tasks
     
     if not startup_tasks["indexes_created"]:
         # Safe database index creation
@@ -246,16 +246,6 @@ async def _process_chat_with_fallbacks(request: ChatRequest, start_time: float):
             logger.info("✅ Message memory indexes created successfully")
         else:
             logger.warning("⚠️ Message memory index creation failed - continuing without indexes")
-    
-    if not startup_tasks["performance_optimizer_initialized"] and performance_optimizer is None:
-        # Safe performance optimizer initialization
-        try:
-            performance_optimizer = await safe_memory_operation(initialize_performance_optimizer)
-            if performance_optimizer:
-                startup_tasks["performance_optimizer_initialized"] = True
-                logger.info("✅ Performance Optimizer initialized successfully")
-        except Exception as e:
-            logger.warning(f"⚠️ Performance Optimizer initialization failed - continuing without: {e}")
 
     logger.info(f"💬 Enhanced chat request - Session: {request.session_id}, Message: {request.message[:100]}...")
 
