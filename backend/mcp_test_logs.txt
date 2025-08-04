@@ -1,6 +1,6 @@
 === COMPREHENSIVE MCP SERVICE TEST ===
 Test Date: Thu Jul 31 03:23:51 UTC 2025
-Backend URL: https://a306185b-5af9-42eb-b13a-8333a56f33fb.preview.emergentagent.com
+Backend URL: https://0b30aab1-896e-477e-822b-002edcbac2b3.preview.emergentagent.com
 MCP Service URL: http://localhost:8003
 Bearer Token: kumararpit9468
 

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://a306185b-5af9-42eb-b13a-8333a56f33fb.preview.emergentagent.com/api"
+BACKEND_URL = "https://0b30aab1-896e-477e-822b-002edcbac2b3.preview.emergentagent.com/api"
 
 # MCP API Token from backend/.env
 MCP_API_TOKEN = "kumararpit9468"
