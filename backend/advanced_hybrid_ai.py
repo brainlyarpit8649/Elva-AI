@@ -135,7 +135,7 @@ class AdvancedHybridAI:
                 "set_reminder": {"model": ModelChoice.GROQ, "confidence": 0.7},
                 "web_search": {"model": ModelChoice.GROQ, "confidence": 0.95},
                 "complex_analysis": {"model": ModelChoice.GROQ, "confidence": 0.8},
-                "creative_writing": {"model": ModelChoice.BOTH_SEQUENTIAL, "confidence": 0.9},
+                "creative_writing": {"model": ModelChoice.GROQ, "confidence": 0.9},
                 "technical_explanation": {"model": ModelChoice.GROQ, "confidence": 0.8},
                 # Enhanced Gmail intents with count limiting and search
                 "summarize_gmail_emails": {"model": ModelChoice.GROQ, "confidence": 0.9, "direct_automation": True},
