@@ -365,10 +365,11 @@ async def process_regular_chat(request: ChatRequest):
                 needs_approval = True  # This will trigger the automation workflow
                 return response_text, intent_data, needs_approval
 
-        # STEP 4: Run through advanced hybrid AI system
+        # STEP 4: Run through advanced hybrid AI system with memory context
         intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
             user_input=request.message,
-            session_id=request.session_id
+            session_id=request.session_id,
+            memory_context=memory_context
         )
 
         # Check if this is an action that needs approval
