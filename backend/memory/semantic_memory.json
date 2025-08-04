@@ -2,17 +2,18 @@
   "user_identity": {
     "7256781e-6f49-4c35-8cce-672146b72faf": {
       "id": "7256781e-6f49-4c35-8cce-672146b72faf",
-      "content": "my name is arpit",
+      "content": "hello my name is arpit and i created you",
       "category": "user_identity",
       "confidence": 0.6,
       "source_message": "my name is arpit",
       "session_id": "test_semantic_memory",
       "created_at": "2025-08-04T07:34:56.899307",
-      "updated_at": "2025-08-04T07:36:45.310664",
+      "updated_at": "2025-08-04T07:44:17.182851",
       "related_facts": [],
       "metadata": {
         "source_messages": [
-          "My name is Arpit"
+          "My name is Arpit",
+          "Hello my name is Arpit and I created you"
         ]
       }
     }
@@ -85,9 +86,9 @@
   "fact_relationships": {},
   "metadata": {
     "created_at": "2025-08-04T07:32:17.674137",
-    "last_updated": "2025-08-04T07:36:52.798761",
+    "last_updated": "2025-08-04T07:44:17.182860",
     "total_facts": 5,
-    "deduplication_count": 4,
+    "deduplication_count": 5,
     "semantic_extractions": 0
   }
 }
