@@ -907,13 +907,18 @@ Return ONLY the JSON object."""
                 full_conversation_context += f"\n\n=== USER PERSONAL CONTEXT ===\n{memory_context}"
                 logger.info(f"🧠 Added Letta memory context for natural response generation")
             
-            # Also get MCP context for additional context
+            # Also get MCP context for additional context with timeout protection
             try:
                 mcp_service = get_mcp_service()
-                mcp_context = await mcp_service.get_context_for_prompt(session_id)
+                mcp_context = await asyncio.wait_for(
+                    mcp_service.get_context_for_prompt(session_id),
+                    timeout=10.0
+                )
                 if mcp_context:
                     full_conversation_context += f"\n\n=== ADDITIONAL MCP CONTEXT ===\n{mcp_context}"
                 logger.info(f"📚 Added MCP context to full conversation context")
+            except asyncio.TimeoutError:
+                logger.warning(f"⚠️ Timeout retrieving MCP context for session {session_id}")
             except Exception as e:
                 logger.warning(f"Could not retrieve MCP context: {e}")
             
