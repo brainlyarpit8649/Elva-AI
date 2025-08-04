@@ -163,7 +163,13 @@ async def search_conversation_memory(session_id: str, search_query: str) -> List
             "session_id": session_id,
             "$text": {"$search": search_query}
         })
-        results = await cursor.to_list(length=None)
+        
+        # Add timeout protection to prevent hanging
+        try:
+            results = await asyncio.wait_for(cursor.to_list(length=None), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning(f"⚠️ Database search timeout for session {session_id} with query '{search_query}', returning empty results")
+            return []
         
         # Convert timestamps for JSON compatibility
         for msg in results:
