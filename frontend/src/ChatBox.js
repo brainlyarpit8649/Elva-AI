@@ -289,7 +289,8 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
   };
 
   // 🔒 Admin Email Detection and Toggle Functions
-      if (!gmailAuthStatus.authenticated) {
+  const checkAdminEmail = useCallback(async () => {
+    if (!gmailAuthStatus.authenticated) {
       setShowAdminToggle(false);
       return;
     }
