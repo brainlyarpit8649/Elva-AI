@@ -114,7 +114,13 @@ from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
 
 # Create indexes for message memory
-ensure_indexes(db)
+import asyncio
+loop = asyncio.get_event_loop()
+try:
+    loop.run_until_complete(ensure_indexes())
+    logging.info("✅ Message memory indexes created successfully")
+except Exception as e:
+    logging.warning(f"⚠️ Message memory index creation failed: {e}")
 
 # Pydantic models for request/response validation
 class ChatRequest(BaseModel):
