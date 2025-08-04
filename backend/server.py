@@ -79,6 +79,16 @@ except Exception as e:
     logging.warning(f"⚠️ Enhanced Letta Memory initialization failed: {e}")
     letta_memory = None
 
+# Initialize Performance Optimizer
+try:
+    import asyncio
+    loop = asyncio.get_event_loop()
+    performance_optimizer = loop.run_until_complete(initialize_performance_optimizer())
+    logging.info("✅ Performance Optimizer initialized successfully")
+except Exception as e:
+    logging.warning(f"⚠️ Performance Optimizer initialization failed: {e}")
+    performance_optimizer = None
+
 # In-memory store for pending post prompt packages
 pending_post_packages = {}
 
