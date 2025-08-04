@@ -71,12 +71,12 @@ conversation_memory = initialize_conversation_memory(db)
 # Initialize MCP (Model Context Protocol) integration service
 mcp_service = initialize_mcp_service()
 
-# Initialize Letta Memory System
+# Initialize Enhanced Letta Memory System
 try:
-    letta_memory = initialize_letta_memory()
-    logging.info("✅ Letta Memory System initialized successfully")
+    letta_memory = initialize_enhanced_letta_memory()
+    logging.info("✅ Enhanced Letta Memory System initialized successfully")
 except Exception as e:
-    logging.warning(f"⚠️ Letta Memory initialization failed: {e}")
+    logging.warning(f"⚠️ Enhanced Letta Memory initialization failed: {e}")
     letta_memory = None
 
 # In-memory store for pending post prompt packages
