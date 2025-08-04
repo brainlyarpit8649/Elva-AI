@@ -988,28 +988,30 @@ Return ONLY the JSON object."""
             
             # Step 6: Execute routing decision with FULL conversation context
             try:
-                if routing_decision.primary_model == ModelChoice.BOTH_SEQUENTIAL:
-                    intent_data, response_text = await self._execute_sequential_routing(user_input, classification, session_id, full_conversation_context)
-                elif routing_decision.primary_model == ModelChoice.CLAUDE:
-                    # Claude for warm, contextual responses with FULL context ALWAYS
+                # All routing now goes to Groq - simplified logic
+                intent_data = await self._groq_intent_detection(user_input)
+                
+                if intent_data.get("intent") == "general_chat":
+                    # For general chat, use Groq with enhanced conversational prompt
                     enhanced_prompt = user_input
                     if full_conversation_context:
                         enhanced_prompt = f"{full_conversation_context}\n\nCurrent request: {user_input}"
                     
-                    system_message = self._generate_claude_system_message(classification, {"intent": classification.primary_intent})
-                    response_text = await self._get_claude_response(enhanced_prompt, system_message)
-                    intent_data = {"intent": classification.primary_intent, "message": user_input}
-                else:  # Groq
-                    intent_data = await self._groq_intent_detection(user_input)
-                    if intent_data.get("intent") == "general_chat":
-                        # Fallback to Claude for general chat with FULL context
-                        enhanced_prompt = user_input
-                        if full_conversation_context:
-                            enhanced_prompt = f"{full_conversation_context}\n\nCurrent request: {user_input}"
-                        response_text = await self._get_claude_response(enhanced_prompt)
-                    else:
-                        # Use Groq for structured response
-                        response_text = f"I've analyzed your request: {intent_data.get('intent')}. Here are the details I extracted: {json.dumps(intent_data, indent=2)}"
+                    # Create a conversational system message for Groq
+                    conversational_system = """You are Elva AI, a warm, friendly, and helpful assistant. 
+
+Respond naturally and conversationally. Be human-like, engaging, and show personality. 
+Avoid robotic responses. If someone greets you or asks how you are, respond warmly.
+Keep responses concise but friendly. Use emojis occasionally to be more expressive.
+Always maintain context from previous conversation."""
+                    
+                    response_text = await self._get_groq_response(enhanced_prompt, conversational_system)
+                else:
+                    # For other intents, use standard Groq processing but make it friendly
+                    response_text = await self._get_groq_response(
+                        f"Please respond to this request in a helpful and friendly way: {user_input}",
+                        "You are Elva AI, a helpful and friendly assistant. Respond naturally and conversationally."
+                    )
                 
                 # Step 7: Store conversation context in MCP
                 try:
