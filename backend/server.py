@@ -623,6 +623,39 @@ async def process_regular_chat(request: ChatRequest):
                 )
                 
                 logger.info(f"💾 Wrote enhanced context to MCP for session: {request.session_id}")
+                
+                # STEP 3: Auto-store important facts in Letta memory
+                if letta_memory:
+                    # Check if the conversation contains important personal information
+                    user_message_lower = request.message.lower()
+                    
+                    # Look for personal information patterns
+                    fact_patterns = [
+                        ("my name is", "name"),
+                        ("call me", "nickname"),
+                        ("i am", "identity"),
+                        ("i work as", "job"),
+                        ("i'm a", "profession"),
+                        ("my email is", "email"),
+                        ("my phone", "phone"),
+                        ("i prefer", "preference"),
+                        ("i like", "preference"),
+                        ("remember that", "reminder"),
+                        ("my manager", "contact"),
+                        ("my boss", "contact"),
+                    ]
+                    
+                    for pattern, fact_type in fact_patterns:
+                        if pattern in user_message_lower:
+                            try:
+                                # Store the fact automatically
+                                fact_result = letta_memory.store_fact(request.message)
+                                if fact_result.get("success"):
+                                    logger.info(f"🧠 Auto-stored {fact_type} fact in Letta memory: {request.message[:50]}...")
+                                break  # Only store once per message
+                            except Exception as letta_error:
+                                logger.warning(f"⚠️ Auto-storage to Letta failed: {letta_error}")
+                
             except Exception as context_error:
                 logger.warning(f"⚠️ Error writing context to MCP: {context_error}")
             
