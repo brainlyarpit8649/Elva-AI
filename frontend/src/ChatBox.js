@@ -541,61 +541,6 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     }
   };
 
-  // 🔒 Admin Debug Command Handler
-  const handleAdminDebugCommand = async (inputMessage) => {
-    try {
-      let targetSession = sessionId; // Default to current session
-      
-      // Parse command to extract session ID if specified
-      const sessionMatch = inputMessage.match(/show context for session\s+([^\s]+)/i);
-      if (sessionMatch) {
-        targetSession = sessionMatch[1];
-      }
-      
-      // Call admin debug endpoint with token
-      const response = await axios.post(`${API}/admin/debug/context`, {
-        command: inputMessage.toLowerCase().includes('show my context') ? 'show my context' : `show context for session ${targetSession}`,
-        session_id: targetSession
-      }, {
-        headers: {
-          'X-Debug-Token': 'elva-admin-debug-2024-secure'
-        }
-      });
-      
-      if (response.data.success) {
-        const debugMessage = {
-          id: generateStableId('admin_debug'),
-          response: response.data.formatted_context,
-          isUser: false,
-          isSystem: true,
-          isAdminDebug: true,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, debugMessage]);
-      } else {
-        const errorMessage = {
-          id: generateStableId('admin_debug_error'),
-          response: `❌ **Admin Debug Error**\n\n${response.data.error || 'Failed to retrieve context'}`,
-          isUser: false,
-          isSystem: true,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      }
-      
-    } catch (error) {
-      console.error('Admin debug command error:', error);
-      const errorMessage = {
-        id: generateStableId('admin_debug_error'),
-        response: `❌ **Admin Debug Error**\n\nFailed to execute debug command: ${error.response?.data?.detail || error.message}`,
-        isUser: false,
-        isSystem: true,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
-  };
-
   // Helper function to format updated email details nicely
   const formatUpdatedDetails = (data) => {
     if (!data) return 'No updates made.';
