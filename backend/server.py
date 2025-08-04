@@ -353,16 +353,15 @@ async def process_regular_chat(request: ChatRequest):
                 return response_text, intent_data, needs_approval
 
         # STEP 4: Run through advanced hybrid AI system
-        result = await advanced_hybrid_ai(
-            message=request.message,
-            session_id=request.session_id,
-            conversation_context=previous_context,
-            user_id=request.user_id
+        intent_data, response_text, routing_decision = await advanced_hybrid_ai.process_message(
+            user_input=request.message,
+            session_id=request.session_id
         )
 
-        response_text = result.get("response", "I understand.")
-        intent_data = result.get("intent_data", {})
-        needs_approval = result.get("needs_approval", False)
+        # Check if this is an action that needs approval
+        needs_approval = intent_data.get("needs_approval", False)
+        if intent_data.get("intent") in ["send_email", "create_event", "add_todo", "set_reminder"]:
+            needs_approval = True
 
         # STEP 5: Store important information in semantic memory automatically
         if semantic_memory and not memory_result.get("is_memory_operation", False):
