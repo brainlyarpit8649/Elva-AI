@@ -318,35 +318,36 @@ async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict,
         logger.warning(f"⚠️ Could not import message memory functions: {e}")
         return await _process_groq_only(request)
     
-    # STEP 1: Handle Letta memory commands directly
-    memory_context = ""
+    # STEP 1: Handle Letta memory commands directly first (before any AI processing)
     if MEMORY_ENABLED and semantic_memory:
         message_lower = request.message.lower().strip()
         
-        # Handle explicit memory commands with direct responses
+        # Expand memory trigger patterns
         memory_triggers = [
             "remember that", "store this", "what do you remember", 
-            "what's my", "forget that", "my name is", "call me"
+            "what's my", "what is my", "forget that", "my name is", "call me",
+            "what do i", "who am i", "tell me about", "do you remember",
+            "i like", "i love", "my favorite"
         ]
         
         is_memory_command = any(trigger in message_lower for trigger in memory_triggers)
         
         if is_memory_command:
-            logger.info(f"🧠 Processing Letta memory command: {request.message[:50]}...")
+            logger.info(f"🧠 Processing Letta memory command directly: {request.message[:50]}...")
             
-            memory_result = await safe_memory_operation(
-                semantic_memory.chat_with_memory, 
-                request.message, 
-                request.session_id
-            )
-            
-            if memory_result and memory_result.get("success"):
-                response_text = memory_result.get("response", "Got it!")
-                intent_data = {"intent": "memory_operation", "operation_type": "letta_memory"}
-                logger.info(f"✅ Letta memory operation completed: {response_text[:50]}...")
-                return response_text, intent_data, False
-            else:
-                logger.warning("⚠️ Letta memory operation failed, continuing with normal processing")
+            try:
+                memory_result = await semantic_memory.chat_with_memory(request.message, request.session_id)
+                
+                if memory_result and memory_result.get("success"):
+                    response_text = memory_result.get("response", "Got it!")
+                    intent_data = {"intent": "memory_operation", "operation_type": "letta_memory"}
+                    logger.info(f"✅ Letta memory operation completed: {response_text[:50]}...")
+                    return response_text, intent_data, False
+                else:
+                    logger.warning("⚠️ Letta memory operation failed, continuing with normal processing")
+            except Exception as memory_error:
+                logger.error(f"❌ Memory processing error: {memory_error}")
+                # Continue with normal processing
     
     # STEP 2: Get conversation context for AI responses
     previous_context = ""
