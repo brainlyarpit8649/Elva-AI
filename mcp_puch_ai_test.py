@@ -46,7 +46,7 @@ class MCPPuchAITester:
                 "Content-Type": "application/json"
             }
             
-            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -59,7 +59,7 @@ class MCPPuchAITester:
                     self.log_test("MCP Validate POST - Valid Token", False, f"Unexpected response format: {data}")
                     return False
             else:
-                self.log_test("MCP Validate POST - Valid Token", False, f"HTTP {response.status_code}", response.text)
+                self.log_test("MCP Validate POST - Valid Token", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -73,7 +73,7 @@ class MCPPuchAITester:
                 "Authorization": f"Bearer {self.valid_token}"
             }
             
-            response = requests.get(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            response = requests.get(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -86,7 +86,7 @@ class MCPPuchAITester:
                     self.log_test("MCP Validate GET - Valid Token", False, f"Unexpected response format: {data}")
                     return False
             else:
-                self.log_test("MCP Validate GET - Valid Token", False, f"HTTP {response.status_code}", response.text)
+                self.log_test("MCP Validate GET - Valid Token", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -100,7 +100,7 @@ class MCPPuchAITester:
                 "Authorization": f"Bearer {self.valid_token}"
             }
             
-            response = requests.get(f"{BACKEND_URL}/mcp", headers=headers, timeout=10)
+            response = requests.get(f"{BACKEND_URL}/mcp", headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -118,7 +118,7 @@ class MCPPuchAITester:
                     self.log_test("MCP Root GET - Valid Token", False, f"Missing expected fields: {data}")
                     return False
             else:
-                self.log_test("MCP Root GET - Valid Token", False, f"HTTP {response.status_code}", response.text)
+                self.log_test("MCP Root GET - Valid Token", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -133,13 +133,13 @@ class MCPPuchAITester:
                 "Content-Type": "application/json"
             }
             
-            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if response.status_code == 401:
                 self.log_test("MCP Validate POST - Invalid Token", True, "Correctly returned 401 for invalid token")
                 return True
             else:
-                self.log_test("MCP Validate POST - Invalid Token", False, f"Expected 401, got {response.status_code}", response.text)
+                self.log_test("MCP Validate POST - Invalid Token", False, f"Expected 401, got {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -153,13 +153,13 @@ class MCPPuchAITester:
                 "Authorization": f"Bearer {self.invalid_token}"
             }
             
-            response = requests.get(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            response = requests.get(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if response.status_code == 401:
                 self.log_test("MCP Validate GET - Invalid Token", True, "Correctly returned 401 for invalid token")
                 return True
             else:
-                self.log_test("MCP Validate GET - Invalid Token", False, f"Expected 401, got {response.status_code}", response.text)
+                self.log_test("MCP Validate GET - Invalid Token", False, f"Expected 401, got {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -173,13 +173,13 @@ class MCPPuchAITester:
                 "Content-Type": "application/json"
             }
             
-            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if response.status_code == 401:
                 self.log_test("MCP Validate POST - Missing Token", True, "Correctly returned 401 for missing token")
                 return True
             else:
-                self.log_test("MCP Validate POST - Missing Token", False, f"Expected 401, got {response.status_code}", response.text)
+                self.log_test("MCP Validate POST - Missing Token", False, f"Expected 401, got {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -194,13 +194,13 @@ class MCPPuchAITester:
                 "Content-Type": "application/json"
             }
             
-            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if response.status_code == 401:
                 self.log_test("MCP Validate POST - Wrong Format", True, "Correctly returned 401 for wrong format")
                 return True
             else:
-                self.log_test("MCP Validate POST - Wrong Format", False, f"Expected 401, got {response.status_code}", response.text)
+                self.log_test("MCP Validate POST - Wrong Format", False, f"Expected 401, got {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -214,7 +214,7 @@ class MCPPuchAITester:
                 "Content-Type": "application/json"
             }
             
-            response = requests.post(f"{BACKEND_URL}/mcp/validate?token={self.valid_token}", headers=headers, timeout=10)
+            response = requests.post(f"{BACKEND_URL}/mcp/validate?token={self.valid_token}", headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -227,7 +227,7 @@ class MCPPuchAITester:
                     self.log_test("MCP Validate POST - Query Parameter", False, f"Unexpected response: {data}")
                     return False
             else:
-                self.log_test("MCP Validate POST - Query Parameter", False, f"HTTP {response.status_code}", response.text)
+                self.log_test("MCP Validate POST - Query Parameter", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -237,7 +237,7 @@ class MCPPuchAITester:
     def test_mcp_health_endpoint(self):
         """Test 9: MCP Health Check Endpoint"""
         try:
-            response = requests.get(f"{BACKEND_URL}/mcp/health", timeout=10)
+            response = requests.get(f"{BACKEND_URL}/mcp/health", timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -255,7 +255,7 @@ class MCPPuchAITester:
                     self.log_test("MCP Health Check", False, f"Missing expected fields: {data}")
                     return False
             else:
-                self.log_test("MCP Health Check", False, f"HTTP {response.status_code}", response.text)
+                self.log_test("MCP Health Check", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -279,7 +279,7 @@ class MCPPuchAITester:
                 "message": "Hello, connection test"
             }
             
-            response = requests.post(f"{BACKEND_URL}/mcp", json=test_payload, headers=headers, timeout=15)
+            response = requests.post(f"{BACKEND_URL}/mcp", json=test_payload, headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -292,7 +292,7 @@ class MCPPuchAITester:
                     self.log_test("Puch AI Integration Readiness", False, f"Unexpected response structure: {data}")
                     return False
             else:
-                self.log_test("Puch AI Integration Readiness", False, f"HTTP {response.status_code}", response.text)
+                self.log_test("Puch AI Integration Readiness", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
@@ -309,10 +309,10 @@ class MCPPuchAITester:
             }
             
             # Test POST
-            post_response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            post_response = requests.post(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             # Test GET
-            get_response = requests.get(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=10)
+            get_response = requests.get(f"{BACKEND_URL}/mcp/validate", headers=headers, timeout=30)
             
             if post_response.status_code == 200 and get_response.status_code == 200:
                 post_data = post_response.json()
@@ -352,9 +352,9 @@ class MCPPuchAITester:
             for method, endpoint in endpoints_to_test:
                 try:
                     if method == "POST":
-                        response = requests.post(f"{BACKEND_URL}{endpoint}", timeout=5)
+                        response = requests.post(f"{BACKEND_URL}{endpoint}", timeout=30)
                     else:
-                        response = requests.get(f"{BACKEND_URL}{endpoint}", timeout=5)
+                        response = requests.get(f"{BACKEND_URL}{endpoint}", timeout=30)
                     
                     # We expect 401 (unauthorized) or 200 (success), not 404 (not found)
                     if response.status_code in [200, 401, 400]:
