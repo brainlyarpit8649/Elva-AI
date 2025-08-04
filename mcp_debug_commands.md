@@ -17,7 +17,7 @@ show context for session <session_id>
 
 ## Method 2: Direct API Call
 ```bash
-curl -X GET "https://d16fdba0-1be5-48f0-85b7-104cf45d55df.preview.emergentagent.com/api/admin/debug/context?session_id=YOUR_SESSION_ID&command=show_context" \
+curl -X GET "https://ad4a13b2-21da-421a-bc6c-d10e436aeccb.preview.emergentagent.com/api/admin/debug/context?session_id=YOUR_SESSION_ID&command=show_context" \
   -H "x-debug-token: elva-admin-debug-2024-secure"
 ```
 
