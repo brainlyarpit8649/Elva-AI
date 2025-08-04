@@ -387,20 +387,29 @@ Facts:"""
     def _simple_fact_extraction(self, message: str, session_id: str) -> List[SemanticFact]:
         """Fallback simple fact extraction if AI fails"""
         try:
-            message = message.lower().strip()
+            message_lower = message.lower().strip()
             
             # Remove command prefixes
-            prefixes = ["remember that", "remember this", "note that", "keep in mind that"]
+            prefixes = ["remember that", "remember this", "note that", "keep in mind that", "store"]
+            extracted_content = message_lower
+            
             for prefix in prefixes:
-                if message.startswith(prefix):
-                    message = message[len(prefix):].strip()
+                if message_lower.startswith(prefix):
+                    extracted_content = message_lower[len(prefix):].strip()
                     break
             
-            if len(message) > 3:
+            # Skip if it's a question (recall attempt)
+            if extracted_content.endswith('?') or any(word in extracted_content for word in ['what', 'who', 'when', 'where', 'how']):
+                return []
+            
+            # Only extract if it contains meaningful personal info
+            if len(extracted_content) > 5 and any(word in extracted_content for word in 
+                ['like', 'love', 'prefer', 'name is', 'am', 'work', 'live', 'hate', 'dislike']):
+                
                 fact = SemanticFact(
                     id=str(uuid.uuid4()),
-                    content=message,
-                    category=self._categorize_semantic_fact(message),
+                    content=extracted_content,
+                    category=self._categorize_semantic_fact(extracted_content),
                     confidence=0.6,  # Lower confidence for simple extraction
                     source_message=message,
                     session_id=session_id,
