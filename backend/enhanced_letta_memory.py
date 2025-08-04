@@ -825,6 +825,343 @@ class EnhancedLettaMemory:
         except Exception as e:
             logger.error(f"❌ Error auto-storing discovered fact: {e}")
 
+    async def periodic_conversation_summarization(self, session_id: str, messages: List[Dict]) -> Dict[str, Any]:
+        """
+        Advanced periodic conversation summarization with AI-powered insights
+        """
+        try:
+            logger.info(f"🔄 Starting periodic summarization for session: {session_id}")
+            
+            # Check if summarization is needed
+            if not self._should_create_summary(session_id, messages):
+                return {"success": False, "reason": "Summarization not needed yet"}
+            
+            # Create conversation summary using AI
+            summary_result = await self._create_ai_conversation_summary(messages)
+            
+            # Extract key insights and patterns
+            insights = self._extract_conversation_insights(messages)
+            
+            # Create comprehensive summary entry
+            summary_entry = {
+                "session_id": session_id,
+                "created_at": datetime.utcnow().isoformat(),
+                "message_count": len(messages),
+                "summary": summary_result["summary"],
+                "key_topics": summary_result["topics"],
+                "user_intent_patterns": insights["intent_patterns"],
+                "discovered_facts": insights["discovered_facts"],
+                "mood_indicators": insights["mood_indicators"],
+                "interaction_quality": insights["interaction_quality"],
+                "follow_up_needed": insights["follow_up_needed"]
+            }
+            
+            # Store summary
+            self.memory["conversation_summaries"][session_id] = summary_entry
+            
+            # Update daily aggregation
+            await self._update_daily_summary(summary_entry)
+            
+            # Auto-store any discovered facts
+            for fact in insights["discovered_facts"]:
+                self._auto_store_discovered_fact(fact, session_id)
+            
+            # Update memory metadata
+            self.memory["memory_metadata"]["last_summarization"] = datetime.utcnow().isoformat()
+            self.memory["memory_metadata"]["total_conversations"] += 1
+            
+            self._save_memory()
+            
+            logger.info(f"✅ Periodic summarization completed for session: {session_id}")
+            return {
+                "success": True,
+                "summary": summary_entry,
+                "facts_discovered": len(insights["discovered_facts"])
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error in periodic conversation summarization: {e}")
+            return {"success": False, "error": str(e)}
+
+    def _should_create_summary(self, session_id: str, messages: List[Dict]) -> bool:
+        """Determine if conversation summary should be created"""
+        try:
+            # Check message count threshold
+            if len(messages) < self.MIN_MESSAGES_FOR_SUMMARY:
+                return False
+            
+            # Check if recent summary exists
+            existing_summary = self.memory["conversation_summaries"].get(session_id)
+            if existing_summary:
+                last_summary_time = datetime.fromisoformat(existing_summary["created_at"])
+                time_since_summary = (datetime.utcnow() - last_summary_time).total_seconds()
+                if time_since_summary < self.SUMMARIZATION_INTERVAL:
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error checking if summary should be created: {e}")
+            return False
+
+    async def _create_ai_conversation_summary(self, messages: List[Dict]) -> Dict[str, Any]:
+        """Create AI-powered conversation summary using Groq"""
+        try:
+            # Prepare conversation context
+            conversation_text = self._format_conversation_for_summary(messages)
+            
+            # Use advanced hybrid AI for summarization
+            from advanced_hybrid_ai import advanced_hybrid_ai
+            
+            summary_prompt = f"""Analyze this conversation and provide a comprehensive summary:
+
+{conversation_text}
+
+Please provide:
+1. A concise summary (2-3 sentences)
+2. Key topics discussed (list)
+3. User's main intents/needs
+4. Any important facts about the user mentioned
+5. Overall conversation quality (1-10 scale)
+
+Format as JSON with keys: summary, topics, intents, user_facts, quality_score"""
+
+            result = await advanced_hybrid_ai(
+                message=summary_prompt,
+                session_id="memory_summarization",
+                context="conversation_analysis"
+            )
+            
+            # Parse AI response
+            try:
+                import json
+                parsed_result = json.loads(result.get("response", "{}"))
+                return {
+                    "summary": parsed_result.get("summary", "Conversation with user"),
+                    "topics": parsed_result.get("topics", []),
+                    "intents": parsed_result.get("intents", []),
+                    "user_facts": parsed_result.get("user_facts", []),
+                    "quality_score": parsed_result.get("quality_score", 7)
+                }
+            except:
+                # Fallback to simple summary
+                return self._create_simple_summary(messages)
+                
+        except Exception as e:
+            logger.error(f"❌ Error creating AI conversation summary: {e}")
+            return self._create_simple_summary(messages)
+
+    def _format_conversation_for_summary(self, messages: List[Dict]) -> str:
+        """Format conversation messages for AI summarization"""
+        formatted_lines = []
+        for msg in messages[-20:]:  # Use last 20 messages to avoid token limits
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+            if content:
+                formatted_lines.append(f"{role.upper()}: {content[:200]}")  # Truncate long messages
+        
+        return "\n".join(formatted_lines)
+
+    def _create_simple_summary(self, messages: List[Dict]) -> Dict[str, Any]:
+        """Fallback simple conversation summary"""
+        topics = set()
+        user_messages = []
+        
+        for msg in messages:
+            if msg.get("role") == "user":
+                content = msg.get("content", "").lower()
+                user_messages.append(content)
+                
+                # Extract topics
+                if "email" in content:
+                    topics.add("email")
+                if "calendar" in content or "meeting" in content:
+                    topics.add("scheduling")
+                if "gmail" in content:
+                    topics.add("gmail")
+                if "weather" in content:
+                    topics.add("weather")
+        
+        return {
+            "summary": f"User engaged in conversation covering {len(topics)} main topics",
+            "topics": list(topics),
+            "intents": ["general_assistance"],
+            "user_facts": [],
+            "quality_score": 7
+        }
+
+    def _extract_conversation_insights(self, messages: List[Dict]) -> Dict[str, Any]:
+        """Extract deep insights from conversation patterns"""
+        insights = {
+            "intent_patterns": [],
+            "discovered_facts": [],
+            "mood_indicators": [],
+            "interaction_quality": 7,
+            "follow_up_needed": []
+        }
+        
+        try:
+            user_messages = [msg for msg in messages if msg.get("role") == "user"]
+            
+            # Analyze intent patterns
+            intents = []
+            for msg in user_messages:
+                content = msg.get("content", "").lower()
+                if "send email" in content or "email" in content:
+                    intents.append("email_assistance")
+                elif "schedule" in content or "calendar" in content:
+                    intents.append("scheduling")
+                elif "remember" in content or "remind" in content:
+                    intents.append("memory_management")
+                elif "?" in content:
+                    intents.append("information_seeking")
+            
+            insights["intent_patterns"] = list(set(intents))
+            
+            # Extract discovered facts
+            for msg in user_messages:
+                content = msg.get("content", "")
+                if any(phrase in content.lower() for phrase in ["my name is", "i am", "call me"]):
+                    insights["discovered_facts"].append(content)
+                elif any(phrase in content.lower() for phrase in ["i prefer", "i like", "i work"]):
+                    insights["discovered_facts"].append(content)
+            
+            # Analyze mood indicators
+            mood_words = {
+                "positive": ["great", "awesome", "perfect", "thanks", "love", "excellent"],
+                "negative": ["problem", "issue", "frustrated", "annoying", "bad"],
+                "neutral": ["okay", "fine", "alright"]
+            }
+            
+            for msg in user_messages:
+                content = msg.get("content", "").lower()
+                for mood, words in mood_words.items():
+                    if any(word in content for word in words):
+                        insights["mood_indicators"].append(mood)
+            
+            # Determine follow-up needs
+            last_messages = user_messages[-3:]  # Check last 3 user messages
+            for msg in last_messages:
+                content = msg.get("content", "").lower()
+                if any(word in content for word in ["later", "tomorrow", "remind", "follow up"]):
+                    insights["follow_up_needed"].append("schedule_followup")
+                elif "more info" in content or "tell me more" in content:
+                    insights["follow_up_needed"].append("provide_more_info")
+            
+            # Calculate interaction quality
+            total_exchanges = len(messages) / 2  # Approximate user-AI exchanges
+            if total_exchanges > 10:
+                insights["interaction_quality"] = 9
+            elif total_exchanges > 5:
+                insights["interaction_quality"] = 8
+            else:
+                insights["interaction_quality"] = 7
+            
+        except Exception as e:
+            logger.error(f"❌ Error extracting conversation insights: {e}")
+        
+        return insights
+
+    async def _update_daily_summary(self, summary_entry: Dict[str, Any]):
+        """Update daily conversation summaries"""
+        try:
+            today = datetime.utcnow().date().isoformat()
+            
+            if today not in self.memory["daily_summaries"]:
+                self.memory["daily_summaries"][today] = {
+                    "date": today,
+                    "conversation_count": 0,
+                    "total_messages": 0,
+                    "dominant_topics": [],
+                    "user_facts_discovered": 0,
+                    "quality_average": 0,
+                    "sessions": []
+                }
+            
+            daily_summary = self.memory["daily_summaries"][today]
+            daily_summary["conversation_count"] += 1
+            daily_summary["total_messages"] += summary_entry["message_count"]
+            daily_summary["user_facts_discovered"] += len(summary_entry["discovered_facts"])
+            daily_summary["sessions"].append(summary_entry["session_id"])
+            
+            # Update dominant topics
+            all_topics = daily_summary["dominant_topics"] + summary_entry["key_topics"]
+            topic_counts = {}
+            for topic in all_topics:
+                topic_counts[topic] = topic_counts.get(topic, 0) + 1
+            
+            # Keep top 5 topics
+            sorted_topics = sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
+            daily_summary["dominant_topics"] = [topic for topic, count in sorted_topics[:5]]
+            
+            # Update quality average
+            total_quality = sum(session.get("interaction_quality", 7) 
+                              for session in [summary_entry] + 
+                              [self.memory["conversation_summaries"].get(sid, {}) 
+                               for sid in daily_summary["sessions"][:-1]])
+            daily_summary["quality_average"] = round(total_quality / daily_summary["conversation_count"], 1)
+            
+            # Update last daily summary timestamp
+            self.memory["memory_metadata"]["last_daily_summary"] = datetime.utcnow().isoformat()
+            
+            logger.info(f"✅ Updated daily summary for {today}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error updating daily summary: {e}")
+
+    async def trigger_periodic_summarization_if_needed(self, session_id: str) -> Dict[str, Any]:
+        """
+        Check if periodic summarization is needed and trigger it
+        This should be called after significant conversation activity
+        """
+        try:
+            # Get recent conversation messages from message_memory
+            from message_memory import get_conversation_history
+            messages = await get_conversation_history(session_id, limit=50)
+            
+            if not messages:
+                return {"success": False, "reason": "No messages to summarize"}
+            
+            # Convert to format expected by summarization
+            formatted_messages = []
+            for msg in messages:
+                role = "user" if msg.get("isUser", False) else "assistant"
+                content = msg.get("message") or msg.get("response", "")
+                if content:
+                    formatted_messages.append({"role": role, "content": content})
+            
+            # Trigger summarization if needed
+            return await self.periodic_conversation_summarization(session_id, formatted_messages)
+            
+        except Exception as e:
+            logger.error(f"❌ Error checking for periodic summarization: {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_conversation_summary(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get existing conversation summary for a session"""
+        return self.memory["conversation_summaries"].get(session_id)
+
+    def get_daily_summary(self, date: str = None) -> Optional[Dict[str, Any]]:
+        """Get daily conversation summary"""
+        if not date:
+            date = datetime.utcnow().date().isoformat()
+        return self.memory["daily_summaries"].get(date)
+
+    def get_memory_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive memory statistics"""
+        return {
+            "total_facts": len(self.memory["user_facts"]),
+            "total_preferences": len(self.memory["user_preferences"]),
+            "conversation_summaries": len(self.memory["conversation_summaries"]),
+            "daily_summaries": len(self.memory["daily_summaries"]),
+            "tasks_and_reminders": len(self.memory["tasks_and_reminders"]),
+            "memory_metadata": self.memory["memory_metadata"],
+            "cache_status": {
+                "is_valid": self._is_cache_valid(),
+                "last_updated": self._cache_timestamp.isoformat() if self._cache_timestamp else None
+            }
+        }
+
 
 # Global enhanced memory instance
 enhanced_letta_memory: Optional[EnhancedLettaMemory] = None
