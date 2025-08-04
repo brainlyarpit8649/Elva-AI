@@ -1037,31 +1037,29 @@ Always maintain context from previous conversation."""
                 
             except Exception as e:
                 logger.error(f"Processing error: {e}")
-                # Fallback to simple routing
-                if routing_decision.fallback_model:
+                # Fallback to Groq with friendly response
+                try:
+                    intent_data = await self._groq_intent_detection(user_input) 
+                    response_text = await self._get_groq_response(
+                        user_input,
+                        "You are Elva AI, a helpful and friendly assistant. Respond naturally and conversationally."
+                    )
+                    
+                    # Store fallback conversation in MCP
                     try:
-                        if routing_decision.fallback_model == ModelChoice.CLAUDE:
-                            response_text = await self._get_claude_response(user_input)
-                            intent_data = {"intent": "general_chat", "message": user_input}
-                        else:
-                            intent_data = await self._groq_intent_detection(user_input) 
-                            response_text = f"Structured analysis: {json.dumps(intent_data, indent=2)}"
-                        
-                        # Store fallback conversation in MCP
-                        try:
-                            mcp_service = get_mcp_service()
-                            context_data = mcp_service.prepare_context_data(user_input, response_text, intent_data)
-                            await mcp_service.write_context(
-                                session_id=session_id,
-                                intent=intent_data.get("intent", "general_chat"),
-                                data=context_data
-                            )
-                        except Exception as mem_e:
-                            logger.warning(f"Could not store fallback conversation in MCP: {mem_e}")
-                        
-                        return intent_data, response_text, routing_decision
-                    except Exception as fallback_error:
-                        logger.error(f"Fallback error: {fallback_error}")
+                        mcp_service = get_mcp_service()
+                        context_data = mcp_service.prepare_context_data(user_input, response_text, intent_data)
+                        await mcp_service.write_context(
+                            session_id=session_id,
+                            intent=intent_data.get("intent", "general_chat"),
+                            data=context_data
+                        )
+                    except Exception as mem_e:
+                        logger.warning(f"Could not store fallback conversation in MCP: {mem_e}")
+                    
+                    return intent_data, response_text, routing_decision
+                except Exception as fallback_error:
+                    logger.error(f"Fallback error: {fallback_error}")
                 
                 # Ultimate fallback
                 return (
