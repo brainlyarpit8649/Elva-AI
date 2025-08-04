@@ -289,24 +289,28 @@ async def process_regular_chat(request: ChatRequest):
         # Import message memory functions
         from message_memory import get_conversation_context_for_ai, search_conversation_memory
         
-        # STEP 1: Semantic Letta memory processing with new system
+        # STEP 1: Letta memory processing - selective memory operations only
         if semantic_memory:
-            memory_result = await semantic_memory.process_message_for_memory(request.message, request.session_id)
+            message_lower = request.message.lower().strip()
             
-            if memory_result.get("is_memory_operation"):
-                response_text = memory_result.get("response", "Got it 👍")
-                intent_data = {"intent": "memory_operation", "operation_type": "semantic_memory"}
-                needs_approval = False
+            # Only process explicit memory commands - be very selective
+            memory_triggers = [
+                "remember that", "my name is", "call me", "i am", "store this",
+                "what do you remember", "what's my", "who am i", "forget that",
+                "don't remember", "my nickname is"
+            ]
+            
+            is_memory_command = any(trigger in message_lower for trigger in memory_triggers)
+            
+            if is_memory_command:
+                memory_result = semantic_memory.chat_with_memory(request.message, request.session_id)
                 
-                # Cache successful memory operations for performance
-                if performance_optimizer and memory_result.get("facts_extracted"):
-                    performance_optimizer.cache_response(request.message, {
-                        "response": response_text,
-                        "intent_data": intent_data,
-                        "needs_approval": needs_approval
-                    })
-                
-                return response_text, intent_data, needs_approval
+                if memory_result.get("success"):
+                    response_text = memory_result.get("response", "Got it")
+                    intent_data = {"intent": "memory_operation", "operation_type": "letta_memory"}
+                    needs_approval = False
+                    
+                    return response_text, intent_data, needs_approval
         
         # STEP 2: Get FULL conversation context (MongoDB + message_memory + Semantic Memory)
         previous_context = ""
