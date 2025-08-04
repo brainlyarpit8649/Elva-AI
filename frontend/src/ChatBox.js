@@ -593,7 +593,7 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
       }
 
       // 🔒 Admin Debug Commands - Only available in admin mode
-      if ( && (inputMessage.toLowerCase().includes('show my context') || inputMessage.toLowerCase().includes('show context for session'))) {
+      if (showAdminToggle && isAdminMode && (inputMessage.toLowerCase().includes('show my context') || inputMessage.toLowerCase().includes('show context for session'))) {
         await handleAdminDebugCommand(inputMessage);
       }
 
