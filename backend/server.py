@@ -313,6 +313,7 @@ async def process_regular_chat(request: ChatRequest):
         
         # STEP 2: Get FULL conversation context (MongoDB + message_memory + Semantic Memory)
         previous_context = ""
+        memory_context = ""
         try:
             # Get complete conversation history for context
             previous_context = await get_conversation_context_for_ai(request.session_id)
@@ -334,11 +335,11 @@ async def process_regular_chat(request: ChatRequest):
                     if memory_summary.get("success"):
                         memory_info = memory_summary.get("memory_info", {})
                         if memory_info.get("total_facts", 0) > 0:
-                            # Add basic memory context
+                            # Add basic memory context - this will be passed to AI
                             context_result = semantic_memory.retrieve_context("user information preferences facts")
                             if context_result.get("success") and context_result.get("context"):
-                                previous_context += f"\n\n=== USER MEMORY ===\n{context_result['context']}"
-                                logger.info(f"🧠 Added Letta Memory context for session: {request.session_id}")
+                                memory_context = context_result.get("context", "")
+                                logger.info(f"🧠 Retrieved Letta Memory context for natural AI response generation")
                 except Exception as memory_context_error:
                     logger.warning(f"⚠️ Error retrieving memory context: {memory_context_error}")
                 
