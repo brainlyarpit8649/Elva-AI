@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://329904b0-2cf4-48ba-8d24-e322e324860a.preview.emergentagent.com/api"
+BACKEND_URL = "https://395a2c43-f9bd-494c-beb2-dd30fbdf7e7e.preview.emergentagent.com/api"
 
 class MCPPuchAITester:
     def __init__(self):
@@ -418,7 +418,7 @@ class MCPPuchAITester:
         
         if failed == 0:
             print("🎉 ALL TESTS PASSED! MCP service is ready for Puch AI integration!")
-            print("🔗 Puch AI can connect using: /mcp connect https://329904b0-2cf4-48ba-8d24-e322e324860a.preview.emergentagent.com/api/mcp kumararpit9468")
+            print("🔗 Puch AI can connect using: /mcp connect https://395a2c43-f9bd-494c-beb2-dd30fbdf7e7e.preview.emergentagent.com/api/mcp kumararpit9468")
         else:
             print("⚠️ Some tests failed. Please check the implementation.")
         
