@@ -321,16 +321,6 @@ async def _process_with_cascading_fallbacks(request: ChatRequest) -> tuple[str, 
 async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict, bool]:
     """Process chat with full memory context (ideal path)"""
     
-    # Performance optimization check
-    if performance_optimizer:
-        cached_result = await safe_memory_operation(
-            performance_optimizer.optimize_chat_processing,
-            {"message": request.message, "session_id": request.session_id}
-        )
-        if cached_result and cached_result[0]:  # is_cached
-            cached_data = cached_result[1]
-            return cached_data["response"], cached_data["intent_data"], cached_data.get("needs_approval", False)
-
     # Import message memory functions safely
     try:
         from message_memory import get_conversation_context_for_ai, search_conversation_memory
