@@ -36,13 +36,6 @@ function ChatBox({ sessionId, gmailAuthStatus, setGmailAuthStatus, messages, set
     
   const messagesEndRef = useRef(null);
 
-  // 🔒 Admin Debug Toggle State Variables
-  const [showAdminToggle, setShowAdminToggle] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
-
-  // Admin Email Whitelist
-  const ADMIN_EMAILS = ['brainlyarpit8649@gmail.com', 'kumararpit9468@gmail.com'];
-
   // Stable ID generator to prevent flickering - using UUID instead of Date.now()
   const generateStableId = useCallback((prefix = 'msg') => {
     messageCounter += 1;
