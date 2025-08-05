@@ -269,24 +269,29 @@ class EnhancedMessageMemory:
 
     async def get_conversation_history(self, session_id: str, limit: Optional[int] = None) -> List[Dict]:
         """
-        Get conversation history with Redis caching and MongoDB fallback
+        Get conversation history with Redis caching, MongoDB fallback, and enhanced error handling
         """
         try:
             message_limit = limit or self.CONTEXT_MEMORY_LIMIT
             
-            # Try Redis cache first for recent messages
+            # Ensure connection is available
+            if not await self._test_connection():
+                logger.warning("⚠️ Database not available for history retrieval")
+                return []
+            
+            # Try Redis cache first for recent messages (optimized path)
             if self.redis_connected and message_limit <= self.REDIS_CACHE_LIMIT:
                 cached_messages = await self._get_cached_messages(session_id, message_limit)
                 if cached_messages:
                     logger.info(f"🚀 Retrieved {len(cached_messages)} cached messages from Redis")
                     return cached_messages
             
-            # Fallback to MongoDB
+            # Fallback to MongoDB with safe operation wrapper
             messages = await self._get_messages_from_mongodb(session_id, message_limit)
             
-            # Cache the results in Redis for future requests
+            # Cache the results in Redis for future requests (background task)
             if self.redis_connected and messages:
-                await self._update_redis_cache(session_id, messages[:self.REDIS_CACHE_LIMIT])
+                asyncio.create_task(self._update_redis_cache(session_id, messages[:self.REDIS_CACHE_LIMIT]))
             
             logger.info(f"📖 Retrieved {len(messages)} messages from MongoDB for session {session_id}")
             return messages
