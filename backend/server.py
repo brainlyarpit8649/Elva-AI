@@ -71,7 +71,7 @@ db = client[os.environ['DB_NAME']]
 gmail_oauth_service = GmailOAuthService(db=db)
 enhanced_gmail_service = EnhancedGmailService(gmail_oauth_service)
 realtime_gmail_service = RealTimeGmailService(gmail_oauth_service)
-conversation_memory = initialize_conversation_memory(db)
+# conversation_memory = initialize_conversation_memory(db)  # Removed - using enhanced memory system
 mcp_service = initialize_mcp_service()
 
 # Enhanced Message Memory System - Letta Memory disabled for now
