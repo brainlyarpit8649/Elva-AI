@@ -160,15 +160,18 @@ class SimpleLettaMemory:
             # First, check for recall commands (questions) - these should NOT be stored
             if any(cmd in message_lower for cmd in ["what's my", "what is my", "what do i", "what am i", "who am i", "tell me", "do you remember"]):
                 
-                if "nickname" in message_lower:
+                if "nickname" in message_lower and any(phrase in message_lower for phrase in ["what's my nickname", "what is my nickname", "my nickname is what"]):
                     # Look for nickname in facts
-                    for fact_key, fact_data in self.memory["facts"].items():
-                        fact_text = fact_data.get("text", "").lower()
-                        if "nickname" in fact_text:
-                            if "ary" in fact_text:
-                                return {"success": True, "response": "Your nickname is Ary."}
-                            elif "arp" in fact_text:  
-                                return {"success": True, "response": "Your nickname is Arp."}
+                    if "nickname" in self.memory["facts"]:
+                        fact_text = self.memory["facts"]["nickname"]["text"]
+                        if "ary" in fact_text.lower():
+                            return {"success": True, "response": "Your nickname is Ary."}
+                        elif "arp" in fact_text.lower():  
+                            return {"success": True, "response": "Your nickname is Arp."}
+                        else:
+                            # Extract nickname from text
+                            nickname_text = fact_text.replace("Actually, my nickname is ", "").replace("my nickname is ", "").replace("...", "").strip()
+                            return {"success": True, "response": f"Your nickname is {nickname_text}."}
                     return {"success": True, "response": "I don't have information about your nickname."}
                 
                 elif any(phrase in message_lower for phrase in ["what is my name", "what's my name", "my name is what"]) and "nickname" not in message_lower:
