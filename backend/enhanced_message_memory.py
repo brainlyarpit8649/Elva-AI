@@ -623,7 +623,7 @@ class EnhancedMessageMemory:
             # Test MongoDB
             mongo_healthy = False
             try:
-                await self.db.admin.command('ping')
+                await self.db.command('ping')
                 mongo_healthy = True
             except:
                 pass
