@@ -46,8 +46,7 @@ from weather_service_tomorrow import (
     clear_weather_cache
 )
 
-# Import simplified Letta Memory System 
-from letta_memory import initialize_letta_memory, get_letta_memory
+# Enhanced Message Memory System for Context-Aware Conversations
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -75,15 +74,10 @@ realtime_gmail_service = RealTimeGmailService(gmail_oauth_service)
 conversation_memory = initialize_conversation_memory(db)
 mcp_service = initialize_mcp_service()
 
-# Re-enable Letta Memory System with safe initialization
-try:
-    semantic_memory = initialize_letta_memory()
-    logging.info("✅ Letta Memory System initialized successfully")
-    MEMORY_ENABLED = True
-except Exception as e:
-    logging.warning(f"⚠️ Letta Memory initialization failed: {e}")
-    semantic_memory = None
-    MEMORY_ENABLED = False
+# Enhanced Message Memory System - Letta Memory disabled for now
+semantic_memory = None
+MEMORY_ENABLED = False
+logging.info("📝 Enhanced Message Memory System initialized (Letta Memory disabled)")
 
 # Memory and processing timeout configuration  
 MEMORY_OPERATION_TIMEOUT = 15.0  # 15 seconds for memory operations
