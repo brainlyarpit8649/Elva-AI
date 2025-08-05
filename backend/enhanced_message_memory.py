@@ -182,14 +182,17 @@ class EnhancedMessageMemory:
             # Add to Redis list (latest messages at the beginning)
             redis_key = f"session_messages:{session_id}"
             
-            # Add new message to the beginning of the list
-            await self.redis_client.lpush(redis_key, json.dumps(cache_doc))
+            # Execute Redis operations in thread pool
+            loop = asyncio.get_event_loop()
             
-            # Trim to keep only recent messages
-            await self.redis_client.ltrim(redis_key, 0, self.REDIS_CACHE_LIMIT - 1)
+            # Add new message to the beginning of the list
+            await loop.run_in_executor(None, self.redis_client.lpush, redis_key, json.dumps(cache_doc))
+            
+            # Trim to keep only recent messages  
+            await loop.run_in_executor(None, self.redis_client.ltrim, redis_key, 0, self.REDIS_CACHE_LIMIT - 1)
             
             # Set expiration
-            await self.redis_client.expire(redis_key, self.REDIS_TTL_SECONDS)
+            await loop.run_in_executor(None, self.redis_client.expire, redis_key, self.REDIS_TTL_SECONDS)
             
         except Exception as e:
             logger.warning(f"⚠️ Error caching message in Redis: {e}")
