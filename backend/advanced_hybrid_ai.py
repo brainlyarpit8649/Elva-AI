@@ -902,10 +902,10 @@ Return ONLY the JSON object."""
                 logger.warning(f"Could not retrieve full conversation context: {e}")
                 full_conversation_context = ""
             
-            # Add Letta Memory context if provided
+            # Add MongoDB Memory context if provided
             if memory_context:
-                full_conversation_context += f"\n\n=== USER PERSONAL CONTEXT ===\n{memory_context}"
-                logger.info(f"🧠 Added Letta memory context for natural response generation")
+                full_conversation_context += f"\n\n=== USER CONVERSATION CONTEXT ===\n{memory_context}"
+                logger.info(f"💾 Added MongoDB conversation context for natural response generation")
             
             # Also get MCP context for additional context with timeout protection
             try:
