@@ -110,17 +110,20 @@ class EnhancedMessageMemory:
             
         try:
             redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379')
+            # Use standard redis library with connection pooling
             self.redis_client = redis.from_url(
                 redis_url,
                 encoding="utf-8",
                 decode_responses=True,
                 socket_keepalive=True,
                 socket_keepalive_options={},
-                health_check_interval=30
+                health_check_interval=30,
+                retry_on_timeout=True,
+                socket_connect_timeout=5
             )
             
             # Test connection
-            await self.redis_client.ping()
+            self.redis_client.ping()
             self.redis_connected = True
             self._redis_initialized = True
             logger.info("✅ Redis connection established for message caching")
