@@ -42,7 +42,7 @@ Deploy the MCP service with these environment variables:
 ```env
 # MCP Service Configuration
 MCP_API_TOKEN=kumararpit9468
-ELVA_BACKEND_URL=https://5be6aaaa-6734-49b7-bbc3-94369bffa03f.preview.emergentagent.com
+ELVA_BACKEND_URL=https://7c274570-5dc9-4f65-b14d-72a40eec87bc.preview.emergentagent.com
 
 # MongoDB Atlas Configuration
 MCP_MONGO_URI=mongodb+srv://kumararpit9468:kumararpit1234coc@elva-mcp-mongo.uzclf39.mongodb.net/elva_mcp?retryWrites=true&w=majority&appName=elva-mcp-mongo

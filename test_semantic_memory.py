@@ -8,7 +8,7 @@ import json
 import time
 
 # Backend URL
-BACKEND_URL = "https://5be6aaaa-6734-49b7-bbc3-94369bffa03f.preview.emergentagent.com/api"
+BACKEND_URL = "https://7c274570-5dc9-4f65-b14d-72a40eec87bc.preview.emergentagent.com/api"
 
 def test_chat(message, session_id="test_semantic_memory"):
     """Send a chat message and return the response"""
