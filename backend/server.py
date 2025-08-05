@@ -736,6 +736,49 @@ async def health_check():
         logger.error(f"Health check error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/enhanced-memory/stats")
+async def get_enhanced_memory_stats():
+    """Get Enhanced Memory System statistics"""
+    try:
+        global enhanced_memory
+        if enhanced_memory is None:
+            try:
+                enhanced_memory = await initialize_enhanced_message_memory()
+            except Exception as e:
+                raise HTTPException(status_code=503, detail=f"Enhanced Memory not available: {e}")
+        
+        health_status = await enhanced_memory.get_health_status()
+        return {
+            "status": "available",
+            "health": health_status,
+            "message": "Enhanced Message Memory System operational - Letta removed successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Enhanced memory stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/enhanced-memory/session/{session_id}/stats")
+async def get_session_memory_stats(session_id: str):
+    """Get memory statistics for a specific session"""
+    try:
+        global enhanced_memory
+        if enhanced_memory is None:
+            enhanced_memory = await initialize_enhanced_message_memory()
+        
+        session_stats = await enhanced_memory.get_session_stats(session_id)
+        return {
+            "status": "success",
+            "session_stats": session_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Session memory stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Add router to app
 app.include_router(api_router)
 
