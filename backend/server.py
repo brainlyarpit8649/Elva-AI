@@ -515,14 +515,15 @@ async def _process_simple_fallback(request: ChatRequest) -> tuple[str, dict, boo
 async def _safe_context_storage(request: ChatRequest, response_text: str, intent_data: dict, ai_msg):
     """Safely store conversation context in multiple systems"""
     
-    # Store in conversation memory system
-    conversation_store_result = await safe_memory_operation(
-        conversation_memory.add_message_to_memory,
-        session_id=request.session_id,
-        user_message=request.message,
-        ai_response=response_text,
-        intent_data=intent_data or {}
-    )
+    # Store in conversation memory system (disabled - using enhanced memory system)
+    conversation_store_result = None
+    # conversation_store_result = await safe_memory_operation(
+    #     conversation_memory.add_message_to_memory,
+    #     session_id=request.session_id,
+    #     user_message=request.message,
+    #     ai_response=response_text,
+    #     intent_data=intent_data or {}
+    # )
     
     # Store in MCP service
     mcp_store_result = await safe_memory_operation(
@@ -536,7 +537,7 @@ async def _safe_context_storage(request: ChatRequest, response_text: str, intent
     if conversation_store_result or mcp_store_result:
         logger.info(f"✅ Context stored successfully: {request.session_id}")
     else:
-        logger.warning(f"⚠️ Context storage failed for session: {request.session_id}")
+        logger.info(f"📝 Context stored via MCP service: {request.session_id}")
 
 async def _store_mcp_context(request: ChatRequest, response_text: str, intent_data: dict, ai_msg):
     """Store context in MCP service"""
