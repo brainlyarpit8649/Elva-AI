@@ -105,7 +105,7 @@ class EnhancedMessageMemory:
             return True
             
         try:
-            await asyncio.wait_for(self.db.admin.command('ping'), timeout=5.0)
+            await asyncio.wait_for(self.db.command('ping'), timeout=5.0)
             self._connection_tested = True
             logger.info("✅ MongoDB connection verified")
             return True
