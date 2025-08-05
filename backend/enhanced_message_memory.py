@@ -6,7 +6,7 @@ Provides context-aware conversations without Letta dependency
 
 from datetime import datetime, timedelta
 from motor.motor_asyncio import AsyncIOMotorClient
-import aioredis
+import redis
 import json
 import os
 import logging
@@ -110,7 +110,7 @@ class EnhancedMessageMemory:
             
         try:
             redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379')
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 redis_url,
                 encoding="utf-8",
                 decode_responses=True,
