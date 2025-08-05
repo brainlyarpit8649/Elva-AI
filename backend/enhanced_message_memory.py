@@ -1,7 +1,8 @@
 """
 Enhanced Message Memory System for Elva AI
-Combines MongoDB for persistent storage with Redis for fast caching
-Provides context-aware conversations without Letta dependency
+Unified high-performance memory system combining MongoDB for persistent storage with Redis for fast caching.
+Replaces both message_memory.py and conversation_memory.py for simplified, stable architecture.
+Provides context-aware conversations with optimized database operations and comprehensive error handling.
 """
 
 from datetime import datetime, timedelta
@@ -13,6 +14,7 @@ import logging
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 import hashlib
+import uuid
 
 logger = logging.getLogger(__name__)
 
