@@ -334,24 +334,41 @@ async def _process_with_cascading_fallbacks(request: ChatRequest) -> tuple[str, 
 async def _process_with_mongodb_context(request: ChatRequest) -> tuple[str, dict, bool]:
     """Process chat with enhanced MongoDB conversation context"""
     
-    # Import message memory functions safely
-    try:
-        from message_memory import get_conversation_context_for_ai, search_conversation_memory
-    except ImportError as e:
-        logger.warning(f"⚠️ Could not import message memory functions: {e}")
-        return await _process_groq_only(request)
+    # Get enhanced memory instance
+    global enhanced_memory
+    if enhanced_memory is None:
+        try:
+            enhanced_memory = await initialize_enhanced_message_memory()
+        except Exception as e:
+            logger.warning(f"⚠️ Could not initialize enhanced memory: {e}")
+            return await _process_groq_only(request)
     
-    # STEP 1: Get enhanced conversation context from MongoDB
+    # STEP 1: Get enhanced conversation context from MongoDB/Redis
     previous_context = ""
     try:
-        # Get full conversation history for context
-        context_result = await safe_database_operation(
-            get_conversation_context_for_ai, 
-            request.session_id
-        )
-        if context_result:
-            previous_context = context_result
-            logger.info(f"📖 Retrieved MongoDB conversation context ({len(previous_context)} chars)")
+        # Get conversation context using enhanced memory system
+        if enhanced_memory:
+            context_result = await enhanced_memory.get_context_for_ai(
+                session_id=request.session_id,
+                max_chars=12000  # Optimized for AI context
+            )
+            if context_result:
+                previous_context = context_result
+                logger.info(f"📖 Retrieved enhanced conversation context ({len(previous_context)} chars)")
+        
+        # Fallback to legacy message memory if enhanced memory fails
+        if not previous_context:
+            try:
+                from message_memory import get_conversation_context_for_ai
+                context_result = await safe_database_operation(
+                    get_conversation_context_for_ai, 
+                    request.session_id
+                )
+                if context_result:
+                    previous_context = context_result
+                    logger.info(f"📖 Fallback: Retrieved legacy conversation context ({len(previous_context)} chars)")
+            except ImportError:
+                logger.warning("⚠️ Could not import legacy message memory functions")
         
         # Add MCP context
         mcp_context_result = await safe_memory_operation(
@@ -368,7 +385,7 @@ async def _process_with_mongodb_context(request: ChatRequest) -> tuple[str, dict
                 logger.info(f"📖 Added MCP context")
                 
     except Exception as context_error:
-        logger.warning(f"⚠️ Error reading conversation context: {context_error}")
+        logger.warning(f"⚠️ Error reading enhanced conversation context: {context_error}")
         previous_context = ""
 
     # STEP 2: Handle Post Prompt Package confirmation
@@ -387,18 +404,18 @@ async def _process_with_mongodb_context(request: ChatRequest) -> tuple[str, dict
             response_text = "✅ **Package sent to your automation workflow!** I've forwarded your post description and AI instructions for processing."
             return response_text, intent_data, True
 
-    # STEP 3: Process through advanced hybrid AI with MongoDB context
+    # STEP 3: Process through advanced hybrid AI with enhanced MongoDB context
     try:
         intent_data, response_text, routing_decision = await asyncio.wait_for(
             advanced_hybrid_ai.process_message(
                 user_input=request.message,
                 session_id=request.session_id,
-                memory_context=previous_context  # Pass MongoDB conversation context
+                memory_context=previous_context  # Pass enhanced conversation context
             ),
             timeout=AI_RESPONSE_TIMEOUT
         )
         
-        logger.info(f"🚀 AI processing completed with MongoDB context: {intent_data.get('intent', 'unknown')} -> {len(response_text)} chars")
+        logger.info(f"🚀 AI processing completed with enhanced context: {intent_data.get('intent', 'unknown')} -> {len(response_text)} chars")
         
     except asyncio.TimeoutError:
         logger.warning(f"⚠️ AI response generation timed out, using fallback")
