@@ -493,46 +493,113 @@ class EnhancedMessageMemory:
             return False
 
     async def get_session_stats(self, session_id: str) -> Dict[str, Any]:
-        """Get statistics for a conversation session"""
+        """Get statistics for a conversation session with enhanced MongoDB aggregation"""
         try:
-            # Count total messages
-            total_count = await self.messages_collection.count_documents(
-                {"session_id": session_id}
+            if not await self._test_connection():
+                return {"error": "Database not available"}
+                
+            # Use aggregation pipeline for better performance (from message_memory.py optimization)
+            pipeline = [
+                {"$match": {"session_id": session_id}},
+                {
+                    "$group": {
+                        "_id": "$session_id",
+                        "total_messages": {"$sum": 1},
+                        "user_messages": {
+                            "$sum": {"$cond": [{"$eq": ["$role", "user"]}, 1, 0]}
+                        },
+                        "assistant_messages": {
+                            "$sum": {"$cond": [{"$eq": ["$role", "assistant"]}, 1, 0]}
+                        },
+                        "first_message_time": {"$min": "$timestamp"},
+                        "last_message_time": {"$max": "$timestamp"}
+                    }
+                }
+            ]
+            
+            result = await self._safe_db_operation(
+                self.messages_collection.aggregate(pipeline).to_list,
+                length=None,
+                timeout=8.0
             )
             
-            # Count by role
-            user_count = await self.messages_collection.count_documents(
-                {"session_id": session_id, "role": "user"}
-            )
+            if not result:
+                return {
+                    "session_id": session_id,
+                    "total_messages": 0,
+                    "user_messages": 0,
+                    "assistant_messages": 0,
+                    "first_message_time": None,
+                    "last_message_time": None,
+                    "redis_cache_available": self.redis_connected
+                }
             
-            assistant_count = await self.messages_collection.count_documents(
-                {"session_id": session_id, "role": "assistant"}
-            )
+            stats = result[0]
+            stats["session_id"] = session_id
+            stats["redis_cache_available"] = self.redis_connected
             
-            # Get first and last message timestamps
-            first_msg = await self.messages_collection.find_one(
-                {"session_id": session_id},
-                sort=[("timestamp", 1)]
-            )
+            # Convert timestamps
+            if stats.get("first_message_time"):
+                stats["first_message_time"] = stats["first_message_time"].isoformat()
+            if stats.get("last_message_time"):
+                stats["last_message_time"] = stats["last_message_time"].isoformat()
             
-            last_msg = await self.messages_collection.find_one(
-                {"session_id": session_id},
-                sort=[("timestamp", -1)]
-            )
-            
-            return {
-                "session_id": session_id,
-                "total_messages": total_count,
-                "user_messages": user_count,
-                "assistant_messages": assistant_count,
-                "first_message": first_msg.get("timestamp").isoformat() if first_msg else None,
-                "last_message": last_msg.get("timestamp").isoformat() if last_msg else None,
-                "redis_cache_available": self.redis_connected
-            }
+            logger.info(f"📊 Memory stats for session {session_id}: {stats['total_messages']} total messages")
+            return stats
             
         except Exception as e:
             logger.error(f"❌ Error getting session stats: {e}")
             return {"session_id": session_id, "error": str(e)}
+
+    async def save_messages_batch(self, messages: List[Dict], session_id: str) -> int:
+        """
+        Save multiple messages in a single batch operation for better performance
+        Enhanced from message_memory.py optimizations
+        """
+        try:
+            if not messages:
+                return 0
+                
+            if not await self._test_connection():
+                return 0
+                
+            # Prepare documents with timestamps and unique IDs
+            documents = []
+            for msg in messages:
+                doc = {
+                    "session_id": session_id,
+                    "role": msg.get("role", "unknown"),
+                    "content": msg.get("content", ""),
+                    "timestamp": msg.get("timestamp", datetime.utcnow()),
+                    "metadata": msg.get("metadata", {}),
+                    "indexed": True,
+                    "message_id": str(uuid.uuid4())
+                }
+                documents.append(doc)
+            
+            # Batch insert with safe operation wrapper
+            result = await self._safe_db_operation(
+                self.messages_collection.insert_many,
+                documents,
+                timeout=15.0
+            )
+            
+            if result:
+                inserted_count = len(result.inserted_ids) if hasattr(result, 'inserted_ids') else 0
+                logger.info(f"💾 Batch saved {inserted_count} messages for session {session_id}")
+                
+                # Update Redis cache in background if available
+                if self.redis_connected and documents:
+                    asyncio.create_task(self._update_redis_cache(session_id, documents[-self.REDIS_CACHE_LIMIT:]))
+                
+                return inserted_count
+            else:
+                logger.error(f"❌ Batch insert failed for session {session_id}")
+                return 0
+                
+        except Exception as e:
+            logger.error(f"❌ Error in batch save: {e}")
+            return 0
 
     async def cleanup_old_sessions(self, days_old: int = 30) -> int:
         """Clean up old conversation sessions"""
