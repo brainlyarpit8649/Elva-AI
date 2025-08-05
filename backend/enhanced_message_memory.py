@@ -290,15 +290,18 @@ class EnhancedMessageMemory:
         try:
             redis_key = f"session_messages:{session_id}"
             
+            # Execute Redis operations in thread pool
+            loop = asyncio.get_event_loop()
+            
             # Clear existing cache
-            await self.redis_client.delete(redis_key)
+            await loop.run_in_executor(None, self.redis_client.delete, redis_key)
             
             # Add messages in reverse order (newest first in Redis)
             for msg in reversed(messages):
-                await self.redis_client.lpush(redis_key, json.dumps(msg))
+                await loop.run_in_executor(None, self.redis_client.lpush, redis_key, json.dumps(msg))
             
             # Set expiration
-            await self.redis_client.expire(redis_key, self.REDIS_TTL_SECONDS)
+            await loop.run_in_executor(None, self.redis_client.expire, redis_key, self.REDIS_TTL_SECONDS)
             
         except Exception as e:
             logger.warning(f"⚠️ Error updating Redis cache: {e}")
