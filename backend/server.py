@@ -77,6 +77,16 @@ mcp_service = initialize_mcp_service()
 # Enhanced Message Memory System - Letta Memory disabled for now
 semantic_memory = None
 MEMORY_ENABLED = False
+
+# Initialize Enhanced Message Memory System
+from enhanced_message_memory import initialize_enhanced_message_memory
+enhanced_memory = None
+try:
+    # This will be initialized asynchronously on first request
+    logger.info("📝 Enhanced Message Memory System ready for initialization")
+except Exception as e:
+    logger.error(f"❌ Enhanced Message Memory System preparation failed: {e}")
+
 logging.info("📝 Enhanced Message Memory System initialized (Letta Memory disabled)")
 
 # Memory and processing timeout configuration  
