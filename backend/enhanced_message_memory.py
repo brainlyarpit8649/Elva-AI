@@ -186,9 +186,29 @@ class EnhancedMessageMemory:
 
     async def save_message(self, session_id: str, role: str, content: str, metadata: Dict = None) -> bool:
         """
-        Save message to both MongoDB and Redis cache
+        Save message to both MongoDB and Redis cache with enhanced error handling and duplicate detection
         """
         try:
+            # Ensure connection and indexes are ready
+            if not await self._test_connection():
+                logger.warning("⚠️ Database connection not available")
+                return False
+            
+            # Check for duplicates with optimized query
+            existing = await self._safe_db_operation(
+                self.messages_collection.find_one,
+                {
+                    "session_id": session_id,
+                    "role": role,
+                    "content": content
+                },
+                timeout=5.0
+            )
+
+            if existing:
+                logger.info(f"⚠️ Duplicate message ignored for session {session_id}")
+                return True  # Return True since message already exists
+                
             # Prepare message document
             message_doc = {
                 "session_id": session_id,
@@ -196,16 +216,18 @@ class EnhancedMessageMemory:
                 "content": content,
                 "timestamp": datetime.utcnow(),
                 "metadata": metadata or {},
-                "indexed": True
+                "indexed": True,
+                "message_id": str(uuid.uuid4())  # Unique message ID for tracking
             }
             
-            # Save to MongoDB with timeout protection
-            mongo_result = await asyncio.wait_for(
-                self.messages_collection.insert_one(message_doc),
+            # Save to MongoDB with safe operation wrapper
+            mongo_result = await self._safe_db_operation(
+                self.messages_collection.insert_one,
+                message_doc,
                 timeout=8.0
             )
             
-            if not mongo_result.inserted_id:
+            if not mongo_result or not mongo_result.inserted_id:
                 logger.error(f"❌ Failed to save message to MongoDB for session {session_id}")
                 return False
             
@@ -216,9 +238,6 @@ class EnhancedMessageMemory:
             logger.info(f"💾 Saved {role} message for session {session_id}")
             return True
             
-        except asyncio.TimeoutError:
-            logger.error(f"⏱️ Timeout saving message for session {session_id}")
-            return False
         except Exception as e:
             logger.error(f"❌ Error saving message: {e}")
             return False
