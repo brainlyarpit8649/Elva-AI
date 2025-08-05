@@ -218,40 +218,68 @@ async def enhanced_chat_with_timeout(request: ChatRequest):
         return await _create_emergency_response(request, "I'm ready to assist you! How can I help?")
 
 async def _process_chat_with_fallbacks(request: ChatRequest, start_time: float):
-    """Process chat with comprehensive fallback system"""
+    """Process chat with comprehensive fallback system using Enhanced Message Memory"""
     
-    # Lazy initialization of startup tasks
-    global startup_tasks
-    
-    if not startup_tasks["indexes_created"]:
-        # Safe database index creation
-        index_result = await safe_database_operation(ensure_indexes)
-        if index_result is not None:
-            startup_tasks["indexes_created"] = True
-            logger.info("✅ Message memory indexes created successfully")
-        else:
-            logger.warning("⚠️ Message memory index creation failed - continuing without indexes")
+    # Initialize Enhanced Message Memory if not done already
+    global enhanced_memory
+    if enhanced_memory is None:
+        try:
+            enhanced_memory = await initialize_enhanced_message_memory()
+            logger.info("✅ Enhanced Message Memory initialized successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ Enhanced Message Memory initialization failed: {e}")
+            enhanced_memory = None
 
     logger.info(f"💬 Enhanced chat request - Session: {request.session_id}, Message: {request.message[:100]}...")
 
-    # STEP 1: Save user message safely
+    # STEP 1: Save user message to Enhanced Memory System
+    if enhanced_memory:
+        user_save_success = await enhanced_memory.save_message(
+            session_id=request.session_id,
+            role="user",
+            content=request.message,
+            metadata={"user_id": request.user_id}
+        )
+        if user_save_success:
+            logger.info(f"💾 Saved user message to enhanced memory")
+        else:
+            logger.warning("⚠️ Failed to save user message to enhanced memory")
+
+    # STEP 1.5: Also save to legacy system for compatibility
     user_msg = UserMessage(
         user_id=request.user_id,
         session_id=request.session_id,
         message=request.message
     )
     
-    # Safe user message save
+    # Safe user message save to legacy system
     save_result = await safe_database_operation(db.chat_messages.insert_one, user_msg.dict())
     if save_result:
-        logger.info(f"💾 Saved user message: {user_msg.id}")
+        logger.info(f"💾 Saved user message to legacy system: {user_msg.id}")
     else:
-        logger.warning("⚠️ Failed to save user message - continuing")
+        logger.warning("⚠️ Failed to save user message to legacy system - continuing")
 
-    # STEP 2: Process through fallback system
+    # STEP 2: Process through enhanced fallback system
     response_text, intent_data, needs_approval = await _process_with_cascading_fallbacks(request)
     
-    # STEP 3: Create and save AI response
+    # STEP 3: Save AI response to Enhanced Memory System
+    if enhanced_memory:
+        ai_save_success = await enhanced_memory.save_message(
+            session_id=request.session_id,
+            role="assistant",
+            content=response_text,
+            metadata={
+                "intent_data": intent_data,
+                "needs_approval": needs_approval,
+                "user_id": request.user_id
+            }
+        )
+        if ai_save_success:
+            logger.info(f"💾 Saved AI response to enhanced memory")
+        else:
+            logger.warning("⚠️ Failed to save AI response to enhanced memory")
+
+    # STEP 3.5: Create and save AI response to legacy system for compatibility
     ai_msg = AIMessage(
         session_id=request.session_id,
         user_id=request.user_id,
@@ -260,10 +288,10 @@ async def _process_chat_with_fallbacks(request: ChatRequest, start_time: float):
         is_system=intent_data.get('intent') in ['gmail_auth_required', 'error', 'no_pending_package']
     )
     
-    # Safe AI message save
+    # Safe AI message save to legacy system
     await safe_database_operation(db.chat_messages.insert_one, ai_msg.dict())
     
-    # STEP 4: Safe conversation context storage
+    # STEP 4: Safe conversation context storage (legacy systems)
     await _safe_context_storage(request, response_text, intent_data, ai_msg)
     
     execution_time = asyncio.get_event_loop().time() - start_time
