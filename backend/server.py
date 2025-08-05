@@ -45,6 +45,7 @@ from weather_service_tomorrow import (
 )
 
 # Enhanced Message Memory System for Context-Aware Conversations
+from enhanced_message_memory import initialize_enhanced_message_memory
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
