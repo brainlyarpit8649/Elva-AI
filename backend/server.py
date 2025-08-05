@@ -768,9 +768,6 @@ async def get_session_unified_memory_stats(session_id: str):
     except Exception as e:
         logger.error(f"Session unified memory stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        logger.error(f"Health check error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 # Add router to app
 app.include_router(api_router)
