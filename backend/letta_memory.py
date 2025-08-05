@@ -171,6 +171,16 @@ class SimpleLettaMemory:
                                 return {"success": True, "response": "Your nickname is Arp."}
                     return {"success": True, "response": "I don't have information about your nickname."}
                 
+                elif "name" in message_lower and any(word in message_lower for word in ["what is my", "what's my"]):
+                    # Look for name in facts
+                    for fact_key, fact_data in self.memory["facts"].items():
+                        fact_text = fact_data.get("text", "")
+                        if "name is" in fact_text.lower() or fact_key == "name":
+                            # Extract the name from the text
+                            name_text = fact_text.replace("My name is ", "").replace("my name is ", "").replace("...", "").strip()
+                            return {"success": True, "response": f"Your name is {name_text}."}
+                    return {"success": True, "response": "I don't have information about your name."}
+                
                 elif any(food_word in message_lower for food_word in ["love to eat", "like to eat", "favorite food", "love eating"]):
                     # Look for food preferences
                     food_facts = []
