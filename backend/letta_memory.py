@@ -211,11 +211,24 @@ class SimpleLettaMemory:
                         return {"success": True, "response": "I don't have specific information stored about you yet."}
                 
                 else:
-                    # General context search
+                    # General context search with intelligent response
                     context_result = self.retrieve_context(message)
                     context = context_result.get("context", "")
                     if context:
-                        return {"success": True, "response": context}
+                        # Instead of returning raw context, process it intelligently
+                        facts = context.split('\n')
+                        if len(facts) == 1:
+                            # Single fact - return it naturally
+                            fact = facts[0].replace("Remember that ", "").replace("remember that ", "")
+                            return {"success": True, "response": f"Based on what you've told me: {fact}"}
+                        else:
+                            # Multiple facts - return summary
+                            processed_facts = []
+                            for fact in facts[:3]:  # Limit to 3 most relevant
+                                clean_fact = fact.replace("Remember that ", "").replace("remember that ", "")
+                                processed_facts.append(clean_fact)
+                            response = "Here's what I know: " + "; ".join(processed_facts)
+                            return {"success": True, "response": response}
                     else:
                         return {"success": True, "response": "I don't have specific information about that."}
             
