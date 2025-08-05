@@ -486,7 +486,8 @@ class EnhancedMessageMemory:
             redis_healthy = False
             if self.redis_connected:
                 try:
-                    await self.redis_client.ping()
+                    loop = asyncio.get_event_loop()
+                    await loop.run_in_executor(None, self.redis_client.ping)
                     redis_healthy = True
                 except:
                     self.redis_connected = False
