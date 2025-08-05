@@ -229,7 +229,10 @@ class EnhancedMessageMemory:
         """Get messages from Redis cache"""
         try:
             redis_key = f"session_messages:{session_id}"
-            cached_data = await self.redis_client.lrange(redis_key, 0, limit - 1)
+            
+            # Execute Redis operations in thread pool
+            loop = asyncio.get_event_loop()
+            cached_data = await loop.run_in_executor(None, self.redis_client.lrange, redis_key, 0, limit - 1)
             
             if not cached_data:
                 return None
