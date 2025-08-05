@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://7c274570-5dc9-4f65-b14d-72a40eec87bc.preview.emergentagent.com/api"
+BACKEND_URL = "https://0fbf6255-bf7b-4ad7-b4ea-c5da62fa1669.preview.emergentagent.com/api"
 
 class GmailAuthTester:
     def __init__(self):
@@ -73,7 +73,7 @@ class GmailAuthTester:
                     return False
                 
                 # Check if correct redirect URI is present
-                expected_redirect = "https://7c274570-5dc9-4f65-b14d-72a40eec87bc.preview.emergentagent.com/api/gmail/callback"
+                expected_redirect = "https://0fbf6255-bf7b-4ad7-b4ea-c5da62fa1669.preview.emergentagent.com/api/gmail/callback"
                 if expected_redirect not in auth_url:
                     self.log_test("Gmail Auth URL Generation", False, f"Incorrect redirect URI in URL. Expected: {expected_redirect}")
                     return False
@@ -319,7 +319,7 @@ class GmailAuthTester:
                 auth_url = response.headers.get('Location', '')
                 
                 # Extract redirect URI from credentials.json
-                expected_redirect_uri = "https://7c274570-5dc9-4f65-b14d-72a40eec87bc.preview.emergentagent.com/api/gmail/callback"
+                expected_redirect_uri = "https://0fbf6255-bf7b-4ad7-b4ea-c5da62fa1669.preview.emergentagent.com/api/gmail/callback"
                 
                 # Check if the redirect URI from credentials.json is in the auth URL
                 if expected_redirect_uri in auth_url:

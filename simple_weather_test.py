@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://7c274570-5dc9-4f65-b14d-72a40eec87bc.preview.emergentagent.com/api"
+BACKEND_URL = "https://0fbf6255-bf7b-4ad7-b4ea-c5da62fa1669.preview.emergentagent.com/api"
 
 def test_weather_direct_api():
     """Test direct weather API endpoints"""
