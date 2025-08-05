@@ -327,8 +327,9 @@ class EnhancedMessageMemory:
             return None
 
     async def _get_messages_from_mongodb(self, session_id: str, limit: int) -> List[Dict]:
-        """Get messages from MongoDB with optimized query"""
+        """Get messages from MongoDB with optimized query and safe operation wrapper"""
         try:
+            # Use optimized query with projection for better performance
             cursor = self.messages_collection.find(
                 {"session_id": session_id},
                 {
@@ -337,25 +338,28 @@ class EnhancedMessageMemory:
                     "content": 1,
                     "timestamp": 1,
                     "metadata": 1,
-                    "_id": 0
+                    "_id": 0  # Exclude _id for better performance
                 }
             ).sort("timestamp", 1).limit(limit)
             
-            messages = await asyncio.wait_for(
-                cursor.to_list(length=None),
-                timeout=12.0
+            # Execute with safe operation wrapper
+            messages = await self._safe_db_operation(
+                cursor.to_list,
+                length=None,
+                timeout=self.DB_OPERATION_TIMEOUT
             )
             
-            # Convert timestamps to ISO strings
+            if messages is None:
+                logger.warning(f"⚠️ MongoDB query timed out for session {session_id}")
+                return []
+            
+            # Optimize timestamp conversion
             for msg in messages:
                 if isinstance(msg.get("timestamp"), datetime):
                     msg["timestamp"] = msg["timestamp"].isoformat()
             
             return messages
             
-        except asyncio.TimeoutError:
-            logger.error(f"⏱️ MongoDB query timeout for session {session_id}")
-            return []
         except Exception as e:
             logger.error(f"❌ Error querying MongoDB: {e}")
             return []
