@@ -1,5 +1,159 @@
 #!/usr/bin/env python3
 """
+Simple Enhanced Memory Test - Direct API Testing
+Focus on diagnosing the context retrieval issue with simpler approach
+"""
+
+import requests
+import json
+import uuid
+import time
+
+# Test configuration
+BACKEND_URL = "https://ee5e777b-dc22-480e-8057-5ec09c03a73c.preview.emergentagent.com"
+API_BASE = f"{BACKEND_URL}/api"
+
+def test_memory_system():
+    """Test the enhanced memory system step by step"""
+    session_id = f"test_session_{uuid.uuid4().hex[:8]}"
+    
+    print(f"🧪 Testing Enhanced Conversation Memory System")
+    print(f"📋 Session ID: {session_id}")
+    print("=" * 60)
+    
+    # Test 1: Check unified memory stats
+    print("\n1️⃣ Testing Unified Memory Stats Endpoint")
+    try:
+        response = requests.get(f"{API_BASE}/unified-memory/stats", timeout=10)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            stats = response.json()
+            print(f"   ✅ Memory Status: {stats.get('status', 'unknown')}")
+            print(f"   📊 Health: {stats.get('health', {})}")
+        else:
+            print(f"   ❌ Error: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Exception: {e}")
+    
+    # Test 2: Send name message
+    print("\n2️⃣ Sending Name Message")
+    try:
+        chat_request = {
+            "message": "My name is Arpit",
+            "session_id": session_id,
+            "user_id": "test_user"
+        }
+        
+        response = requests.post(f"{API_BASE}/chat", json=chat_request, timeout=30)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            chat_response = response.json()
+            print(f"   ✅ AI Response: {chat_response.get('response', '')[:100]}...")
+            print(f"   📝 Message ID: {chat_response.get('id')}")
+        else:
+            print(f"   ❌ Error: {response.text}")
+            return
+    except Exception as e:
+        print(f"   ❌ Exception: {e}")
+        return
+    
+    # Wait a moment for message to be processed
+    time.sleep(2)
+    
+    # Test 3: Check session stats
+    print("\n3️⃣ Checking Session Memory Stats")
+    try:
+        response = requests.get(f"{API_BASE}/unified-memory/session/{session_id}/stats", timeout=10)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            stats = response.json()
+            session_stats = stats.get('session_stats', {})
+            print(f"   ✅ Total Messages: {session_stats.get('total_messages', 0)}")
+            print(f"   👤 User Messages: {session_stats.get('user_messages', 0)}")
+            print(f"   🤖 Assistant Messages: {session_stats.get('assistant_messages', 0)}")
+        else:
+            print(f"   ❌ Error: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Exception: {e}")
+    
+    # Test 4: Send a few more messages
+    print("\n4️⃣ Sending Additional Messages")
+    additional_messages = [
+        "How are you today?",
+        "What's the weather like?"
+    ]
+    
+    for i, message in enumerate(additional_messages):
+        try:
+            chat_request = {
+                "message": message,
+                "session_id": session_id,
+                "user_id": "test_user"
+            }
+            
+            response = requests.post(f"{API_BASE}/chat", json=chat_request, timeout=30)
+            print(f"   Message {i+1}: {response.status_code} - {message}")
+            if response.status_code == 200:
+                chat_response = response.json()
+                print(f"      Response: {chat_response.get('response', '')[:50]}...")
+            time.sleep(1)
+        except Exception as e:
+            print(f"   ❌ Exception on message {i+1}: {e}")
+    
+    # Test 5: Ask for name recall
+    print("\n5️⃣ Testing Name Recall")
+    try:
+        chat_request = {
+            "message": "What is my name?",
+            "session_id": session_id,
+            "user_id": "test_user"
+        }
+        
+        response = requests.post(f"{API_BASE}/chat", json=chat_request, timeout=30)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            chat_response = response.json()
+            ai_response = chat_response.get('response', '')
+            print(f"   🤖 AI Response: {ai_response}")
+            
+            # Check if AI remembers the name
+            remembers_name = 'arpit' in ai_response.lower()
+            if remembers_name:
+                print("   ✅ SUCCESS: AI remembers the name!")
+            else:
+                print("   ❌ FAILURE: AI does NOT remember the name")
+                print("   🚨 This confirms the context retrieval issue")
+        else:
+            print(f"   ❌ Error: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Exception: {e}")
+    
+    # Test 6: Final session stats
+    print("\n6️⃣ Final Session Stats")
+    try:
+        response = requests.get(f"{API_BASE}/unified-memory/session/{session_id}/stats", timeout=10)
+        if response.status_code == 200:
+            stats = response.json()
+            session_stats = stats.get('session_stats', {})
+            print(f"   ✅ Final Total Messages: {session_stats.get('total_messages', 0)}")
+            print(f"   📊 User/Assistant: {session_stats.get('user_messages', 0)}/{session_stats.get('assistant_messages', 0)}")
+        else:
+            print(f"   ❌ Error: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Exception: {e}")
+    
+    print("\n" + "=" * 60)
+    print("🎯 DIAGNOSIS SUMMARY:")
+    print("If AI does NOT remember the name 'Arpit', then:")
+    print("1. Enhanced Memory System may not be storing messages correctly")
+    print("2. Context retrieval (get_context_for_ai) may be broken")
+    print("3. Context may not be passed to AI models properly")
+    print("4. This confirms the issue reported in the review request")
+    print("=" * 60)
+
+if __name__ == "__main__":
+    test_memory_system()
+"""
 Simple Backend Testing for Conversation Memory and Gmail Authentication
 Focused tests with shorter timeouts and better error handling
 """
