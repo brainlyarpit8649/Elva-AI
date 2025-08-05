@@ -70,15 +70,10 @@ db = client[os.environ['DB_NAME']]
 gmail_oauth_service = GmailOAuthService(db=db)
 enhanced_gmail_service = EnhancedGmailService(gmail_oauth_service)
 realtime_gmail_service = RealTimeGmailService(gmail_oauth_service)
-# conversation_memory = initialize_conversation_memory(db)  # Removed - using enhanced memory system
 mcp_service = initialize_mcp_service()
 
-# Enhanced Message Memory System - Letta Memory disabled for now
-semantic_memory = None
-MEMORY_ENABLED = False
-
-# Initialize Enhanced Message Memory System
-from enhanced_message_memory import initialize_enhanced_message_memory
+# Enhanced Message Memory System - Single Unified System
+# Initialize Enhanced Message Memory System (replaces both message_memory.py and conversation_memory.py)
 enhanced_memory = None
 try:
     # This will be initialized asynchronously on first request
@@ -86,7 +81,11 @@ try:
 except Exception as e:
     logger.error(f"❌ Enhanced Message Memory System preparation failed: {e}")
 
-logging.info("📝 Enhanced Message Memory System initialized (Letta Memory disabled)")
+logger.info("📝 Enhanced Message Memory System initialized (Unified Redis+MongoDB system)")
+
+# Legacy memory system completely removed
+semantic_memory = None
+MEMORY_ENABLED = False
 
 # Memory and processing timeout configuration  
 MEMORY_OPERATION_TIMEOUT = 15.0  # 15 seconds for memory operations
