@@ -324,6 +324,100 @@ async def _process_with_cascading_fallbacks(request: ChatRequest) -> tuple[str, 
             # Ultimate fallback
             return await _process_simple_fallback(request)
 
+async def _process_with_mongodb_context(request: ChatRequest) -> tuple[str, dict, bool]:
+    """Process chat with enhanced MongoDB conversation context"""
+    
+    # Import message memory functions safely
+    try:
+        from message_memory import get_conversation_context_for_ai, search_conversation_memory
+    except ImportError as e:
+        logger.warning(f"⚠️ Could not import message memory functions: {e}")
+        return await _process_groq_only(request)
+    
+    # STEP 1: Get enhanced conversation context from MongoDB
+    previous_context = ""
+    try:
+        # Get full conversation history for context
+        context_result = await safe_database_operation(
+            get_conversation_context_for_ai, 
+            request.session_id
+        )
+        if context_result:
+            previous_context = context_result
+            logger.info(f"📖 Retrieved MongoDB conversation context ({len(previous_context)} chars)")
+        
+        # Add MCP context
+        mcp_context_result = await safe_memory_operation(
+            mcp_service.read_context, 
+            request.session_id
+        )
+        if mcp_context_result and mcp_context_result.get("success"):
+            mcp_context = await safe_memory_operation(
+                mcp_service.get_context_for_prompt, 
+                request.session_id
+            )
+            if mcp_context:
+                previous_context += f"\n\n=== MCP CONTEXT ===\n{mcp_context}"
+                logger.info(f"📖 Added MCP context")
+                
+    except Exception as context_error:
+        logger.warning(f"⚠️ Error reading conversation context: {context_error}")
+        previous_context = ""
+
+    # STEP 2: Handle Post Prompt Package confirmation
+    if request.session_id in pending_post_packages:
+        if any(confirmation in request.message.lower() for confirmation in ["send", "yes", "go ahead", "submit", "confirm", "ok"]):
+            logger.info(f"📤 Confirmed post package send for session {request.session_id}")
+            
+            package_data = pending_post_packages[request.session_id]
+            intent_data = {
+                "intent": "generate_post_prompt_package_confirmed",
+                **package_data
+            }
+            
+            del pending_post_packages[request.session_id]
+            
+            response_text = "✅ **Package sent to your automation workflow!** I've forwarded your post description and AI instructions for processing."
+            return response_text, intent_data, True
+
+    # STEP 3: Process through advanced hybrid AI with MongoDB context
+    try:
+        intent_data, response_text, routing_decision = await asyncio.wait_for(
+            advanced_hybrid_ai.process_message(
+                user_input=request.message,
+                session_id=request.session_id,
+                memory_context=previous_context  # Pass MongoDB conversation context
+            ),
+            timeout=AI_RESPONSE_TIMEOUT
+        )
+        
+        logger.info(f"🚀 AI processing completed with MongoDB context: {intent_data.get('intent', 'unknown')} -> {len(response_text)} chars")
+        
+    except asyncio.TimeoutError:
+        logger.warning(f"⚠️ AI response generation timed out, using fallback")
+        return await _process_groq_only(request)
+    
+    # Check if this is an action that needs approval
+    needs_approval = intent_data.get("needs_approval", False)
+    if intent_data.get("intent") in ["send_email", "create_event", "add_todo", "set_reminder"]:
+        needs_approval = True
+
+    # STEP 4: Handle generate_post_prompt_package intent
+    if intent_data.get("intent") == "generate_post_prompt_package":
+        pending_post_packages[request.session_id] = {
+            "post_description": intent_data.get("post_description", ""),
+            "ai_instructions": intent_data.get("ai_instructions", ""),
+            "topic": intent_data.get("topic", ""),
+            "project_name": intent_data.get("project_name", ""),
+            "project_type": intent_data.get("project_type", ""),
+            "tech_stack": intent_data.get("tech_stack", ""),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        response_text += "\n\n💬 **Ready to send?** Just say **'send'**, **'yes, go ahead'**, or **'submit'** to send this package to your automation workflow!"
+        logger.info(f"📝 Stored pending post package for session {request.session_id}")
+    
+    return response_text, intent_data, needs_approval
+
 async def _process_with_memory_context(request: ChatRequest) -> tuple[str, dict, bool]:
     """Process chat with Letta memory context - simplified approach"""
     
