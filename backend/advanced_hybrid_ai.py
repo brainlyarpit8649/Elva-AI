@@ -879,7 +879,7 @@ Return ONLY the JSON object."""
         Args:
             user_input: User's input message
             session_id: Session identifier for context retrieval
-            memory_context: Memory context from Letta system (user facts, preferences, etc.)
+            memory_context: Conversation context from MongoDB system (history, preferences, etc.)
             
         Returns:
             Tuple of (intent_data, response_text, routing_decision)
