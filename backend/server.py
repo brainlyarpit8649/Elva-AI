@@ -722,7 +722,8 @@ async def health_check():
             "timestamp": datetime.utcnow().isoformat(),
             "services": {
                 "database": db_status,
-                "semantic_memory": memory_status,
+                "enhanced_memory": enhanced_memory_status,
+                "legacy_memory": memory_status,
                 "mcp_service": mcp_status
             },
             "timeout_config": {
