@@ -457,37 +457,6 @@ async def _process_simple_fallback(request: ChatRequest) -> tuple[str, dict, boo
     intent_data = {"intent": "general_chat", "fallback_mode": "simple"}
     return response_text, intent_data, False
 
-async def _auto_store_facts(request: ChatRequest, semantic_memory):
-    """Auto-store important facts from conversation"""
-    
-    try:
-        user_message_lower = request.message.lower()
-        
-        # Patterns that suggest personal information
-        info_patterns = {
-            "identity": ["my name is", "i am", "call me", "i'm"],
-            "preferences": ["i like", "i love", "i prefer", "i hate", "i dislike", "my favorite"],
-            "contacts": ["my manager", "my boss", "my colleague", "my friend", "my family"],
-            "work": ["i work", "my job", "my company", "my role", "my position"],
-            "location": ["i live", "i'm from", "my address", "my location"],
-            "skills": ["i can", "i know how to", "i'm good at", "i have experience"]
-        }
-        
-        for fact_type, patterns in info_patterns.items():
-            if any(pattern in user_message_lower for pattern in patterns):
-                # Auto-store facts silently
-                auto_memory_result = await safe_memory_operation(
-                    semantic_memory.process_message_for_memory,
-                    request.message,
-                    request.session_id
-                )
-                if auto_memory_result and auto_memory_result.get("facts_extracted"):
-                    logger.info(f"🧠 Auto-stored {fact_type} facts: {len(auto_memory_result['facts_extracted'])} facts")
-                break
-                
-    except Exception as auto_store_error:
-        logger.warning(f"⚠️ Auto-store failed: {auto_store_error}")
-
 async def _safe_context_storage(request: ChatRequest, response_text: str, intent_data: dict, ai_msg):
     """Safely store conversation context in multiple systems"""
     
