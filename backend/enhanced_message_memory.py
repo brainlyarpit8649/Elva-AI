@@ -403,7 +403,8 @@ class EnhancedMessageMemory:
             # Clear Redis cache
             if self.redis_connected:
                 redis_key = f"session_messages:{session_id}"
-                await self.redis_client.delete(redis_key)
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, self.redis_client.delete, redis_key)
             
             logger.info(f"🗑️ Cleared {mongo_result.deleted_count} messages for session {session_id}")
             return True
