@@ -272,48 +272,17 @@ async def _process_chat_with_fallbacks(request: ChatRequest, start_time: float):
 
 async def _process_with_cascading_fallbacks(request: ChatRequest) -> tuple[str, dict, bool]:
     """
-    Cascading fallback system:
-    1. Quick memory check first (if memory command detected)
-    2. Full processing with Letta memory + Groq
-    3. Groq only (if memory fails)
-    4. Simple response (if Groq fails)
+    Enhanced processing with MongoDB-based context memory:
+    1. Process with MongoDB conversation context + Groq/Claude
+    2. Fallback to Groq-only (if context retrieval fails)
+    3. Simple response (if all AI processing fails)
     """
     
-    # PRIORITY: Quick memory command check first (before any complex processing)
-    if MEMORY_ENABLED and semantic_memory:
-        message_lower = request.message.lower().strip()
-        
-        memory_triggers = [
-            "remember that", "store this", "what do you remember", 
-            "what's my", "what is my", "forget that", "my name is", "call me",
-            "what do i", "who am i", "tell me about", "do you remember",
-            "i like", "i love", "my favorite"
-        ]
-        
-        is_memory_command = any(trigger in message_lower for trigger in memory_triggers)
-        
-        if is_memory_command:
-            logger.info(f"🧠 Quick memory command detected: {request.message[:50]}...")
-            
-            try:
-                memory_result = await semantic_memory.chat_with_memory(request.message, request.session_id)
-                
-                if memory_result and memory_result.get("success"):
-                    response_text = memory_result.get("response", "Got it!")
-                    intent_data = {"intent": "memory_operation", "operation_type": "letta_memory"}
-                    logger.info(f"✅ Quick memory operation successful: {response_text[:50]}...")
-                    return response_text, intent_data, False
-                else:
-                    logger.warning("⚠️ Quick memory operation had no success flag, continuing")
-            except Exception as memory_error:
-                logger.error(f"❌ Quick memory processing error: {memory_error}")
-                # Continue with normal processing if memory fails
-    
-    # Try full processing with memory context
+    # Process with enhanced MongoDB context
     try:
-        return await _process_with_memory_context(request)
+        return await _process_with_mongodb_context(request)
     except Exception as e:
-        logger.warning(f"⚠️ Full processing failed, trying Groq-only: {e}")
+        logger.warning(f"⚠️ MongoDB context processing failed, trying Groq-only: {e}")
         
         # Fallback to Groq only
         try:
