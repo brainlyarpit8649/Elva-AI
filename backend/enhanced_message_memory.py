@@ -64,10 +64,53 @@ class EnhancedMessageMemory:
         try:
             await self._ensure_mongo_indexes()
             await self._initialize_redis()
+            await self._test_connection()
             logger.info("✅ Enhanced Message Memory System initialized successfully")
             return True
         except Exception as e:
             logger.error(f"❌ Failed to initialize Enhanced Message Memory: {e}")
+            return False
+
+    async def _safe_db_operation(self, operation_func, *args, timeout: float = None, **kwargs):
+        """
+        Safely execute database operations with timeout and retry logic.
+        Enhanced version from message_memory.py optimizations.
+        """
+        timeout = timeout or self.DEFAULT_TIMEOUT
+        max_retries = 2
+        base_delay = 0.1
+        
+        for attempt in range(max_retries + 1):
+            try:
+                return await asyncio.wait_for(
+                    operation_func(*args, **kwargs), 
+                    timeout=timeout
+                )
+            except asyncio.TimeoutError:
+                if attempt == max_retries:
+                    logger.error(f"❌ Database operation timed out after {max_retries} retries (timeout: {timeout}s)")
+                    return None
+                await asyncio.sleep(base_delay * (2 ** attempt))  # Exponential backoff
+            except Exception as e:
+                if attempt == max_retries:
+                    logger.error(f"❌ Database operation failed after {max_retries} retries: {e}")
+                    return None
+                await asyncio.sleep(base_delay * (2 ** attempt))
+        
+        return None
+
+    async def _test_connection(self):
+        """Test MongoDB connection health"""
+        if self._connection_tested:
+            return True
+            
+        try:
+            await asyncio.wait_for(self.db.admin.command('ping'), timeout=5.0)
+            self._connection_tested = True
+            logger.info("✅ MongoDB connection verified")
+            return True
+        except Exception as e:
+            logger.error(f"❌ MongoDB connection test failed: {e}")
             return False
 
     async def _ensure_mongo_indexes(self):
