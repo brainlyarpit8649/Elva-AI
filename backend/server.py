@@ -341,10 +341,10 @@ async def _process_with_mongodb_context(request: ChatRequest) -> tuple[str, dict
             logger.warning(f"⚠️ Could not initialize enhanced memory: {e}")
             return await _process_groq_only(request)
     
-    # STEP 1: Get enhanced conversation context from MongoDB/Redis
+    # STEP 1: Get enhanced conversation context from Redis+MongoDB hybrid system
     previous_context = ""
     try:
-        # Get conversation context using enhanced memory system
+        # Get conversation context using enhanced memory system only
         if enhanced_memory:
             context_result = await enhanced_memory.get_context_for_ai(
                 session_id=request.session_id,
@@ -353,20 +353,8 @@ async def _process_with_mongodb_context(request: ChatRequest) -> tuple[str, dict
             if context_result:
                 previous_context = context_result
                 logger.info(f"📖 Retrieved enhanced conversation context ({len(previous_context)} chars)")
-        
-        # Fallback to legacy message memory if enhanced memory fails
-        if not previous_context:
-            try:
-                from message_memory import get_conversation_context_for_ai
-                context_result = await safe_database_operation(
-                    get_conversation_context_for_ai, 
-                    request.session_id
-                )
-                if context_result:
-                    previous_context = context_result
-                    logger.info(f"📖 Fallback: Retrieved legacy conversation context ({len(previous_context)} chars)")
-            except ImportError:
-                logger.warning("⚠️ Could not import legacy message memory functions")
+        else:
+            logger.warning("⚠️ Enhanced Memory System not initialized - responses may lack context")
         
         # Add MCP context
         mcp_context_result = await safe_memory_operation(
