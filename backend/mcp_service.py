@@ -29,7 +29,7 @@ security = HTTPBearer()
 MCP_API_TOKEN = os.getenv("MCP_API_TOKEN", "kumararpit9468")
 
 # Backend URL for processing WhatsApp messages
-ELVA_BACKEND_URL = os.getenv("ELVA_BACKEND_URL", "https://ad4a13b2-21da-421a-bc6c-d10e436aeccb.preview.emergentagent.com")
+ELVA_BACKEND_URL = os.getenv("ELVA_BACKEND_URL", "https://ab5f30cf-28b7-448e-92ee-50cd74c372d1.preview.emergentagent.com")
 
 # Initialize FastAPI app
 app = FastAPI(
