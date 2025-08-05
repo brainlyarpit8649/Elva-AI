@@ -874,40 +874,28 @@ Return ONLY the JSON object."""
 
     async def process_message(self, user_input: str, session_id: str, memory_context: str = "") -> Tuple[dict, str, RoutingDecision]:
         """
-        Enhanced message processing with comprehensive conversation memory integration.
+        Enhanced message processing with conversation memory integration.
         
         Args:
             user_input: User's input message
             session_id: Session identifier for context retrieval
-            memory_context: Conversation context from MongoDB system (history, preferences, etc.)
+            memory_context: Conversation context from enhanced Redis+MongoDB hybrid system
             
         Returns:
             Tuple of (intent_data, response_text, routing_decision)
         """
-        logger.info(f"🚀 Processing message with full conversation context: {user_input[:50]}...")
+        logger.info(f"🚀 Processing message with enhanced conversation context: {user_input[:50]}...")
         
         try:
-            # Get comprehensive conversation context from message_memory with timeout protection
-            try:
-                from message_memory import get_conversation_context_for_ai
-                full_conversation_context = await asyncio.wait_for(
-                    get_conversation_context_for_ai(session_id), 
-                    timeout=15.0
-                )
-                logger.info(f"📚 Retrieved FULL conversation context: {len(full_conversation_context)} chars")
-            except asyncio.TimeoutError:
-                logger.warning(f"⚠️ Timeout retrieving conversation context for session {session_id}")
-                full_conversation_context = ""
-            except Exception as e:
-                logger.warning(f"Could not retrieve full conversation context: {e}")
-                full_conversation_context = ""
-            
-            # Add MongoDB Memory context if provided
+            # PRIORITY 1: Use enhanced memory context passed from server.py
+            full_conversation_context = ""
             if memory_context:
-                full_conversation_context += f"\n\n=== USER CONVERSATION CONTEXT ===\n{memory_context}"
-                logger.info(f"💾 Added MongoDB conversation context for natural response generation")
+                full_conversation_context = memory_context
+                logger.info(f"💾 Using enhanced Redis+MongoDB conversation context ({len(memory_context)} chars)")
+            else:
+                logger.warning("⚠️ No enhanced memory context provided - responses may lack conversational continuity")
             
-            # Also get MCP context for additional context with timeout protection
+            # Add MCP context for additional context with timeout protection
             try:
                 mcp_service = get_mcp_service()
                 mcp_context = await asyncio.wait_for(
@@ -916,13 +904,13 @@ Return ONLY the JSON object."""
                 )
                 if mcp_context:
                     full_conversation_context += f"\n\n=== ADDITIONAL MCP CONTEXT ===\n{mcp_context}"
-                logger.info(f"📚 Added MCP context to full conversation context")
+                    logger.info(f"📚 Added MCP context to conversation memory")
             except asyncio.TimeoutError:
                 logger.warning(f"⚠️ Timeout retrieving MCP context for session {session_id}")
             except Exception as e:
                 logger.warning(f"Could not retrieve MCP context: {e}")
             
-            # Step 1: Get comprehensive conversation context from message_memory
+            # Step 1: Analyze task classification
             classification = await self.analyze_task_classification(user_input, session_id)
             
             # Step 2: Check for direct automation intents first
