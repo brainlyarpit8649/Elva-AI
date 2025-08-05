@@ -20,19 +20,19 @@ logger = logging.getLogger(__name__)
 
 class EnhancedMessageMemory:
     def __init__(self):
-        # MongoDB setup
+        # MongoDB setup with optimized connection pool settings
         self.mongo_url = os.environ.get('MONGO_URL')
         self.mongo_client = AsyncIOMotorClient(
             self.mongo_url,
-            maxPoolSize=25,
-            minPoolSize=5,
-            maxIdleTimeMS=30000,
-            connectTimeoutMS=5000,
-            serverSelectionTimeoutMS=10000,
-            socketTimeoutMS=20000,
-            heartbeatFrequencyMS=10000,
-            retryWrites=True,
-            w="majority"
+            maxPoolSize=25,  # Increased pool size for high performance
+            minPoolSize=5,   # Minimum connections kept alive
+            maxIdleTimeMS=30000,  # Keep connections for 30 seconds
+            connectTimeoutMS=5000,  # 5 second connection timeout
+            serverSelectionTimeoutMS=10000,  # 10 second server selection timeout
+            socketTimeoutMS=20000,  # 20 second socket timeout
+            heartbeatFrequencyMS=10000,  # Health check every 10 seconds
+            retryWrites=True,  # Enable retry writes for resilience
+            w="majority"  # Write concern for data safety
         )
         
         self.db = self.mongo_client[os.environ.get('DB_NAME', 'test_database')]
@@ -42,16 +42,22 @@ class EnhancedMessageMemory:
         self.redis_client = None
         self.redis_connected = False
         
-        # Configuration
-        self.CONTEXT_MEMORY_LIMIT = 100  # Fetch last 100 messages from MongoDB
-        self.REDIS_CACHE_LIMIT = 30     # Cache last 30 messages in Redis for speed
+        # Performance Configuration (Optimized for User Requirements)
+        self.CONTEXT_MEMORY_LIMIT = 100  # Fetch last 100+ messages from MongoDB for long-term context
+        self.REDIS_CACHE_LIMIT = 30     # Cache last 30 messages in Redis for short-term speed
         self.REDIS_TTL_SECONDS = 3600    # 1 hour Redis cache TTL
         self.MONGO_TTL_DAYS = 30         # 30 days MongoDB retention
         self.MAX_CONTEXT_CHARS = 12000   # Maximum context size for AI
         
-        # Connection state
+        # Timeout Configuration (From message_memory.py optimizations)
+        self.MAX_TIMEOUT = 15.0  # Maximum timeout for any operation
+        self.DEFAULT_TIMEOUT = 8.0  # Default timeout for most operations
+        self.DB_OPERATION_TIMEOUT = 12.0  # Database operation timeout
+        
+        # Connection state tracking
         self._indexes_created = False
         self._redis_initialized = False
+        self._connection_tested = False
 
     async def initialize(self):
         """Initialize MongoDB indexes and Redis connection"""
