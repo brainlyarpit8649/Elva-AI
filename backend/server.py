@@ -685,17 +685,17 @@ async def health_check():
         except:
             db_status = "disconnected"
         
-        # Test enhanced memory system
-        enhanced_memory_status = "disabled"
+        # Test legacy memory system (completely removed)
+        legacy_memory_status = "removed"  # Legacy systems completely removed
+        
+        # Test unified enhanced memory system
+        unified_memory_status = "disabled"
         if enhanced_memory:
             try:
                 memory_health = await enhanced_memory.get_health_status()
-                enhanced_memory_status = memory_health.get("status", "unknown")
+                unified_memory_status = memory_health.get("status", "unknown")
             except:
-                enhanced_memory_status = "error"
-        
-        # Test legacy memory system
-        memory_status = "disabled"  # Letta is now disabled
+                unified_memory_status = "error"
         
         # Test MCP service
         mcp_status = "connected"
@@ -709,8 +709,8 @@ async def health_check():
             "timestamp": datetime.utcnow().isoformat(),
             "services": {
                 "database": db_status,
-                "enhanced_memory": enhanced_memory_status,
-                "legacy_memory": memory_status,
+                "unified_memory": unified_memory_status,
+                "legacy_memory": legacy_memory_status,
                 "mcp_service": mcp_status
             },
             "timeout_config": {
