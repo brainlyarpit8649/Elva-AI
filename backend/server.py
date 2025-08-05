@@ -723,31 +723,36 @@ async def health_check():
         logger.error(f"Health check error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/enhanced-memory/stats")
-async def get_enhanced_memory_stats():
-    """Get Enhanced Memory System statistics"""
+@api_router.get("/unified-memory/stats")
+async def get_unified_memory_stats():
+    """Get Unified Memory System statistics (replaces both enhanced-memory and message-memory endpoints)"""
     try:
         global enhanced_memory
         if enhanced_memory is None:
             try:
                 enhanced_memory = await initialize_enhanced_message_memory()
             except Exception as e:
-                raise HTTPException(status_code=503, detail=f"Enhanced Memory not available: {e}")
+                raise HTTPException(status_code=503, detail=f"Unified Memory not available: {e}")
         
         health_status = await enhanced_memory.get_health_status()
         return {
             "status": "available",
             "health": health_status,
-            "message": "Enhanced Message Memory System operational - Letta removed successfully"
+            "message": "Unified Message Memory System operational - Legacy systems removed",
+            "architecture": {
+                "redis_cache": f"{enhanced_memory.REDIS_CACHE_LIMIT} messages",
+                "mongodb_storage": f"{enhanced_memory.CONTEXT_MEMORY_LIMIT}+ messages",
+                "performance": "Redis+MongoDB hybrid with timeout protection"
+            }
         }
         
     except Exception as e:
-        logger.error(f"Enhanced memory stats error: {e}")
+        logger.error(f"Unified memory stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/enhanced-memory/session/{session_id}/stats")
-async def get_session_memory_stats(session_id: str):
-    """Get memory statistics for a specific session"""
+@api_router.get("/unified-memory/session/{session_id}/stats")
+async def get_session_unified_memory_stats(session_id: str):
+    """Get unified memory statistics for a specific session"""
     try:
         global enhanced_memory
         if enhanced_memory is None:
@@ -756,11 +761,12 @@ async def get_session_memory_stats(session_id: str):
         session_stats = await enhanced_memory.get_session_stats(session_id)
         return {
             "status": "success",
-            "session_stats": session_stats
+            "session_stats": session_stats,
+            "architecture": "unified_redis_mongodb_system"
         }
         
     except Exception as e:
-        logger.error(f"Session memory stats error: {e}")
+        logger.error(f"Session unified memory stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         logger.error(f"Health check error: {e}")
