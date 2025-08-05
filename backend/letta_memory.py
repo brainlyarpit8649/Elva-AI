@@ -171,15 +171,21 @@ class SimpleLettaMemory:
                                 return {"success": True, "response": "Your nickname is Arp."}
                     return {"success": True, "response": "I don't have information about your nickname."}
                 
-                elif "name" in message_lower and any(word in message_lower for word in ["what is my", "what's my"]):
-                    # Look for name in facts
-                    for fact_key, fact_data in self.memory["facts"].items():
-                        fact_text = fact_data.get("text", "")
-                        if "name is" in fact_text.lower() or fact_key == "name":
-                            # Extract the name from the text
-                            name_text = fact_text.replace("My name is ", "").replace("my name is ", "").replace("...", "").strip()
-                            return {"success": True, "response": f"Your name is {name_text}."}
-                    return {"success": True, "response": "I don't have information about your name."}
+                elif any(phrase in message_lower for phrase in ["what is my name", "what's my name", "my name is what"]) and "nickname" not in message_lower:
+                    # Look specifically for name in facts (not nickname)
+                    if "name" in self.memory["facts"]:
+                        fact_text = self.memory["facts"]["name"]["text"]
+                        # Extract the name from the text
+                        name_text = fact_text.replace("My name is ", "").replace("my name is ", "").replace("...", "").strip()
+                        return {"success": True, "response": f"Your name is {name_text}."}
+                    else:
+                        # Look for any fact with "name is" but not "nickname"
+                        for fact_key, fact_data in self.memory["facts"].items():
+                            fact_text = fact_data.get("text", "")
+                            if "name is" in fact_text.lower() and "nickname" not in fact_text.lower():
+                                name_text = fact_text.replace("My name is ", "").replace("my name is ", "").replace("...", "").strip()
+                                return {"success": True, "response": f"Your name is {name_text}."}
+                        return {"success": True, "response": "I don't have information about your name."}
                 
                 elif any(food_word in message_lower for food_word in ["love to eat", "like to eat", "favorite food", "love eating"]):
                     # Look for food preferences
