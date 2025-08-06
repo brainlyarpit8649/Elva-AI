@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "First check why chat is responding sorry I've encountered an error and on clicking gmail button it's not opening and update this credential. Final Task: Implement secure Admin Debug Toggle in Chat UI to allow admin emails (brainlyarpit8649@gmail.com, kumararpit9468@gmail.com) to view MCP-stored messages using environment variable token (DEBUG_ADMIN_TOKEN) with commands 'show my context' and 'show context for session <session_id>'. Display clean formatted output with message roles, timestamps, and agent results."
+user_problem_statement: "First check why chat is responding sorry I've encountered an error and on clicking gmail button it's not opening and update this credential. Admin Debug Toggle functionality has been disabled per user request."
 
 backend:
   - task: "Hybrid AI Architecture - Claude + Groq Integration"
