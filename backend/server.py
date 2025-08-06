@@ -769,6 +769,181 @@ async def get_session_unified_memory_stats(session_id: str):
         logger.error(f"Session unified memory stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Gmail OAuth endpoints
+@api_router.get("/gmail/auth")
+async def gmail_auth_init(session_id: str = None):
+    """Initialize Gmail OAuth2 authentication flow with session support"""
+    try:
+        if not session_id:
+            session_id = 'default_session'
+            
+        result = gmail_oauth_service.get_auth_url()
+        
+        if result.get('success') and result.get('auth_url'):
+            # Add session ID to the state parameter
+            auth_url = result['auth_url']
+            if 'state=' in auth_url:
+                auth_url = auth_url.replace('state=', f'state={session_id}_')
+            result['auth_url'] = auth_url
+            
+        return result
+    except Exception as e:
+        logger.error(f"Gmail auth init error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/gmail/callback")
+async def gmail_auth_callback(code: str = None, state: str = None, error: str = None, session_id: str = None):
+    """Handle Gmail OAuth2 callback from Google redirect"""
+    try:
+        logger.info(f"🔗 Gmail OAuth callback received - code: {bool(code)}, state: {state}, error: {error}")
+        
+        # Extract session_id from state if not provided separately
+        if not session_id and state:
+            try:
+                # State can contain session information
+                if '_' in state:
+                    session_id = state.split('_')[0]
+                    logger.info(f"📋 Extracted session_id from state: {session_id}")
+                else:
+                    session_id = 'default_session'
+            except:
+                session_id = 'default_session'
+        
+        if not session_id:
+            session_id = 'default_session'
+            
+        logger.info(f"🎯 Using session_id: {session_id}")
+            
+        # Handle OAuth error responses
+        if error:
+            logger.warning(f"❌ OAuth callback received error: {error}")
+            # Redirect to frontend with error parameter
+            return RedirectResponse(
+                url=f'https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com/?auth=error&message={error}&session_id={session_id}',
+                status_code=302
+            )
+        
+        # Check for authorization code
+        if not code:
+            logger.error("❌ No authorization code received in OAuth callback")
+            return RedirectResponse(
+                url=f'https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com/?auth=error&message=no_code&session_id={session_id}',
+                status_code=302
+            )
+        
+        logger.info(f"✅ Processing OAuth callback with authorization code for session: {session_id}")
+        
+        # Handle OAuth callback with authorization code
+        result = await gmail_oauth_service.handle_oauth_callback(code, session_id)
+        
+        logger.info(f"📊 OAuth callback result: success={result.get('success')}, authenticated={result.get('authenticated')}")
+        
+        # Redirect to frontend with success/error status
+        if result.get('success'):
+            return RedirectResponse(
+                url=f'https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com/?auth=success&session_id={session_id}',
+                status_code=302
+            )
+        else:
+            error_msg = result.get('error', 'authentication_failed')
+            return RedirectResponse(
+                url=f'https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com/?auth=error&message={error_msg}&session_id={session_id}',
+                status_code=302
+            )
+        
+    except Exception as e:
+        logger.error(f"Gmail callback error: {e}")
+        return RedirectResponse(
+            url=f'https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com/?auth=error&message=callback_error&session_id={session_id or "default"}',
+            status_code=302
+        )
+
+@api_router.get("/gmail/status")
+async def gmail_auth_status(session_id: str = None):
+    """Get Gmail authentication status for specific session"""
+    try:
+        status = await gmail_oauth_service.get_auth_status(session_id)
+        return status
+    except Exception as e:
+        logger.error(f"Gmail status error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/gmail/user-info")
+async def gmail_user_info(session_id: str = None):
+    """Get Gmail user information for admin detection"""
+    try:
+        if not session_id:
+            # Try to extract from headers or use a default
+            session_id = "default_session"
+        
+        # Check if user is authenticated
+        status = await gmail_oauth_service.get_auth_status(session_id)
+        if not status.get('authenticated'):
+            return {
+                "success": False,
+                "error": "Not authenticated",
+                "requires_auth": True
+            }
+        
+        # Get user profile info from Gmail service
+        user_info = await gmail_oauth_service.get_user_profile(session_id)
+        
+        if user_info and user_info.get('success'):
+            return {
+                "success": True,
+                "email": user_info.get('email'),
+                "name": user_info.get('name'),
+                "session_id": session_id
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Failed to retrieve user info"
+            }
+            
+    except Exception as e:
+        logger.error(f"Gmail user info error: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@api_router.get("/gmail/inbox")
+async def gmail_check_inbox(session_id: str = None, max_results: int = 10, query: str = 'is:unread'):
+    """Check Gmail inbox using OAuth2 for specific session"""
+    try:
+        if not session_id:
+            raise HTTPException(status_code=400, detail="session_id is required")
+            
+        result = await gmail_oauth_service.check_inbox(session_id, max_results=max_results, query=query)
+        return result
+    except Exception as e:
+        logger.error(f"Gmail inbox check error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/gmail/send")
+async def gmail_send_email(request: dict):
+    """Send email using Gmail API with OAuth2"""
+    try:
+        to = request.get('to')
+        subject = request.get('subject')
+        body = request.get('body')
+        session_id = request.get('session_id')
+        
+        if not all([to, subject, body]):
+            raise HTTPException(status_code=400, detail="to, subject, and body are required")
+        
+        result = await gmail_oauth_service.send_email(
+            to=to,
+            subject=subject,
+            body=body,
+            session_id=session_id
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Gmail send error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Add router to app
 app.include_router(api_router)
 
