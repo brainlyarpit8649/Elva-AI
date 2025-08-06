@@ -714,12 +714,12 @@ async def gmail_callback(code: str = None, error: str = None):
         await gmail_oauth_service.exchange_code_for_tokens(code)
         
         # Redirect to frontend with success message
-        frontend_url = os.getenv("REACT_APP_FRONTEND_URL", "https://ee5e777b-dc22-480e-8057-5ec09c03a73c.preview.emergentagent.com")
+        frontend_url = os.getenv("REACT_APP_FRONTEND_URL", "https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com")
         return RedirectResponse(url=f"{frontend_url}?gmail_auth=success")
         
     except Exception as e:
         logger.error(f"Gmail callback error: {e}")
-        frontend_url = os.getenv("REACT_APP_FRONTEND_URL", "https://ee5e777b-dc22-480e-8057-5ec09c03a73c.preview.emergentagent.com")
+        frontend_url = os.getenv("REACT_APP_FRONTEND_URL", "https://ed44aeba-7cef-4fcd-8d35-8bddafadc1d4.preview.emergentagent.com")
         return RedirectResponse(url=f"{frontend_url}?gmail_auth=error&message={str(e)}")
 
 @api_router.get("/gmail/status")
